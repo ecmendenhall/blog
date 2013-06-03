@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Lisp | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/lisp/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-06-03T15:45:45-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Network closures in Clojure]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/25/network-closures-in-clojure/"/>
+    <updated>2013-05-25T12:38:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/05/25/network-closures-in-clojure</id>
+    <content type="html"><![CDATA[<p>Clojure may be a new language, but Lisp has a long history.
+Translating Scheme and Common Lisp classics into Clojure is always an
+interesting exercise, and often illuminates the differences and
+comparative advantages of various Lisp-y languages. (For more
+Lisp-to-Clojure resources see <a href="http://juliangamble.com/blog/2012/07/13/amazing-lisp-books-living-again-in-clojure/">this
+list</a>.
+Or, if you'd like to try porting some Scheme, consider <a href="https://github.com/ecmendenhall/sicpclojure">helping
+translate SICP</a>).</p>
+
+<p>This weekend, I spent some time with Paul Graham's classic <a href="http://www.paulgraham.com/onlisp.html"><em>On
+Lisp</em></a>.
+In Chapter 6, Graham shows how to use
+<a href="https://en.wikipedia.org/wiki/Closure_(computer_science)">closures</a>
+to model nodes in a network, representing a 20 questions game as a self-traversing binary
+tree. Here's his original code, and my best attempts at Clojure translations.</p>
+
+<p>The most obvious model for a set of connected nodes is a nested data
+structure, like a map of maps. In Common Lisp, Graham uses a mutable
+hashmap of <a href="http://www.lispworks.com/documentation/HyperSpec/Body/m_defstr.htm">structured
+types</a>,
+each pointing to their neighbors in the network:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='common-lisp'><span class='line'><span class="p">(</span><span class="nb">defstruct</span> <span class="nv">node</span> <span class="nv">contents</span> <span class="nv">yes</span> <span class="nv">no</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defvar</span> <span class="nv">&lt;em&gt;nodes&lt;/em&gt;</span> <span class="p">(</span><span class="nb">make-hash-table</span><span class="p">))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defun</span> <span class="nv">defnode</span> <span class="p">(</span><span class="nv">name</span> <span class="nv">conts</span> <span class="nv">&amp;amp</span><span class="c1">;optional yes no)&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">name</span> <span class="nv">&lt;em&gt;nodes&lt;/em&gt;</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">make-node</span> <span class="ss">:contents</span> <span class="nv">conts&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;:yes</span> <span class="nv">yes</span>
+</span><span class='line'><span class="ss">:no</span> <span class="nv">no</span><span class="p">)))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>A simple map seems like a sufficient replacement in Clojure. A single
+node looks like this:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">{</span><span class="ss">:people</span> <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is the person a man?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:male</span>, <span class="ss">:no</span> <span class="ss">:female</span><span class="p">}}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And the full tree looks like the following. Each node's <code>:yes</code> or <code>:no</code> keyword
+points to the next node in the tree:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">{</span><span class="ss">:penny</span> <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Abraham Lincoln.&quot;</span>, <span class="ss">:yes</span> <span class="nv">nil</span>, <span class="ss">:no</span> <span class="nv">nil</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:coin</span>  <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is the coin a penny?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:penny</span>, <span class="ss">:no</span> <span class="ss">:other-coin</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:USA</span>   <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is he on a coin?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:coin</span>, <span class="ss">:no</span> <span class="ss">:no-coin</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:dead</span>  <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Was he from the USA?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:USA</span>, <span class="ss">:no</span> <span class="ss">:elsewhere</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:male</span>  <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is he living?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:live</span>, <span class="ss">:no</span> <span class="ss">:dead</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:people</span> <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is the person a man?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:male</span>, <span class="ss">:no</span> <span class="ss">:female</span><span class="p">}}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Here's my first draft for defining nodes in Clojure. Since the Common
+Lisp version used a mutable variable, I used a Clojure atom to store
+network state:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">nodes</span> <span class="p">(</span><span class="nf">atom</span> <span class="p">{}))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="kd">defn </span><span class="nv">defnode</span> <span class="p">[</span><span class="nb">name </span><span class="nv">contents</span> <span class="o">&amp;</span><span class="nv">amp</span><span class="c1">; [yes no]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">swap!</span> <span class="nv">nodes</span> <span class="nb">assoc name </span><span class="p">{</span><span class="ss">:contents</span> <span class="nv">contents</span> <span class="ss">:yes</span> <span class="nv">yes</span> <span class="ss">:no</span> <span class="nv">no</span><span class="p">}))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="kd">defn </span><span class="nv">make-nodes</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:people</span> <span class="s">&quot;Is the person a man?&quot;</span> <span class="ss">:male</span> <span class="ss">:female</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:male</span> <span class="s">&quot;Is he living?&quot;</span> <span class="ss">:live</span> <span class="ss">:dead</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:dead</span> <span class="s">&quot;Was he from the USA?&quot;</span> <span class="ss">:USA</span> <span class="ss">:elsewhere</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:USA</span> <span class="s">&quot;Is he on a coin?&quot;</span> <span class="ss">:coin</span> <span class="ss">:no-coin</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:coin</span> <span class="s">&quot;Is the coin a penny?&quot;</span> <span class="ss">:penny</span> <span class="ss">:other-coin</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:penny</span> <span class="s">&quot;Abraham Lincoln.&quot;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Traversing the network is simple: get a node, print the associated
+question, prompt for input, get the next node, and repeat. Here's the original Common Lisp:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='common-lisp'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">run-node</span> <span class="p">(</span><span class="nv">name</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">n</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">name</span> <span class="nv">&lt;em&gt;nodes&lt;/em&gt;</span><span class="p">)))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span><span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nv">node-yes</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>       <span class="p">(</span><span class="nb">format</span> <span class="no">t</span> <span class="s">&quot;~A~%&amp;gt;&amp;gt; &quot;</span> <span class="p">(</span><span class="nv">node-contents</span> <span class="nv">n</span><span class="p">))</span>
+</span><span class='line'>       <span class="p">(</span><span class="nb">case</span> <span class="p">(</span><span class="nb">read</span><span class="p">)</span>
+</span><span class='line'>         <span class="p">(</span><span class="nv">yes</span> <span class="p">(</span><span class="nv">run-node</span> <span class="p">(</span><span class="nv">node-yes</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>         <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nv">run-node</span> <span class="p">(</span><span class="nv">node-no</span> <span class="nv">n</span><span class="p">)))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nv">node-contents</span> <span class="nv">n</span><span class="p">)))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And here's an equivalent in Clojure:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">run-node</span> <span class="p">[</span><span class="nv">name</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nb">node </span>    <span class="p">(</span><span class="err">@</span><span class="nv">nodes</span> <span class="nv">name</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span>    <span class="nv">contents</span> <span class="p">(</span><span class="nb">node </span><span class="ss">:contents</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">yes</span>      <span class="p">(</span><span class="nb">node </span><span class="ss">:yes</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">no</span>       <span class="p">(</span><span class="nb">node </span><span class="ss">:no</span><span class="p">)]</span>
+</span><span class='line'><span class="p">(</span><span class="k">if </span><span class="nv">yes</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">do</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="s">&quot;yes&quot;</span> <span class="p">(</span><span class="nf">read-line</span><span class="p">))</span>
+</span><span class='line'>       <span class="p">(</span><span class="nf">run-node</span> <span class="nv">yes</span><span class="p">)</span>
+</span><span class='line'>       <span class="p">(</span><span class="nf">run-node</span> <span class="nv">no</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Of course, there's no reason to bother swapping and dereferencing an
+atom as long as the tree won't need to change at runtime. This
+immutable version works just as well:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">defnode</span> <span class="p">[</span><span class="nv">nodes</span> <span class="nb">name </span><span class="nv">contents</span> <span class="o">&amp;</span><span class="nv">amp</span><span class="c1">; [yes no]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">assoc </span><span class="nv">nodes</span> <span class="nb">name </span><span class="p">{</span><span class="ss">:contents</span> <span class="nv">contents</span> <span class="ss">:yes</span> <span class="nv">yes</span> <span class="ss">:no</span> <span class="nv">no</span><span class="p">}))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="kd">defn </span><span class="nv">make-nodes</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">-&gt; </span><span class="p">{}</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span><span class="p">(</span><span class="nf">defnode</span> <span class="ss">:people</span> <span class="s">&quot;Is the person a man?&quot;</span> <span class="ss">:male</span> <span class="ss">:female</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nf">defnode</span> <span class="ss">:male</span> <span class="s">&quot;Is he living?&quot;</span> <span class="ss">:live</span> <span class="ss">:dead</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nf">defnode</span> <span class="ss">:dead</span> <span class="s">&quot;Was he from the USA?&quot;</span> <span class="ss">:USA</span> <span class="ss">:elsewhere</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nf">defnode</span> <span class="ss">:USA</span> <span class="s">&quot;Is he on a coin?&quot;</span> <span class="ss">:coin</span> <span class="ss">:no-coin</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nf">defnode</span> <span class="ss">:coin</span> <span class="s">&quot;Is the coin a penny?&quot;</span> <span class="ss">:penny</span> <span class="ss">:other-coin</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nf">defnode</span> <span class="ss">:penny</span> <span class="s">&quot;Abraham Lincoln.&quot;</span><span class="p">)))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="k">def </span><span class="nv">nodes</span> <span class="p">(</span><span class="nf">make-nodes</span><span class="p">))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="kd">defn </span><span class="nv">run-node</span> <span class="p">[</span><span class="nv">nodes</span> <span class="nv">name</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nb">node </span>    <span class="p">(</span><span class="nf">nodes</span> <span class="nv">name</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span>    <span class="nv">contents</span> <span class="p">(</span><span class="nb">node </span><span class="ss">:contents</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">yes</span>      <span class="p">(</span><span class="nb">node </span><span class="ss">:yes</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">no</span>       <span class="p">(</span><span class="nb">node </span><span class="ss">:no</span><span class="p">)]</span>
+</span><span class='line'><span class="p">(</span><span class="k">if </span><span class="nv">yes</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">do</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="s">&quot;yes&quot;</span> <span class="p">(</span><span class="nf">read-line</span><span class="p">))</span>
+</span><span class='line'>       <span class="p">(</span><span class="nf">run-node</span> <span class="nv">nodes</span> <span class="nv">yes</span><span class="p">)</span>
+</span><span class='line'>       <span class="p">(</span><span class="nf">run-node</span> <span class="nv">nodes</span> <span class="nv">no</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Using a closure rolls the data structure and traversal code into one,
+by associating the <code>yes</code> and <code>no</code> fields with anonymous functions that
+handle the same logic as <code>run-node</code>. Here's Graham's CL version:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='common-lisp'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">defnode</span> <span class="p">(</span><span class="nv">name</span> <span class="nv">conts</span> <span class="nv">&amp;amp</span><span class="c1">;optional yes no)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">name</span> <span class="nv">&lt;em&gt;nodes&lt;/em&gt;</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span>    <span class="p">(</span><span class="k">if</span> <span class="nv">yes</span>
+</span><span class='line'>      <span class="err">#’</span><span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
+</span><span class='line'>          <span class="p">(</span><span class="nb">format</span> <span class="no">t</span> <span class="s">&quot;~A~%&amp;gt;&amp;gt; &quot;</span> <span class="nv">conts</span><span class="p">)</span>
+</span><span class='line'>          <span class="p">(</span><span class="nb">case</span> <span class="p">(</span><span class="nb">read</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="nv">yes</span> <span class="p">(</span><span class="nb">funcall</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">yes</span> <span class="vg">*nodes*</span><span class="p">)))</span>
+</span><span class='line'>            <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nb">funcall</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">no</span> <span class="vg">*nodes*</span><span class="p">)))))</span>
+</span><span class='line'>      <span class="err">#’</span><span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="nv">conts</span><span class="p">))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And here's mine in Clojure. The double-parens around <code>(@nodes yes)</code>
+and <code>(@nodes no)</code> call the anonymous function, instead of just
+returning it.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">nodes</span> <span class="p">(</span><span class="nf">atom</span> <span class="p">{}))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="kd">defn </span><span class="nv">defclosure</span> <span class="p">[</span><span class="nb">name </span><span class="nv">contents</span> <span class="o">&amp;</span><span class="nv">amp</span><span class="c1">; [yes no]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">swap!</span> <span class="nv">nodes</span> <span class="nb">assoc </span><span class="nv">name&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span>     <span class="p">(</span><span class="k">if </span><span class="nv">yes</span>
+</span><span class='line'>       <span class="p">(</span><span class="k">fn </span><span class="p">[]</span>
+</span><span class='line'>         <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="s">&quot;yes&quot;</span> <span class="p">(</span><span class="nf">read-line</span><span class="p">))</span>
+</span><span class='line'>           <span class="p">((</span><span class="err">@</span><span class="nv">nodes</span> <span class="nv">yes</span><span class="p">))</span>
+</span><span class='line'>           <span class="p">((</span><span class="err">@</span><span class="nv">nodes</span> <span class="nv">no</span><span class="p">))))</span>
+</span><span class='line'>       <span class="p">(</span><span class="k">fn </span><span class="p">[]</span>
+</span><span class='line'>         <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="kd">defn </span><span class="nv">make-nodes</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:people</span> <span class="s">&quot;Is the person a man?&quot;</span> <span class="ss">:male</span> <span class="ss">:female</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:male</span> <span class="s">&quot;Is he living?&quot;</span> <span class="ss">:live</span> <span class="ss">:dead</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:dead</span> <span class="s">&quot;Was he from the USA?&quot;</span> <span class="ss">:USA</span> <span class="ss">:elsewhere</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:USA</span> <span class="s">&quot;Is he on a coin?&quot;</span> <span class="ss">:coin</span> <span class="ss">:no-coin</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:coin</span> <span class="s">&quot;Is the coin a penny?&quot;</span> <span class="ss">:penny</span> <span class="ss">:other-coin</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:penny</span> <span class="s">&quot;Abraham Lincoln.&quot;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Now, traversing the tree is as simple as calling:
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">((</span><span class="nf">nodes</span> <span class="ss">:people</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+And watching the tree traverse itself. You can find my code from this
+post <a href="https://gist.github.com/ecmendenhall/5646594">here</a>. For more on closures in Lisp,
+check out the rest of <a href="http://lib.store.yahoo.net/lib/paulgraham/onlisp.pdf">Chapter 6</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Enforcing Bottom-up Design]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/"/>
+    <updated>2013-05-10T00:21:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design</id>
+    <content type="html"><![CDATA[<blockquote><p>"Experienced Lisp programmers divide up their programs differently.
+As well as top-down design, they follow a principle which could be
+called bottom-up design–changing the language to suit the problem.
+In Lisp, you don't just write your program down toward the language,
+you also build the language up toward your program. As you're writing
+a program you may think 'I wish Lisp had such-and-such an operator.'
+So you go and write it. Afterward you realize that using the new
+operator would simplify the design of another part of the program, and
+so on. Language and program evolve together. Like the border between
+two warring states, the boundary between language and program is drawn
+and redrawn, until eventually it comes to rest along the mountains and
+rivers, the natural frontiers of your problem. In the end your program
+will look as if the language had been designed for it. And when
+language and program fit one another well, you end up with code which
+is clear, small, and efficient."</p></blockquote>
+
+<p>–<a href="http://www.paulgraham.com/progbot.html">Paul Graham</a>, from the
+introduction to <a href="http://www.paulgraham.com/onlisptext.html"><em>On Lisp</em></a></p>
+
+<p>Lisp programmers have a reputation (earned or otherwise) for considering their language of
+  choice <a href="http://xkcd.com/224/">uniquely powerful</a>, capable of
+  extending the <a href="https://tractatus-online.appspot.com/Tractatus/Ajaxs/tlpA.html#56">limits of the
+  world</a>
+  with its special
+  <a href="http://stackoverflow.com/questions/267862/what-makes-lisp-macros-so-special">expressiveness</a>.
+  I find writing Lisp a joy, and for a long time I bought into the
+  mythos. It still <em>feels</em> unique. But I've come to learn that good bottom-up design is possible in any language.</p>
+
+<p>  For the past two weeks, I've been working in Java, a
+  language many programmers consider
+  <a href="http://www.paulgraham.com/avg.html">Blub</a> incarnate. (You don't have to take <a href="http://hammerprinciple.com/therighttool/items/java/clojure">my word for
+  it</a>).
+  But even without clever macros and first-class functions, following
+  the rules of <a href="http://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530">test-driven
+  development</a>
+  and the principles of <a href="http://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882">clean
+  code</a>
+  feels a lot like the process of natural, iterative evolution Paul
+  Graham describes.</p>
+
+<p>  A good language can encourage bottom-up, evolutionary design, and
+  this is one of Lisp's great strengths. But
+  writing good tests—and writing them first—can go a step further and
+  actually enforce it.</p>
+
+<p> Writing tests first requires describing abstractions before
+ they exist—writing the program you want to read from the very start. Using meaningful names transforms the language you have
+ into the one you want. Revising after every passing test makes
+ simplifying design second nature. And building up a program test by
+ tiny test is an evolutionary process that generates clean, efficient
+ code, whether you're writing Common Lisp or COBOL.</p>
+
+<p>Here's a function that returns a given game board's winner from my
+  first crack at Tic Tac Toe in Clojure:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>tictactoe.core/get-win </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">get-win</span>
+</span><span class='line'>  <span class="s">&quot;Takes a 3x3 game board. Returns a vector</span>
+</span><span class='line'><span class="s">  [winner start middle  end] of the winning player,</span>
+</span><span class='line'><span class="s">  and (row, col) grid coordinates of the three-in-a-row elements.&quot;</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">board</span><span class="p">]</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span><span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">wins</span>           <span class="p">(</span><span class="nf">check-for-wins</span> <span class="nv">board</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">winner</span>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="p">(</span><span class="nb">first </span><span class="p">(</span><span class="nb">remove nil? </span><span class="nv">wins</span><span class="p">)))</span> <span class="mi">1</span> <span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">[</span><span class="nv">row</span> <span class="nv">col</span> <span class="nv">diag</span><span class="p">]</span> <span class="p">(</span><span class="nf">unflatten</span> <span class="nv">wins</span><span class="p">)]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">cond </span><span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">row</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">0</span><span class="p">]</span>
+</span><span class='line'>                                      <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">1</span><span class="p">]</span>
+</span><span class='line'>                                      <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">2</span><span class="p">]]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">col</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
+</span><span class='line'>                                      <span class="p">[</span><span class="mi">1</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
+</span><span class='line'>                                      <span class="p">[</span><span class="mi">2</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">diag</span><span class="p">)</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">diag</span><span class="p">))</span>
+</span><span class='line'>                                <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">2</span><span class="p">]]</span>
+</span><span class='line'>                                <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">2</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">0</span><span class="p">]]))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And here's the equivalent I wrote in Java:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>Board.winnerIs( ) </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">winnerIs</span><span class="o">()</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="k">if</span> <span class="o">(</span><span class="n">hasWin</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nf">getWinningRow</span><span class="o">().</span><span class="na">winner</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">_</span><span class="o">;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Which excerpt reads more like a domain-specific language? Which
+  would you rather read a year from now? I don't doubt that I could
+  clean up the Clojure into something just as simple and readable. But
+merely using an elegant language is no guarantee of elegant design.</p>
+]]></content>
+  </entry>
+  
+</feed>

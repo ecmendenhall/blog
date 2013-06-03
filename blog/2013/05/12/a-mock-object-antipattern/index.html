@@ -1,0 +1,221 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>A mock object antipattern - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="A Mock Object Antipattern For the most part, test-driven development has been a breeze so far.
+In addition to
+enforcing
+good habits, watching red &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">A Mock Object Antipattern</h1>
+	<div class="entry-content" itemprop="articleBody"><p>For the most part, test-driven development has been a breeze so far.
+In addition to
+<a href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/">enforcing</a>
+good habits, watching red tests turn green provides an extremely satisfying
+dopamine kick every few minutes, all day. Testing simple objects and actions in my Tic Tac Toe game—things
+like the board, player behavior, and the Minimax algorithm—was
+straightforward. But testing the view and controller classes that glue
+them together required a little more thought.</p>
+
+<p>Writing tests required interrupting the game loop to check on the behavior of the view and
+controller objects. To start, I added optional flag arguments to many
+methods that would break the game loop so I could make assertions
+about game state. I quickly came to realize that this was a bad
+solution, and I cringed the next day when a chapter of <em>Clean Code</em>
+described boolean flags as one of the most rancid code smells around.</p>
+
+<p>I came across the concept of <a href="http://martinfowler.com/articles/mocksArentStubs.html">test
+ doubles</a>
+and mock objects, and got the idea right away: create fake objects
+ with the same methods as real ones, override their behavior, and use
+ them as substitutes for their more complicated counterparts in unit tests.</p>
+
+<p>Or at least, I  <em>thought</em> I got the idea. With my tests passing and my game working, I felt pretty good about my
+project. But wiring up a code coverage tool showed that my view and
+controller classes were only half covered by my tests. What went
+wrong? As it turned out, I was testing my mocks! Here&#8217;s the pattern I was following:</p>
+
+<ul>
+<li>Create a subclass of the object you want to test.</li>
+<li>Override or stub out methods to return predetermined output.</li>
+<li>Write assertions against the behavior of the mock objects.</li>
+</ul>
+
+
+<p>This meant, of course, that I was never actually testing the real
+objects, but only the fake ones, as revealed by the code coverage data. Worse, all the tests
+that I thought showed my code was working were essentialy tautologies.
+This probably appears obvious to experienced TDD practitioners, but it
+was surprisingly easy to fall into this antipattern. For the record,
+here&#8217;s how you should really use a mock object:</p>
+
+<ul>
+<li>Create mocks of the objects that <em>interact with</em> the one you want to
+test.</li>
+<li>Override or stub out methods to return predetermined output.</li>
+<li>Write assertions against the behavior of the <em>real</em> object
+interacting with the test doubles.</li>
+</ul>
+
+
+<p>In retrospect, this makes perfect sense. But I&#8217;ll be going over all my
+tests with a careful eye tomorrow. Sometimes the green light isn&#8217;t
+what it seems.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

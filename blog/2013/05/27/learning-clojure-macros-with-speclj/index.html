@@ -1,0 +1,289 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Reconstructing Clojure macros with speclj - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Reconstructing Clojure Macros With Speclj &#8220;It is a revelation to compare Menard’s Don Quixote with Cervantes’.
+The latter, for example, wrote &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/05/27/learning-clojure-macros-with-speclj/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Reconstructing Clojure Macros With Speclj</h1>
+	<div class="entry-content" itemprop="articleBody"><blockquote><p>&#8220;It is a revelation to compare Menard’s Don Quixote with Cervantes’.
+The latter, for example, wrote (part one, chapter nine):
+&#8216;…truth, whose mother is history, rival of time, depository of
+deeds, witness of the past, exemplar and adviser to the present, and
+the future’s counselor.&#8217; Written in the seventeenth century, written by
+the &#8216;lay genius&#8217; Cervantes, this enumeration is a mere rhetorical
+praise of history. Menard, on the other hand, writes:
+&#8216;…truth, whose mother is history, rival of time, depository of
+deeds, witness of the past, exemplar and adviser to the present, and
+the future’s counselor.&#8217;&#8221;</p></blockquote>
+
+<p>–From <a href="http://www.coldbacon.com/writing/borges-quixote.html"><em>Pierre Menard, Author of the Quixote</em></a></p>
+
+<p><a href="http://www.infoq.com/presentations/Clojure-Macros">Macros are hard</a>,
+but one of the most helpful exercises I&#8217;ve found in my limited macro
+writing experience is practicing by recreating some of the <a href="http://clojure.org/macros">core
+macros</a> I already know and love, like <code>or</code>,
+<code>when-let</code>, and <code>-&gt;</code>.</p>
+
+<p>Using <a href="https://github.com/slagyr/speclj">speclj</a> greatly simplifies
+this exercise, and writing macro specs often test my understanding
+better than writing the implementations themselves. Here&#8217;s an example spec for the threading macro:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;-&gt; macro&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should expand into the code below&quot;</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">macro-form</span> <span class="o">&#39;</span><span class="p">(</span><span class="nf">-&gt;-macro</span> <span class="mi">1</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">* </span><span class="mi">3</span><span class="p">))]</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="nf">macro-challenges.core/-&gt;-macro</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nf">macro-challenges.core/-&gt;-macro</span> <span class="mi">1</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">2</span><span class="p">))</span> <span class="p">(</span><span class="nb">* </span><span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>                <span class="p">(</span><span class="nb">macroexpand-1 </span><span class="nv">macro-form</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="nb">* </span><span class="p">(</span><span class="nf">macro-challenges.core/-&gt;-macro</span> <span class="mi">1</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">2</span><span class="p">))</span> <span class="mi">3</span><span class="p">)</span>
+</span><span class='line'>                <span class="p">(</span><span class="nb">macroexpand </span><span class="nv">macro-form</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="nb">* </span><span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">)</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">macroexpand-all</span> <span class="nv">macro-form</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The functions <code>macroexpand</code>, <code>macroexpand-1</code>, and <code>macroexpand-all</code>
+come in very handy. <code>Macroexpand-1</code> returns the &#8220;first&#8221; expansion of a
+macro form (macros within macros won&#8217;t be expanded). <code>Macroexpand</code>
+calls <code>macroexpand-1</code> until the expansion is no longer a macro form.</p>
+
+<p>In the above example, the first expansion of <code>-&gt;-macro</code>, my threading
+macro replacement, returns a form that starts with another call to
+<code>-&gt;-macro</code>. (I was surprised to find out that this is how the
+threading macro works under the hood). <code>Macroexpand</code> expands <a href="http://stackoverflow.com/questions/2296385/homoiconicity-how-does-it-work">into a
+list</a>
+until the first item is <code>*</code>, which is not a macro.</p>
+
+<p>When it&#8217;s macros all the way down, <code>macroexpand-all</code> (technically
+<code>clojure.walk/macroexpand-all</code>) recursively expands all macros in a
+given form, resulting in the much simpler expression <code>(* (+ 1 2) 3)</code>
+in the example above. These functions are all hugely helpful for
+writing macros and their associated tests.</p>
+
+<p>Here&#8217;s my recreation of <code>-&gt;</code>, which passed the spec:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">-&gt;-macro</span>
+</span><span class='line'>  <span class="p">([</span><span class="nv">arg</span><span class="p">]</span> <span class="nv">arg</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">([</span><span class="nv">arg</span> <span class="nv">first-form</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="o">~</span><span class="p">(</span><span class="nb">first </span><span class="nv">first-form</span><span class="p">)</span> <span class="o">~</span><span class="nv">arg</span> <span class="o">~@</span><span class="p">(</span><span class="nb">rest </span><span class="nv">first-form</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">([</span><span class="nv">arg</span> <span class="nv">first-form</span> <span class="o">&amp;</span> <span class="nv">more-forms</span><span class="p">]</span>
+</span><span class='line'>     <span class="o">`</span><span class="p">(</span><span class="nf">-&gt;-macro</span> <span class="p">(</span><span class="nf">-&gt;-macro</span> <span class="o">~</span><span class="nv">arg</span> <span class="o">~</span><span class="nv">first-form</span><span class="p">)</span> <span class="o">~@</span><span class="nv">more-forms</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And bears a pretty strong resemblance to the original source:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">-&gt;</span>
+</span><span class='line'>  <span class="s">&quot;Threads the expr through the forms. Inserts x as the</span>
+</span><span class='line'><span class="s">  second item in the first form, making a list of it if it is not a</span>
+</span><span class='line'><span class="s">  list already. If there are more forms, inserts the first form as the</span>
+</span><span class='line'><span class="s">  second item in second form, etc.&quot;</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:added</span> <span class="s">&quot;1.0&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">([</span><span class="nv">x</span><span class="p">]</span> <span class="nv">x</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">([</span><span class="nv">x</span> <span class="nv">form</span><span class="p">]</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">seq? </span><span class="nv">form</span><span class="p">)</span>
+</span><span class='line'>              <span class="p">(</span><span class="nb">with-meta </span><span class="o">`</span><span class="p">(</span><span class="o">~</span><span class="p">(</span><span class="nb">first </span><span class="nv">form</span><span class="p">)</span> <span class="o">~</span><span class="nv">x</span> <span class="o">~@</span><span class="p">(</span><span class="nb">next </span><span class="nv">form</span><span class="p">))</span> <span class="p">(</span><span class="nb">meta </span><span class="nv">form</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nb">list </span><span class="nv">form</span> <span class="nv">x</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">([</span><span class="nv">x</span> <span class="nv">form</span> <span class="o">&amp;</span> <span class="nv">more</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="nb">-&gt; </span><span class="p">(</span><span class="nb">-&gt; </span><span class="o">~</span><span class="nv">x</span> <span class="o">~</span><span class="nv">form</span><span class="p">)</span> <span class="o">~@</span><span class="nv">more</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Some macros are pretty easy to reconstruct (but check <a href="http://clojuredocs.org/clojure_core/clojure.repl/doc">their
+documentation</a>
+to make sure you really understand how they handle different
+arguments). If you&#8217;re well and truly stuck, it&#8217;s always possible to check out the
+<a href="http://clojuredocs.org/clojure_core/clojure.repl/source">original
+code</a> for inspiration.</p>
+
+<p>The specs and solutions I&#8217;ve written so far (mostly low-hanging fruit) are all
+  available on my
+  <a href="https://github.com/ecmendenhall/macro-challenges">Github</a>, if you&#8217;d
+  like to have a hand at reconstructing Clojure yourself.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/05/27/learning-clojure-macros-with-speclj/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/05/27/learning-clojure-macros-with-speclj/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

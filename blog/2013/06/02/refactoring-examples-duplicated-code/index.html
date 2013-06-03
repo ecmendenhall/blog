@@ -1,0 +1,432 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Refactoring examples: Duplicated code - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Refactoring Examples: Duplicated Code I&#8217;ve spent the last couple weeks working through Martin Fowler&#8217;s Refactoring, which includes a &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/06/02/refactoring-examples-duplicated-code/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Refactoring Examples: Duplicated Code</h1>
+	<div class="entry-content" itemprop="articleBody"><p>I&#8217;ve spent the last couple weeks working through <a href="http://martinfowler.com/">Martin Fowler&#8217;s</a> <a href="http://www.amazon.com/Refactoring-Improving-Design-Existing-Code/dp/0201485672/ref=sr_1_1?ie=UTF8&amp;qid=1370238910&amp;sr=8-1&amp;keywords=refactoring"><em>Refactoring</em></a>, which includes a taxonomy of useful solutions to common code smells. It&#8217;s an excellent book, but I found it hard to recognize and remember some of the patterns without digging into my own  code. Over the next few posts, I&#8217;ll describe some of the smells and refactors I found in my Tic Tac Toe game (as much to commit them to my own memory as to share them with others). First up, the most common code smell of all: duplication.</p>
+
+<p>Despite using a <a href="https://github.com/ecmendenhall/Java-TTT/blob/master/test/com/cmendenhall/tests/TicTacToeTest.java">superclass</a> to store static methods and data
+used by all my tests, I wasn&#8217;t using inheritance to create universal setup and teardown methods. Although many of my tests used a similar pattern to capture output, none were quite alike, and all of them were pretty messy. Here&#8217;s an example:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@RunWith</span><span class="o">(</span><span class="n">JUnit4</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">GameControllerTest</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">MockTerminalView</span> <span class="n">view</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MockTerminalView</span><span class="o">();</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">GameController</span> <span class="n">controller</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GameController</span><span class="o">(</span><span class="n">view</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="kd">final</span> <span class="n">PrintStream</span> <span class="n">stdout</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="kd">final</span> <span class="n">ByteArrayOutputStream</span> <span class="n">output</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ByteArrayOutputStream</span><span class="o">();</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">PrintStream</span> <span class="n">outputStream</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">OutputRecorder</span> <span class="n">outputRecorder</span><span class="o">;</span>
+</span><span class='line'><span class="err">  </span>
+</span><span class='line'><span class="err">    </span><span class="nd">@Before</span>
+</span><span class='line'><span class="err">    </span><span class="kd">public</span> <span class="kt">void</span> <span class="n">setUp</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">loadViewStrings</span><span class="o">();</span>
+</span><span class='line'><span class="err">        </span><span class="n">outputStream</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PrintStream</span><span class="o">(</span><span class="n">output</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="s">&quot;UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">outputRecorder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OutputRecorder</span><span class="o">(</span><span class="n">output</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="s">&quot;UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">Player</span> <span class="n">playerOne</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HumanPlayer</span><span class="o">(</span><span class="n">X</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">Player</span> <span class="n">playerTwo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MinimaxPlayer</span><span class="o">(</span><span class="n">O</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">controller</span><span class="o">.</span><span class="na">setPlayerOne</span><span class="o">(</span><span class="n">playerOne</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">controller</span><span class="o">.</span><span class="na">setPlayerTwo</span><span class="o">(</span><span class="n">playerTwo</span><span class="o">);</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="nd">@Test</span>
+</span><span class='line'><span class="err">    </span><span class="kd">public</span> <span class="kt">void</span> <span class="n">controllerShouldStartNewGame</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputRecorder</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">assertEquals</span><span class="o">(</span><span class="n">welcome</span><span class="o">,</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">());</span>
+</span><span class='line'><span class="err">        </span><span class="n">assertEquals</span><span class="o">(</span><span class="n">divider</span><span class="o">,</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">());</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="nd">@Test</span><span class="o">(</span><span class="n">expected</span> <span class="o">=</span> <span class="n">GameOverException</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span class='line'><span class="err">    </span><span class="kd">public</span> <span class="kt">void</span> <span class="n">controllerShouldEndGameOnRestartIfInputIsNo</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputStream</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;n&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">controller</span><span class="o">.</span><span class="na">restartGame</span><span class="o">();</span>
+</span><span class='line'><span class="err">        </span><span class="n">assertEquals</span><span class="o">(</span><span class="n">playAgain</span><span class="o">,</span> <span class="n">output</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'><span class="o">}</span><span class="err"> </span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>These tests use both a plain <code>PrintStream</code> and my custom <code>OutputRecorder</code>, though they don&#8217;t really need to. Some setup is done in the fields, and some during <code>setUp()</code>, though there&#8217;s no clear reason why. And the same lines setting up and tearing down the recorder are repeated across lots of tests. The smell here is duplicated code, which Fowler calls &#8220;number one in the stink parade.&#8221; To solve it, I&#8217;ll start by extracting a method, and then extracting a superclass.</p>
+
+<p>First, I&#8217;ll create an empty <code>TicTacToeTest</code> class with empty setup and teardown methods.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@RunWith</span><span class="o">(</span><span class="n">JUnit4</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TicTacToeTest</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Before</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setUp</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="nd">@After</span>
+</span><span class='line'>          <span class="kd">public</span> <span class="kt">void</span> <span class="nf">cleanUp</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, extract a <code>setUpRecorder()</code> method including all the setup-related lines:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>            <span class="kd">private</span> <span class="n">OutputRecorder</span> <span class="n">recorder</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="kd">private</span> <span class="kt">void</span> <span class="nf">setUpRecorder</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">UnsupportedEncodingException</span> <span class="o">{</span>
+</span><span class='line'>            <span class="err">        </span><span class="n">PrintStream</span> <span class="n">stdout</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">;</span>
+</span><span class='line'>            <span class="err">        </span><span class="n">ByteArrayOutputStream</span> <span class="n">output</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ByteArrayOutputStream</span><span class="o">();</span>
+</span><span class='line'>            <span class="err">        </span><span class="n">recorder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OutputRecorder</span><span class="o">(</span><span class="n">output</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="s">&quot;UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, a <code>startRecorder()</code> method to replace calls to <code>System.setOut()</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>            <span class="kd">private</span><span class="err"> </span><span class="kt">void</span><span class="err"> </span><span class="n">startRecorder</span><span class="o">()</span><span class="err"> </span><span class="o">{</span>
+</span><span class='line'>              <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">recorder</span><span class="o">);</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<pre><code>          This method might seem short, but I find `startRecorder()` much easier to read. Now that these methods are implemented, I can plug them into the tests:
+</code></pre>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>              <span class="nd">@Before</span>
+</span><span class='line'>              <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setUp</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class='line'>              <span class="err">    </span><span class="n">loadViewStrings</span><span class="o">();</span>
+</span><span class='line'>              <span class="err">    </span>
+</span><span class='line'>              <span class="err">    </span><span class="n">setUpRecorder</span><span class="o">();</span>
+</span><span class='line'>              <span class="err">    </span>
+</span><span class='line'>              <span class="err">    </span><span class="n">Player</span> <span class="n">playerOne</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HumanPlayer</span><span class="o">(</span><span class="n">X</span><span class="o">);</span>
+</span><span class='line'>              <span class="err">    </span><span class="n">Player</span> <span class="n">playerTwo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MinimaxPlayer</span><span class="o">(</span><span class="n">O</span><span class="o">);</span>
+</span><span class='line'>              <span class="err">    </span><span class="n">controller</span><span class="o">.</span><span class="na">setPlayerOne</span><span class="o">(</span><span class="n">playerOne</span><span class="o">);</span>
+</span><span class='line'>              <span class="err">    </span><span class="n">controller</span><span class="o">.</span><span class="na">setPlayerTwo</span><span class="o">(</span><span class="n">playerTwo</span><span class="o">);</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>              <span class="nd">@Test</span>
+</span><span class='line'>              <span class="kd">public</span> <span class="kt">void</span> <span class="nf">controllerShouldStartNewGame</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="n">startRecorder</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>                  <span class="err">    </span><span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>                  <span class="err">    </span><span class="n">assertEquals</span><span class="o">(</span><span class="n">welcome</span><span class="o">,</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">());</span>
+</span><span class='line'>                  <span class="err">    </span><span class="n">assertEquals</span><span class="o">(</span><span class="n">divider</span><span class="o">,</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">());</span>
+</span><span class='line'>
+</span><span class='line'>                  <span class="err">    </span><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
+</span><span class='line'>                  <span class="o">}</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The last line of the second test was meant as a mini-teardown, to reset stdout before the next test. I wrote it before I understood the JUnit execution, in which each test runs in its own environment. It survived around 80 commits, but it doesn&#8217;t actually do anything, so I can safely delete it. (I know because none of the tests fail afterwards).I know because none of the tests fail afterwards. In fact, this whole refactor should be possible while keeping the tests green.</p>
+
+<p>After searching for usages of the old pattern and replacing them with the new methods, there&#8217;s just one thing left: pull up the new methods to a Test superclass. Here&#8217;s the result:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>                  <span class="kd">public</span> <span class="kd">class</span> <span class="nc">TicTacToeTest</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>                  <span class="err">    </span><span class="kd">protected</span> <span class="n">OutputRecorder</span> <span class="n">recorder</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>                  <span class="err">    </span><span class="kd">protected</span> <span class="kt">void</span> <span class="n">setUpRecorder</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">UnsupportedEncodingException</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="err">        </span><span class="n">ByteArrayOutputStream</span> <span class="n">output</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ByteArrayOutputStream</span><span class="o">();</span>
+</span><span class='line'>                  <span class="err">        </span><span class="n">recorder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OutputRecorder</span><span class="o">(</span><span class="n">output</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="s">&quot;UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'>                  <span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>                  <span class="err">    </span><span class="kd">protected</span> <span class="kt">void</span> <span class="n">startRecorder</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="err">        </span><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">recorder</span><span class="o">);</span>
+</span><span class='line'>                  <span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>                  <span class="err">    </span><span class="nd">@Before</span>
+</span><span class='line'>                  <span class="err">    </span><span class="kd">public</span> <span class="kt">void</span> <span class="n">recorderSetUp</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">UnsupportedEncodingException</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="err">        </span><span class="n">setUpRecorder</span><span class="o">();</span>
+</span><span class='line'>                  <span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>                  <span class="o">}</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This looks like a simple refactor, but my tests are now much cleaner. More important, if I need to make a change to the <code>OutputRecorder</code> class, it will propagate through all tests.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/06/02/refactoring-examples-duplicated-code/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/06/02/refactoring-examples-duplicated-code/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

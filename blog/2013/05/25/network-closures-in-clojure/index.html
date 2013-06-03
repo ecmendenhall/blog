@@ -1,0 +1,460 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Network closures in Clojure - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Network Closures in Clojure Clojure may be a new language, but Lisp has a long history.
+Translating Scheme and Common Lisp classics into Clojure is &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/05/25/network-closures-in-clojure/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Network Closures in Clojure</h1>
+	<div class="entry-content" itemprop="articleBody"><p>Clojure may be a new language, but Lisp has a long history.
+Translating Scheme and Common Lisp classics into Clojure is always an
+interesting exercise, and often illuminates the differences and
+comparative advantages of various Lisp-y languages. (For more
+Lisp-to-Clojure resources see <a href="http://juliangamble.com/blog/2012/07/13/amazing-lisp-books-living-again-in-clojure/">this
+list</a>.
+Or, if you&#8217;d like to try porting some Scheme, consider <a href="https://github.com/ecmendenhall/sicpclojure">helping
+translate SICP</a>).</p>
+
+<p>This weekend, I spent some time with Paul Graham&#8217;s classic <a href="http://www.paulgraham.com/onlisp.html"><em>On
+Lisp</em></a>.
+In Chapter 6, Graham shows how to use
+<a href="https://en.wikipedia.org/wiki/Closure_(computer_science)">closures</a>
+to model nodes in a network, representing a 20 questions game as a self-traversing binary
+tree. Here&#8217;s his original code, and my best attempts at Clojure translations.</p>
+
+<p>The most obvious model for a set of connected nodes is a nested data
+structure, like a map of maps. In Common Lisp, Graham uses a mutable
+hashmap of <a href="http://www.lispworks.com/documentation/HyperSpec/Body/m_defstr.htm">structured
+types</a>,
+each pointing to their neighbors in the network:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='common-lisp'><span class='line'><span class="p">(</span><span class="nb">defstruct</span> <span class="nv">node</span> <span class="nv">contents</span> <span class="nv">yes</span> <span class="nv">no</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nb">defvar</span> <span class="vg">*nodes*</span> <span class="p">(</span><span class="nb">make-hash-table</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">defnode</span> <span class="p">(</span><span class="nv">name</span> <span class="nv">conts</span> <span class="k">&amp;optional</span> <span class="nv">yes</span> <span class="nv">no</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">name</span> <span class="vg">*nodes*</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">make-node</span> <span class="ss">:contents</span> <span class="nv">conts</span>
+</span><span class='line'>    <span class="ss">:yes</span> <span class="nv">yes</span>
+</span><span class='line'>    <span class="ss">:no</span> <span class="nv">no</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A simple map seems like a sufficient replacement in Clojure. A single
+node looks like this:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">{</span><span class="ss">:people</span> <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is the person a man?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:male</span>, <span class="ss">:no</span> <span class="ss">:female</span><span class="p">}}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And the full tree looks like the following. Each node&#8217;s <code>:yes</code> or <code>:no</code> keyword
+points to the next node in the tree:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">{</span><span class="ss">:penny</span> <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Abraham Lincoln.&quot;</span>, <span class="ss">:yes</span> <span class="nv">nil</span>, <span class="ss">:no</span> <span class="nv">nil</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:coin</span>  <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is the coin a penny?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:penny</span>, <span class="ss">:no</span> <span class="ss">:other-coin</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:USA</span>   <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is he on a coin?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:coin</span>, <span class="ss">:no</span> <span class="ss">:no-coin</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:dead</span>  <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Was he from the USA?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:USA</span>, <span class="ss">:no</span> <span class="ss">:elsewhere</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:male</span>  <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is he living?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:live</span>, <span class="ss">:no</span> <span class="ss">:dead</span><span class="p">}</span>,
+</span><span class='line'> <span class="ss">:people</span> <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is the person a man?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:male</span>, <span class="ss">:no</span> <span class="ss">:female</span><span class="p">}}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here&#8217;s my first draft for defining nodes in Clojure. Since the Common
+Lisp version used a mutable variable, I used a Clojure atom to store
+network state:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">nodes</span> <span class="p">(</span><span class="nf">atom</span> <span class="p">{}))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">defnode</span> <span class="p">[</span><span class="nb">name </span><span class="nv">contents</span> <span class="o">&amp;</span> <span class="p">[</span><span class="nv">yes</span> <span class="nv">no</span><span class="p">]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">swap!</span> <span class="nv">nodes</span> <span class="nb">assoc name </span><span class="p">{</span><span class="ss">:contents</span> <span class="nv">contents</span> <span class="ss">:yes</span> <span class="nv">yes</span> <span class="ss">:no</span> <span class="nv">no</span><span class="p">}))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-nodes</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:people</span> <span class="s">&quot;Is the person a man?&quot;</span> <span class="ss">:male</span> <span class="ss">:female</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:male</span> <span class="s">&quot;Is he living?&quot;</span> <span class="ss">:live</span> <span class="ss">:dead</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:dead</span> <span class="s">&quot;Was he from the USA?&quot;</span> <span class="ss">:USA</span> <span class="ss">:elsewhere</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:USA</span> <span class="s">&quot;Is he on a coin?&quot;</span> <span class="ss">:coin</span> <span class="ss">:no-coin</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:coin</span> <span class="s">&quot;Is the coin a penny?&quot;</span> <span class="ss">:penny</span> <span class="ss">:other-coin</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:penny</span> <span class="s">&quot;Abraham Lincoln.&quot;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Traversing the network is simple: get a node, print the associated
+question, prompt for input, get the next node, and repeat. Here&#8217;s the original Common Lisp:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='common-lisp'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">run-node</span> <span class="p">(</span><span class="nv">name</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">n</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">name</span> <span class="vg">*nodes*</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nv">node-yes</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>           <span class="p">(</span><span class="nb">format</span> <span class="no">t</span> <span class="s">&quot;~A~%&gt;&gt; &quot;</span> <span class="p">(</span><span class="nv">node-contents</span> <span class="nv">n</span><span class="p">))</span>
+</span><span class='line'>           <span class="p">(</span><span class="nb">case</span> <span class="p">(</span><span class="nb">read</span><span class="p">)</span>
+</span><span class='line'>             <span class="p">(</span><span class="nv">yes</span> <span class="p">(</span><span class="nv">run-node</span> <span class="p">(</span><span class="nv">node-yes</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>             <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nv">run-node</span> <span class="p">(</span><span class="nv">node-no</span> <span class="nv">n</span><span class="p">)))))</span>
+</span><span class='line'>          <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nv">node-contents</span> <span class="nv">n</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And here&#8217;s an equivalent in Clojure:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">run-node</span> <span class="p">[</span><span class="nv">name</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nb">node </span>    <span class="p">(</span><span class="err">@</span><span class="nv">nodes</span> <span class="nv">name</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">contents</span> <span class="p">(</span><span class="nb">node </span><span class="ss">:contents</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">yes</span>      <span class="p">(</span><span class="nb">node </span><span class="ss">:yes</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">no</span>       <span class="p">(</span><span class="nb">node </span><span class="ss">:no</span><span class="p">)]</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="nv">yes</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">do</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="s">&quot;yes&quot;</span> <span class="p">(</span><span class="nf">read-line</span><span class="p">))</span>
+</span><span class='line'>           <span class="p">(</span><span class="nf">run-node</span> <span class="nv">yes</span><span class="p">)</span>
+</span><span class='line'>           <span class="p">(</span><span class="nf">run-node</span> <span class="nv">no</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Of course, there&#8217;s no reason to bother swapping and dereferencing an
+atom as long as the tree won&#8217;t need to change at runtime. This
+immutable version works just as well:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">defnode</span> <span class="p">[</span><span class="nv">nodes</span> <span class="nb">name </span><span class="nv">contents</span> <span class="o">&amp;</span> <span class="p">[</span><span class="nv">yes</span> <span class="nv">no</span><span class="p">]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">assoc </span><span class="nv">nodes</span> <span class="nb">name </span><span class="p">{</span><span class="ss">:contents</span> <span class="nv">contents</span> <span class="ss">:yes</span> <span class="nv">yes</span> <span class="ss">:no</span> <span class="nv">no</span><span class="p">}))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-nodes</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">-&gt; </span><span class="p">{}</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:people</span> <span class="s">&quot;Is the person a man?&quot;</span> <span class="ss">:male</span> <span class="ss">:female</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:male</span> <span class="s">&quot;Is he living?&quot;</span> <span class="ss">:live</span> <span class="ss">:dead</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:dead</span> <span class="s">&quot;Was he from the USA?&quot;</span> <span class="ss">:USA</span> <span class="ss">:elsewhere</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:USA</span> <span class="s">&quot;Is he on a coin?&quot;</span> <span class="ss">:coin</span> <span class="ss">:no-coin</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:coin</span> <span class="s">&quot;Is the coin a penny?&quot;</span> <span class="ss">:penny</span> <span class="ss">:other-coin</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:penny</span> <span class="s">&quot;Abraham Lincoln.&quot;</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">nodes</span> <span class="p">(</span><span class="nf">make-nodes</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">run-node</span> <span class="p">[</span><span class="nv">nodes</span> <span class="nv">name</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nb">node </span>    <span class="p">(</span><span class="nf">nodes</span> <span class="nv">name</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">contents</span> <span class="p">(</span><span class="nb">node </span><span class="ss">:contents</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">yes</span>      <span class="p">(</span><span class="nb">node </span><span class="ss">:yes</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">no</span>       <span class="p">(</span><span class="nb">node </span><span class="ss">:no</span><span class="p">)]</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="nv">yes</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">do</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="s">&quot;yes&quot;</span> <span class="p">(</span><span class="nf">read-line</span><span class="p">))</span>
+</span><span class='line'>           <span class="p">(</span><span class="nf">run-node</span> <span class="nv">nodes</span> <span class="nv">yes</span><span class="p">)</span>
+</span><span class='line'>           <span class="p">(</span><span class="nf">run-node</span> <span class="nv">nodes</span> <span class="nv">no</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Using a closure rolls the data structure and traversal code into one,
+by associating the <code>yes</code> and <code>no</code> fields with anonymous functions that
+handle the same logic as <code>run-node</code>. Here&#8217;s Graham&#8217;s CL version:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='common-lisp'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">defnode</span> <span class="p">(</span><span class="nv">name</span> <span class="nv">conts</span> <span class="k">&amp;optional</span> <span class="nv">yes</span> <span class="nv">no</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">name</span> <span class="vg">*nodes*</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">if</span> <span class="nv">yes</span>
+</span><span class='line'>          <span class="err">#’</span><span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
+</span><span class='line'>              <span class="p">(</span><span class="nb">format</span> <span class="no">t</span> <span class="s">&quot;~A~%&gt;&gt; &quot;</span> <span class="nv">conts</span><span class="p">)</span>
+</span><span class='line'>              <span class="p">(</span><span class="nb">case</span> <span class="p">(</span><span class="nb">read</span><span class="p">)</span>
+</span><span class='line'>                <span class="p">(</span><span class="nv">yes</span> <span class="p">(</span><span class="nb">funcall</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">yes</span> <span class="vg">*nodes*</span><span class="p">)))</span>
+</span><span class='line'>                <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nb">funcall</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">no</span> <span class="vg">*nodes*</span><span class="p">)))))</span>
+</span><span class='line'>          <span class="err">#’</span><span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="nv">conts</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And here&#8217;s mine in Clojure. The double-parens around <code>(@nodes yes)</code>
+and <code>(@nodes no)</code> call the anonymous function, instead of just
+returning it.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">nodes</span> <span class="p">(</span><span class="nf">atom</span> <span class="p">{}))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">defclosure</span> <span class="p">[</span><span class="nb">name </span><span class="nv">contents</span> <span class="o">&amp;</span> <span class="p">[</span><span class="nv">yes</span> <span class="nv">no</span><span class="p">]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">swap!</span> <span class="nv">nodes</span> <span class="nb">assoc </span><span class="nv">name</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="nv">yes</span>
+</span><span class='line'>           <span class="p">(</span><span class="k">fn </span><span class="p">[]</span>
+</span><span class='line'>             <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)</span>
+</span><span class='line'>             <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="s">&quot;yes&quot;</span> <span class="p">(</span><span class="nf">read-line</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">((</span><span class="err">@</span><span class="nv">nodes</span> <span class="nv">yes</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">((</span><span class="err">@</span><span class="nv">nodes</span> <span class="nv">no</span><span class="p">))))</span>
+</span><span class='line'>           <span class="p">(</span><span class="k">fn </span><span class="p">[]</span>
+</span><span class='line'>             <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-nodes</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:people</span> <span class="s">&quot;Is the person a man?&quot;</span> <span class="ss">:male</span> <span class="ss">:female</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:male</span> <span class="s">&quot;Is he living?&quot;</span> <span class="ss">:live</span> <span class="ss">:dead</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:dead</span> <span class="s">&quot;Was he from the USA?&quot;</span> <span class="ss">:USA</span> <span class="ss">:elsewhere</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:USA</span> <span class="s">&quot;Is he on a coin?&quot;</span> <span class="ss">:coin</span> <span class="ss">:no-coin</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:coin</span> <span class="s">&quot;Is the coin a penny?&quot;</span> <span class="ss">:penny</span> <span class="ss">:other-coin</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:penny</span> <span class="s">&quot;Abraham Lincoln.&quot;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, traversing the tree is as simple as calling:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">((</span><span class="nf">nodes</span> <span class="ss">:people</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And watching the tree traverse itself. You can find my code from this
+post <a href="https://gist.github.com/ecmendenhall/5646594">here</a>. For more on closures in Lisp,
+check out the rest of <a href="http://lib.store.yahoo.net/lib/paulgraham/onlisp.pdf">Chapter 6</a>.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/05/25/network-closures-in-clojure/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/05/25/network-closures-in-clojure/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

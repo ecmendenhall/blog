@@ -1,0 +1,796 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: TDD | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/tdd/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-06-03T15:45:45-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[The joy of exceptions]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/19/the-joy-of-exceptions/"/>
+    <updated>2013-05-19T21:31:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/05/19/the-joy-of-exceptions</id>
+    <content type="html"><![CDATA[<p>One more recipe for the TDD cookbook before I move on to more
+interesting things. You might have noticed a new <code>GameOverException</code>
+and a try-catch block in the final example of my last post.</p>
+
+<p>Before adding a game over exception, methods that checked for final
+game states directly called <code>System.exit()</code>. Testing this proved
+difficult, and I ended up importing a <a href="http://stefanbirkner.github.io/system-rules/">third-party library</a> of extra
+JUnit rules. This week, I refactored them to throw a custom exception:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>TerminalView.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TerminalView</span> <span class="kd">implements</span> <span class="n">View</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">public</span> <span class="kt">void</span> <span class="n">endGame</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">throw</span> <span class="k">new</span> <span class="nf">GameOverException</span><span class="o">(</span><span class="s">&quot;Game over.&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>This exception will bubble up until it's caught in <code>Main</code>, which calls
+<code>System.exit()</code> on behalf of any method that throws a
+<code>GameOverException</code>.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>Main.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">View</span> <span class="n">view</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TerminalView</span><span class="o">();</span>
+</span><span class='line'>        <span class="n">GameController</span> <span class="n">controller</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GameController</span><span class="o">(</span><span class="n">view</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
+</span><span class='line'>        <span class="n">controller</span><span class="o">.</span><span class="na">setUp</span><span class="o">();</span>
+</span><span class='line'>        <span class="n">controller</span><span class="o">.</span><span class="na">startGame</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">GameOverException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>This is not only a <a href="http://stackoverflow.com/questions/6171265/best-way-to-exit-a-program-when-i-want-an-exception-to-be-thrown">better practice</a>,
+but also provides a much better way to test methods that might detect
+a completed game—just add a try/catch block to the tests!</p>
+
+<p>Exceptions have come in handy elsewhere in my tests, too. Once the
+controller starts a game, there's nothing to break the back-and-forth
+game loop but a win, draw, or error. Figuring out how to test game
+states without getting stuck in an infinite loop or loading up entire
+games was a challenge. "If only there
+were some special syntax for breaking normal control flow in special
+situations," I wondered to myself more times than I'd like to admit.
+Well, duh—use exceptions!  My mock view objects throw a <code>NoSuchElementException</code> when their input
+queue runs empty. Catching this exception breaks the normal game flow
+and allows me to access game state as soon as the fake input I'm
+interested in has been sent to the controller. Here's an example:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>GameControllerTest.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Test</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">controllerShouldPassErrorMessageToViewOnInvalidInput</span><span class="o">()</span><span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;invalid phrase&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputRecorder</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">playRound</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchElementException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">outputRecorder</span><span class="o">.</span><span class="na">discardFirstNStrings</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;That&#39;s not a valid board location.&quot;</span><span class="o">,</span> <span class="n">output</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">clearInput</span><span class="o">();</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Normally, <code>Controller.playRound()</code> will continue querying players for
+moves until the game ends. But once this test catches the empty queue
+exception, it tests against the expected output, which should show an
+error message. Exceptions have proved extremely handy so far—as long as I remember
+that they're in my control flow toolbox, too.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Capturing console output with a deque]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/19/capturing-console-output-with-a-deque/"/>
+    <updated>2013-05-19T14:43:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/05/19/capturing-console-output-with-a-deque</id>
+    <content type="html"><![CDATA[<p>Redirecting stdout to a new <code>PrintStream</code> is an <a href="http://ecmendenhall.github.io/blog/blog/2013/05/05/testing-console-output-with-junit-and-infinitest/">easy way</a>
+to test simple console output in Java. But as my Tic-Tac-Toe game has
+grown more complex, the tests I wrote using this pattern have started
+to stink. There's a lot of duplicated code (create the stream,
+redirect, tear down with each test), each test uses a hand-constructed
+string filled with finicky newline characters, and tests are prone to
+break when unrelated view components change the way they print to the
+screen. Inspired by my <a href="http://ecmendenhall.github.io/blog/blog/2013/05/15/mocking-user-input-with-a-queue/">input
+queue</a>,
+I created an <code>OutputRecorder</code> class that extends <code>PrintStream</code> and
+captures output string by string for later playback:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>OutputRecorder.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">OutputRecorder</span> <span class="kd">extends</span> <span class="n">PrintStream</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">private</span> <span class="n">Deque</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">String</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">outputStack</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">OutputRecorder</span><span class="o">(</span><span class="n">OutputStream</span> <span class="n">outputStream</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">b</span><span class="o">,</span>
+</span><span class='line'>  <span class="n">String</span> <span class="n">s</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">UnsupportedEncodingException</span> <span class="o">{</span>
+</span><span class='line'>      <span class="kd">super</span><span class="o">(</span><span class="n">outputStream</span><span class="o">,</span> <span class="n">b</span><span class="o">,</span> <span class="n">s</span><span class="o">);</span>
+</span><span class='line'>      <span class="n">outputStack</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedList</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">String</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">catchOutput</span><span class="o">(</span><span class="n">String</span> <span class="n">output</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">outputStack</span><span class="o">.</span><span class="na">addFirst</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">String</span> <span class="nf">popLastOutput</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">removeFirst</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">String</span> <span class="nf">popFirstOutput</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">removeLast</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">String</span> <span class="nf">peekLastOutput</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">peekFirst</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">String</span> <span class="nf">peekFirstOutput</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">peekLast</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">discardLastNStrings</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">popLastOutput</span><span class="o">();</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>   <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">discardFirstNStrings</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">popFirstOutput</span><span class="o">();</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>   <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">replayAllForwards</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">popFirstOutput</span><span class="o">();</span>
+</span><span class='line'>        <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class='line'>        <span class="k">while</span> <span class="o">(</span><span class="n">output</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Element&quot;</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">&quot;:&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span><span class="o">;</span>
+</span><span class='line'>            <span class="n">output</span> <span class="o">=</span> <span class="n">popFirstOutput</span><span class="o">();</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>   <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">replayAllBackwards</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">popLastOutput</span><span class="o">();</span>
+</span><span class='line'>        <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+</span><span class='line'>        <span class="k">while</span> <span class="o">(</span><span class="n">output</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Element&quot;</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">&quot;:&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span><span class="o">;</span>
+</span><span class='line'>            <span class="n">output</span> <span class="o">=</span> <span class="n">popLastOutput</span><span class="o">();</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>   <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="nd">@Override</span>
+</span><span class='line'>   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">println</span><span class="o">(</span><span class="n">String</span> <span class="n">output</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">catchOutput</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
+</span><span class='line'>   <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="nd">@Override</span>
+</span><span class='line'>   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">print</span><span class="o">(</span><span class="n">String</span> <span class="n">output</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">catchOutput</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
+</span><span class='line'>   <span class="o">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+Since the recorder stores strings in a
+<a href="https://en.wikipedia.org/wiki/Deque">deque</a>,
+it's easy to replay output in forward or reverse order. Now a test
+like this:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>                            <span class="o">&lt;</span><span class="n">br</span><span class="o">/&gt;</span>
+</span><span class='line'><span class="nd">@Test</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">controllerShouldPassErrorMessageToViewOnInvalidMove</span><span class="o">()</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">view</span><span class="o">.</span><span class="na">pushInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">pushInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">exit</span><span class="o">.</span><span class="na">expectSystemExitWithStatus</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
+</span><span class='line'><span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputStream</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">controller</span><span class="o">.</span><span class="na">playRound</span><span class="o">();</span>
+</span><span class='line'><span class="n">String</span> <span class="n">expected</span> <span class="o">=</span> <span class="n">yourMove</span> <span class="o">+</span> <span class="s">&quot;\n&quot;</span> <span class="o">+</span> <span class="n">xInCenter</span><span class="o">.</span><span class="na">toString</span><span class="o">()</span> <span class="o">+</span> <span class="s">&quot;\n&quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">assertEquals</span><span class="o">(</span><span class="n">expected</span><span class="o">,</span>
+</span><span class='line'><span class="n">output</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">clearInput</span><span class="o">();</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Become a little friendlier...</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Test</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">controllerShouldPassErrorMessageToViewOnInvalidMove</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputRecorder</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">playRound</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchElementException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">outputRecorder</span><span class="o">.</span><span class="na">discardFirstNStrings</span><span class="o">(</span><span class="mi">4</span><span class="o">);</span>
+</span><span class='line'>      <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;Square is already full.&quot;</span><span class="o">,</span> <span class="n">output</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">clearInput</span><span class="o">();</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>The utility might not be immediately obvious, but capturing output
+string by string has already put an end to tracking down small
+differences between expected and actual output that come from an extra
+space or misplaced newline.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Mocking User Input with a Queue]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/15/mocking-user-input-with-a-queue/"/>
+    <updated>2013-05-15T14:53:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/05/15/mocking-user-input-with-a-queue</id>
+    <content type="html"><![CDATA[<p>Over the course of my Tic Tac Toe project, I've needed to test against
+user input several times. As a newcomer to <a href="http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern/">mock object
+patterns</a>,
+coming up with good solutions to these testing dilemmas has been one
+of my biggest challenges.</p>
+
+<p>There are plenty of <a href="http://stackoverflow.com/questions/3833840/mock-object-libraries-in-java">heavy-duty
+tools</a>
+for mocks and fakes in Java, but I'd like to stick with my own
+solutions as long as possible, since writing them myself has been
+enlightening.</p>
+
+<p>Here's a solution I came up with today to simulate full Tic Tac Toe
+games with two human players: a mock View object that returns fake input
+from a queue. By pushing mock input onto the queue during test setup,
+I can configure games in advance and replay them later. Here's the
+very simple mock View object:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>MockTerminalView.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kn">import</span> <span class="nn">java.util.NoSuchElementException</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">java.util.Queue</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">java.util.concurrent.LinkedBlockingQueue</span><span class="o">;&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MockTerminalView</span> <span class="kd">extends</span> <span class="n">TerminalView</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">private</span> <span class="n">Queue</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">String</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="n">inputQ</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedBlockingQueue</span><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="n">String</span><span class="o">&amp;</span><span class="n">gt</span><span class="o">;();</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">enqueueInput</span><span class="o">(</span><span class="n">String</span> <span class="n">fakeInput</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">inputQ</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">fakeInput</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">clearInput</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">inputQ</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="n">String</span> <span class="nf">getInput</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">inputQ</span><span class="o">.</span><span class="na">remove</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchElementException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="s">&quot;&quot;</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And here's an example test that plays through an entire game and exits
+when Player 2 wins (comments added for some context):</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>GameControllerTest.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Test</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">gameShouldEndOnWin</span><span class="o">()</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">exit</span><span class="o">.</span><span class="na">expectSystemExit</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Select two human players</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;h&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;h&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">controller</span><span class="o">.</span><span class="na">setUp</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span> <span class="c1">// Player 1&#39;s first move</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;top left&quot;</span><span class="o">);</span>      <span class="c1">// Player 2&#39;s first move</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;top right&quot;</span><span class="o">);</span>     <span class="c1">// Player 1 goes for the diagonal...</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;middle left&quot;</span><span class="o">);</span>   <span class="c1">// Player 2 goes for the column...</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;lower right&quot;</span><span class="o">);</span>   <span class="c1">// Player 1 chokes!</span>
+</span><span class='line'><span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;lower left&quot;</span><span class="o">);</span>    <span class="c1">// Player 2 wins! What an upset! </span>
+</span><span class='line'>
+</span><span class='line'><span class="n">controller</span><span class="o">.</span><span class="na">startGame</span><span class="o">();</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>I'm sure I'll discover the shortcomings of this approach sooner or
+later, but for now it's a pretty good way to test events inside
+the main game loop.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[A mock object antipattern]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern/"/>
+    <updated>2013-05-12T23:05:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern</id>
+    <content type="html"><![CDATA[<p>For the most part, test-driven development has been a breeze so far.
+In addition to
+<a href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/">enforcing</a>
+good habits, watching red tests turn green provides an extremely satisfying
+dopamine kick every few minutes, all day. Testing simple objects and actions in my Tic Tac Toe game—things
+like the board, player behavior, and the Minimax algorithm—was
+straightforward. But testing the view and controller classes that glue
+them together required a little more thought.</p>
+
+<p>Writing tests required interrupting the game loop to check on the behavior of the view and
+controller objects. To start, I added optional flag arguments to many
+methods that would break the game loop so I could make assertions
+about game state. I quickly came to realize that this was a bad
+solution, and I cringed the next day when a chapter of <em>Clean Code</em>
+described boolean flags as one of the most rancid code smells around.</p>
+
+<p>I came across the concept of <a href="http://martinfowler.com/articles/mocksArentStubs.html">test
+ doubles</a>
+and mock objects, and got the idea right away: create fake objects
+ with the same methods as real ones, override their behavior, and use
+ them as substitutes for their more complicated counterparts in unit tests.</p>
+
+<p>Or at least, I  <em>thought</em> I got the idea. With my tests passing and my game working, I felt pretty good about my
+project. But wiring up a code coverage tool showed that my view and
+controller classes were only half covered by my tests. What went
+wrong? As it turned out, I was testing my mocks! Here's the pattern I was following:</p>
+
+<ul>
+<li>Create a subclass of the object you want to test.</li>
+<li>Override or stub out methods to return predetermined output.</li>
+<li>Write assertions against the behavior of the mock objects.</li>
+</ul>
+
+
+<p>This meant, of course, that I was never actually testing the real
+objects, but only the fake ones, as revealed by the code coverage data. Worse, all the tests
+that I thought showed my code was working were essentialy tautologies.
+This probably appears obvious to experienced TDD practitioners, but it
+was surprisingly easy to fall into this antipattern. For the record,
+here's how you should really use a mock object:</p>
+
+<ul>
+<li>Create mocks of the objects that <em>interact with</em> the one you want to
+test.</li>
+<li>Override or stub out methods to return predetermined output.</li>
+<li>Write assertions against the behavior of the <em>real</em> object
+interacting with the test doubles.</li>
+</ul>
+
+
+<p>In retrospect, this makes perfect sense. But I'll be going over all my
+tests with a careful eye tomorrow. Sometimes the green light isn't
+what it seems.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Enforcing Bottom-up Design]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/"/>
+    <updated>2013-05-10T00:21:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design</id>
+    <content type="html"><![CDATA[<blockquote><p>"Experienced Lisp programmers divide up their programs differently.
+As well as top-down design, they follow a principle which could be
+called bottom-up design–changing the language to suit the problem.
+In Lisp, you don't just write your program down toward the language,
+you also build the language up toward your program. As you're writing
+a program you may think 'I wish Lisp had such-and-such an operator.'
+So you go and write it. Afterward you realize that using the new
+operator would simplify the design of another part of the program, and
+so on. Language and program evolve together. Like the border between
+two warring states, the boundary between language and program is drawn
+and redrawn, until eventually it comes to rest along the mountains and
+rivers, the natural frontiers of your problem. In the end your program
+will look as if the language had been designed for it. And when
+language and program fit one another well, you end up with code which
+is clear, small, and efficient."</p></blockquote>
+
+<p>–<a href="http://www.paulgraham.com/progbot.html">Paul Graham</a>, from the
+introduction to <a href="http://www.paulgraham.com/onlisptext.html"><em>On Lisp</em></a></p>
+
+<p>Lisp programmers have a reputation (earned or otherwise) for considering their language of
+  choice <a href="http://xkcd.com/224/">uniquely powerful</a>, capable of
+  extending the <a href="https://tractatus-online.appspot.com/Tractatus/Ajaxs/tlpA.html#56">limits of the
+  world</a>
+  with its special
+  <a href="http://stackoverflow.com/questions/267862/what-makes-lisp-macros-so-special">expressiveness</a>.
+  I find writing Lisp a joy, and for a long time I bought into the
+  mythos. It still <em>feels</em> unique. But I've come to learn that good bottom-up design is possible in any language.</p>
+
+<p>  For the past two weeks, I've been working in Java, a
+  language many programmers consider
+  <a href="http://www.paulgraham.com/avg.html">Blub</a> incarnate. (You don't have to take <a href="http://hammerprinciple.com/therighttool/items/java/clojure">my word for
+  it</a>).
+  But even without clever macros and first-class functions, following
+  the rules of <a href="http://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530">test-driven
+  development</a>
+  and the principles of <a href="http://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882">clean
+  code</a>
+  feels a lot like the process of natural, iterative evolution Paul
+  Graham describes.</p>
+
+<p>  A good language can encourage bottom-up, evolutionary design, and
+  this is one of Lisp's great strengths. But
+  writing good tests—and writing them first—can go a step further and
+  actually enforce it.</p>
+
+<p> Writing tests first requires describing abstractions before
+ they exist—writing the program you want to read from the very start. Using meaningful names transforms the language you have
+ into the one you want. Revising after every passing test makes
+ simplifying design second nature. And building up a program test by
+ tiny test is an evolutionary process that generates clean, efficient
+ code, whether you're writing Common Lisp or COBOL.</p>
+
+<p>Here's a function that returns a given game board's winner from my
+  first crack at Tic Tac Toe in Clojure:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>tictactoe.core/get-win </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">get-win</span>
+</span><span class='line'>  <span class="s">&quot;Takes a 3x3 game board. Returns a vector</span>
+</span><span class='line'><span class="s">  [winner start middle  end] of the winning player,</span>
+</span><span class='line'><span class="s">  and (row, col) grid coordinates of the three-in-a-row elements.&quot;</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">board</span><span class="p">]</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span><span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">wins</span>           <span class="p">(</span><span class="nf">check-for-wins</span> <span class="nv">board</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">winner</span>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="p">(</span><span class="nb">first </span><span class="p">(</span><span class="nb">remove nil? </span><span class="nv">wins</span><span class="p">)))</span> <span class="mi">1</span> <span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">[</span><span class="nv">row</span> <span class="nv">col</span> <span class="nv">diag</span><span class="p">]</span> <span class="p">(</span><span class="nf">unflatten</span> <span class="nv">wins</span><span class="p">)]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">cond </span><span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">row</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">0</span><span class="p">]</span>
+</span><span class='line'>                                      <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">1</span><span class="p">]</span>
+</span><span class='line'>                                      <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">2</span><span class="p">]]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">col</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
+</span><span class='line'>                                      <span class="p">[</span><span class="mi">1</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
+</span><span class='line'>                                      <span class="p">[</span><span class="mi">2</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">diag</span><span class="p">)</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">diag</span><span class="p">))</span>
+</span><span class='line'>                                <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">2</span><span class="p">]]</span>
+</span><span class='line'>                                <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">2</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">0</span><span class="p">]]))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And here's the equivalent I wrote in Java:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>Board.winnerIs( ) </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">winnerIs</span><span class="o">()</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="k">if</span> <span class="o">(</span><span class="n">hasWin</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nf">getWinningRow</span><span class="o">().</span><span class="na">winner</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">_</span><span class="o">;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Which excerpt reads more like a domain-specific language? Which
+  would you rather read a year from now? I don't doubt that I could
+  clean up the Clojure into something just as simple and readable. But
+merely using an elegant language is no guarantee of elegant design.</p>
+]]></content>
+  </entry>
+  
+</feed>

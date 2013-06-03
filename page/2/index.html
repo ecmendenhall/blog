@@ -1,0 +1,1175 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="May 12th, 2013 Clojure, Incanter Estimating Pi With Incanter and Monte Carlo Methods Of all the things John von
+Neumann
+invented (including the &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/page/2/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner">
+<div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-12T14:26:00-05:00" data-updated="true" itemprop="datePublished">May 12<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/clojure/'>Clojure</a>, <a class='category' href='/blog/categories/incanter/'>Incanter</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/12/estimating-pi-with-incanter-monte-carlo-methods/" itemprop="url">Estimating Pi With Incanter and Monte Carlo Methods</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Of all the things <a href="https://en.wikipedia.org/wiki/John_von_neumann#Career_and_abilities">John von
+Neumann</a>
+invented (including the <a href="https://en.wikipedia.org/wiki/Minimax_theorem#Minimax_theorem">Minimax
+theorem</a>
+behind my Tic Tac Toe AI, and the <a href="https://en.wikipedia.org/wiki/Von_Neumann_architecture">architecture</a> of the computer it runs
+on), Monte Carlo simulation is one of my favorites. Unlike some of his
+other
+<a href="https://en.wikipedia.org/wiki/Ergodic_theory#Mean_ergodic_theorem">breakthroughs</a>,
+the idea behind Monte Carlo simulation is simple: use probability
+and computation to estimate solutions to hard problems.</p>
+
+<p>Think of the craziest integral you&#8217;ve ever solved, and the sheaves of
+notebook paper spent working out the area under that ridiculous curve.
+The Monte Carlo approach is a clever hack: tack a graph of the
+function to a dartboard, and start throwing darts at
+random. As more and more darts hit the board, the ratio of darts that
+land under the curve to total darts thrown will approximate the
+proportion of the dartboard under the curve. Multiply this ratio by
+the area of the dartboard, and you&#8217;ve computed the integral. As a student whose
+favorite fourth grade problem solving strategy was &#8220;guess and check,&#8221;
+and whose favorite tenth grade problem solving strategy was &#8220;plug it
+into your TI-83,&#8221; the idea has a lot of appeal.</p>
+
+<p>Wikipedia has a great example of <a href="https://en.wikipedia.org/wiki/Monte_carlo_simulation#Introduction">estimating the value of
+Pi</a>
+with a Monte Carlo simulation. I wrote a similar simulation <a href="https://gist.github.com/ecmendenhall/5054266">in Python</a> a couple
+months ago, but wanted to check out Clojure&#8217;s <a href="http://incanter.org/">Incanter</a> library for
+statistical computing and try my hand at a TDD solution.</p>
+
+<p>To start, you&#8217;ll want the <a href="https://github.com/slagyr/speclj">speclj</a>
+test framework for Clojure, which uses Rspec-like syntax and provides
+a helpful autorunner. Create a new Leiningen project and add it as a dev
+dependency and plugin in <code>project.clj</code>. Make sure you set up your spec
+directory as <a href="https://github.com/slagyr/speclj">described</a> in the
+documentation. You&#8217;ll also want to add Incanter to your project
+dependencies. Here&#8217;s my final <code>project.clj</code>:</p>
+
+<figure class='code'><figcaption><span>project.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defproject </span><span class="nv">montecarlopi</span> <span class="s">&quot;0.1.0&quot;</span>
+</span><span class='line'>  <span class="ss">:dependencies</span> <span class="p">[[</span><span class="nv">org.clojure/clojure</span> <span class="s">&quot;1.5.0&quot;</span><span class="p">]</span>
+</span><span class='line'>                 <span class="p">[</span><span class="nv">incanter</span> <span class="s">&quot;1.5.0-SNAPSHOT&quot;</span><span class="p">]]</span>
+</span><span class='line'>  <span class="ss">:main</span> <span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="ss">:profiles</span> <span class="p">{</span><span class="ss">:dev</span> <span class="p">{</span><span class="ss">:dependencies</span> <span class="p">[[</span><span class="nv">speclj</span> <span class="s">&quot;2.5.0&quot;</span><span class="p">]]}}</span>
+</span><span class='line'>  <span class="ss">:plugins</span> <span class="p">[[</span><span class="nv">speclj</span> <span class="s">&quot;2.5.0&quot;</span><span class="p">]]</span>
+</span><span class='line'>  <span class="ss">:test-paths</span> <span class="p">[</span><span class="s">&quot;spec/&quot;</span><span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To start, we&#8217;ll need a way to tell whether a given point is inside the
+circle. Here&#8217;s a simple test:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">montecarlopi.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;in-circle?&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return true for points inside the circle.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nf">in-circle?</span> <span class="p">[</span><span class="mi">0</span> <span class="mf">0.1</span><span class="p">])))</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return false for points outside the circle.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should-not</span> <span class="p">(</span><span class="nf">in-circle?</span> <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.9</span><span class="p">]))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Fire up the testrunner with <code>lein spec -a</code>, and you&#8217;ll see an
+exception, since the function doesn&#8217;t exist. Time to add it to
+<code>core.clj</code>:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sq</span><span class="p">]]</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-circle?</span> <span class="p">[</span><span class="nv">point</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[[</span><span class="nv">x</span> <span class="nv">y</span><span class="p">]</span> <span class="nv">point</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt;= </span><span class="p">(</span><span class="nb">+ </span><span class="p">(</span><span class="nf">sq</span> <span class="nv">x</span><span class="p">)</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">sq</span> <span class="nv">y</span><span class="p">))</span>
+</span><span class='line'>            <span class="mf">1.0</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">true</span>
+</span><span class='line'>      <span class="nv">false</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>let</code> binding pulls x and y coordinates out of a vector
+representing a point. If x squared plus y squared are less
+than 1, the point is inside the circle. Save and watch the
+autorunner turn green.</p>
+
+<p>Next, we need a way to generate points at random, with x and y values
+between 0 and 1. Here&#8217;s a test:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;generate-random-point&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return a point with x and y values between 0 and 1.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">let </span><span class="p">[[</span><span class="nv">x</span> <span class="nv">y</span><span class="p">]</span> <span class="p">(</span><span class="nf">generate-random-point</span><span class="p">)]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&gt;= </span><span class="nv">x</span> <span class="mi">0</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">y</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&gt;= </span><span class="nv">y</span> <span class="mi">0</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And a dead-simple implementation (<code>clojure.core/rand</code> conveniently
+generates random floats between 0 and 1).:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">generate-random-point</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">[(</span><span class="nf">rand</span><span class="p">)</span> <span class="p">(</span><span class="nf">rand</span><span class="p">)])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We need a lot of random points, so we&#8217;d better add a function to
+generate them. Here&#8217;s a test and a function that passes:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;generate-random-points&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return the specified number of random points.&quot;</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="mi">100</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">generate-random-points</span> <span class="mi">100</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">generate-random-points</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">take </span><span class="nv">n</span> <span class="p">(</span><span class="nf">repeatedly</span> <span class="nv">generate-random-point</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once we&#8217;ve generated lots of points, we&#8217;ll want to know how many lie
+inside the circle. This test is a little more complicated, since it
+requires some mock points to test against:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;points-in-circle&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return only points inside the circle.&quot;</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">inside</span>  <span class="p">[[</span><span class="mf">0.0</span> <span class="mf">0.0</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.2</span> <span class="mf">0.3</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.1</span> <span class="mf">0.8</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.0</span> <span class="mf">1.0</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">1.0</span> <span class="mf">0.0</span><span class="p">]]</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="nv">outside</span> <span class="p">[[</span><span class="mf">1.0</span> <span class="mf">0.2</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.8</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.9</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.7</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.9</span> <span class="mf">0.9</span><span class="p">]]</span>
+</span><span class='line'>          <span class="nv">points</span>  <span class="p">(</span><span class="nb">concat </span><span class="nv">inside</span> <span class="nv">outside</span><span class="p">)]</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mi">5</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="nv">inside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should-not=</span> <span class="nv">outside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But a passing solution is as easy as using <code>in-circle?</code> as a filter:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">points-in-circle</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">filter </span><span class="nv">in-circle?</span> <span class="nv">points</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In order to plot the points, we&#8217;ll need to sort them into groups. A
+map should do the trick. Let&#8217;s also take this chance to
+pull <code>inside</code>, <code>outside</code>, and <code>points</code> out of the <code>let</code>
+binding and define them as vars so we can reuse them.
+Here&#8217;s the result after a quick refactor:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">inside</span>  <span class="p">[[</span><span class="mf">0.0</span> <span class="mf">0.0</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.2</span> <span class="mf">0.3</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.1</span> <span class="mf">0.8</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.0</span> <span class="mf">1.0</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">1.0</span> <span class="mf">0.0</span><span class="p">]])</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">outside</span> <span class="p">[[</span><span class="mf">1.0</span> <span class="mf">0.2</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.8</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.9</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.7</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.9</span> <span class="mf">0.9</span><span class="p">]])</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">points</span> <span class="p">(</span><span class="nb">concat </span><span class="nv">inside</span> <span class="nv">outside</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;points-in-circle&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return only points inside the circle.&quot;</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="mi">5</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="nv">inside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should-not=</span> <span class="nv">outside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;sort-points&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return a map of correctly sorted points.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="p">{</span><span class="ss">:inside</span>  <span class="nv">inside</span>
+</span><span class='line'>                <span class="ss">:outside</span> <span class="nv">outside</span><span class="p">}</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">sort-points</span> <span class="nv">points</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This code passes, but it&#8217;s not as clear as it could be:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sort-points</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:inside</span>  <span class="p">(</span><span class="nb">filter </span><span class="nv">in-circle?</span> <span class="nv">points</span><span class="p">)</span>
+</span><span class='line'>   <span class="ss">:outside</span> <span class="p">(</span><span class="nb">filter </span><span class="o">#</span><span class="p">(</span><span class="nb">not </span><span class="p">(</span><span class="nf">in-circle</span> <span class="nv">%</span><span class="p">))</span> <span class="nv">points</span><span class="p">)})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&#8217;d like to rename the inline function <code>outside-circle?</code>. So let&#8217;s add
+a test:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;outside-circle?&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return true for points outside the circle.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nf">outside-circle?</span> <span class="p">[</span><span class="mf">0.9</span> <span class="mf">0.7</span><span class="p">]))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Write the function:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">outside-circle?</span> <span class="p">[</span><span class="nv">point</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">not </span><span class="p">(</span><span class="nf">in-circle?</span> <span class="nv">point</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And refactor <code>sort-points</code> once speclj gives us the green light:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sort-points</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:inside</span>  <span class="p">(</span><span class="nb">filter </span><span class="nv">in-circle?</span> <span class="nv">points</span><span class="p">)</span>
+</span><span class='line'>   <span class="ss">:outside</span> <span class="p">(</span><span class="nb">filter </span><span class="nv">outside-circle?</span> <span class="nv">points</span><span class="p">)})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It shouldn&#8217;t be hard to convert sorted points into a ratio. Here&#8217;s a
+test and solution:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;point-ratio&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return the correct ratio of inside to outside points&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mf">0.5</span> <span class="p">(</span><span class="nf">point-ratio</span> <span class="nv">points</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Make sure you return a float instead of a rational:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">point-ratio</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">float </span><span class="p">(</span><span class="nb">/ </span><span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))</span>
+</span><span class='line'>            <span class="p">(</span><span class="nb">count </span><span class="nv">points</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And now we&#8217;re just a step away from estimating Pi. We&#8217;re considering a
+quarter circle inside a unit square. The area of the
+square is 1, and the quarter circle 1/4 * Pi. So
+multiplying by four gives us our estimate:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;estimate-pi&quot;</span>
+</span><span class='line'> <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return four times the ratio of inside to outside points.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mf">2.0</span> <span class="p">(</span><span class="nf">estimate-pi</span> <span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return something close to pi when given a lot of points.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">let </span> <span class="p">[</span><span class="nv">estimate</span> <span class="p">(</span><span class="nf">estimate-pi</span> <span class="p">(</span><span class="nf">generate-random-points</span> <span class="mi">70000</span><span class="p">))]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&gt; </span><span class="nv">estimate</span> <span class="mf">3.13</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&lt; </span><span class="nv">estimate</span> <span class="mf">3.15</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The second part of this test is a little tricky. Our estimate is
+probabilistic, but with enough points it should almost always generate
+an estimate within range. Passing the test is easy:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">estimate-pi</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">* </span><span class="mi">4</span> <span class="p">(</span><span class="nf">point-ratio</span> <span class="nv">points</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>All that&#8217;s left is to create an Incanter
+chart. We&#8217;ll start by plotting the circle with Incanter. First, we
+need to write a function. Here&#8217;s a test for points on 1 = x<sup>2</sup> + y<sup>2</sup>:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;circle&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should equal 1 when x is 0.&quot;</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="mf">1.0</span> <span class="p">(</span><span class="nf">circle</span> <span class="mi">0</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should equal 0 when x is 1.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mf">0.0</span> <span class="p">(</span><span class="nf">circle</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should equal 0.866 when x is 0.5&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="s">&quot;0.866&quot;</span> <span class="p">(</span><span class="nf">format</span> <span class="s">&quot;%.3f&quot;</span> <span class="p">(</span><span class="nf">circle</span> <span class="mf">0.5</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To write the function, make sure you refer <code>incanter.core/sqrt</code> to
+your namespace:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sqrt</span> <span class="nv">sq</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">circle</span> <span class="p">[</span><span class="nv">x</span><span class="p">]</span> <span class="p">(</span><span class="nf">sqrt</span> <span class="p">(</span><span class="nb">- </span><span class="mf">1.0</span> <span class="p">(</span><span class="nf">sq</span> <span class="nv">x</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At this point, writing tests gets a little hairy. The <code>JFreeChart</code>
+object on which Incanter plots are based doesn&#8217;t
+<a href="http://www.jfree.org/jfreechart/api/javadoc/index.html">offer much</a>
+in the way of public fields to test against. But we
+can at least check that the function returns a chart:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;draw-circle&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should be a JFreeChart object.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="s">&quot;class org.jfree.chart.JFreeChart&quot;</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">str </span><span class="p">(</span><span class="nf">.getClass</span> <span class="p">(</span><span class="nf">draw-circle</span><span class="p">))))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Refer <code>incanter.charts/function-plot</code> to plot the function:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sqrt</span> <span class="nv">sq</span> <span class="nv">view</span><span class="p">]]</span>
+</span><span class='line'>           <span class="p">[</span><span class="nv">incanter.charts</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">function-plot</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">draw-circle</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">function-plot</span> <span class="nv">circle</span> <span class="mi">0</span> <span class="mi">1</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Running <code>(view (draw-circle))</code> from the REPL should produce a chart
+like this:</p>
+
+<p><img src="/blog/images/circle-plot.png"></p>
+
+<p>The last step is to add the points and some annotations to the
+Incanter plot:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sqrt</span> <span class="nv">sq</span> <span class="nv">view</span><span class="p">]]</span>
+</span><span class='line'>           <span class="p">[</span><span class="nv">incanter.charts</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">function-plot</span>
+</span><span class='line'>                                    <span class="nv">add-points</span>
+</span><span class='line'>                                    <span class="nv">add-text</span>
+</span><span class='line'>                                    <span class="nv">set-x-label</span>
+</span><span class='line'>                                    <span class="nv">set-y-label</span>
+</span><span class='line'>                                    <span class="nv">set-y-range</span>
+</span><span class='line'>                                    <span class="nv">xy-plot</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">plot-points</span> <span class="p">[</span><span class="nv">chart</span> <span class="nv">points</span> <span class="nv">label</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">xs</span> <span class="p">(</span><span class="nb">map first </span> <span class="nv">points</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">ys</span> <span class="p">(</span><span class="nb">map second </span><span class="nv">points</span><span class="p">)]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">add-points</span> <span class="nv">chart</span> <span class="nv">xs</span> <span class="nv">ys</span> <span class="ss">:series-label</span> <span class="nv">label</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-plot</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">points</span> <span class="p">(</span><span class="nf">generate-random-points</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">sorted</span> <span class="p">(</span><span class="nf">sort-points</span> <span class="nv">points</span><span class="p">)]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">doto </span><span class="p">(</span><span class="nf">draw-circle</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">set-y-range</span> <span class="mf">-0.25</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">plot-points</span> <span class="p">(</span><span class="ss">:inside</span>  <span class="nv">sorted</span><span class="p">)</span> <span class="s">&quot;inside&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">plot-points</span> <span class="p">(</span><span class="ss">:outside</span> <span class="nv">sorted</span><span class="p">)</span> <span class="s">&quot;outside&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">set-x-label</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">set-y-label</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.10</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Total: &quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="nb">count </span><span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.05</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Inside: &quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="ss">:inside</span> <span class="nv">sorted</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.15</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Ratio: &quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="nf">point-ratio</span> <span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.20</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Pi: &quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="nf">format</span> <span class="s">&quot;%4f&quot;</span> <span class="p">(</span><span class="nf">estimate-pi</span> <span class="nv">points</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">view</span> <span class="ss">:width</span> <span class="mi">500</span> <span class="ss">:height</span> <span class="mi">600</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here&#8217;s a plot and estimate with 100 points:</p>
+
+<p><img src="/blog/images/pi-100.png"></p>
+
+<p>With 10000:</p>
+
+<p><img src="/blog/images/pi-10000.png"></p>
+
+<p>And with 100000:</p>
+
+<p><img src="/blog/images/pi-100000.png"></p>
+
+<p>A gist with all the code from this post is <a href="https://gist.github.com/ecmendenhall/5565604">available here</a>.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-10T00:21:00-05:00" data-updated="true" itemprop="datePublished">May 10<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/lisp/'>Lisp</a>, <a class='category' href='/blog/categories/tdd/'>TDD</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/10/enforcing-bottom-up-design/" itemprop="url">Enforcing Bottom-up Design</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<blockquote><p>&#8220;Experienced Lisp programmers divide up their programs differently.
+As well as top-down design, they follow a principle which could be
+called bottom-up design–changing the language to suit the problem.
+In Lisp, you don&#8217;t just write your program down toward the language,
+you also build the language up toward your program. As you&#8217;re writing
+a program you may think &#8216;I wish Lisp had such-and-such an operator.&#8217;
+So you go and write it. Afterward you realize that using the new
+operator would simplify the design of another part of the program, and
+so on. Language and program evolve together. Like the border between
+two warring states, the boundary between language and program is drawn
+and redrawn, until eventually it comes to rest along the mountains and
+rivers, the natural frontiers of your problem. In the end your program
+will look as if the language had been designed for it. And when
+language and program fit one another well, you end up with code which
+is clear, small, and efficient.&#8221;</p></blockquote>
+
+<p>–<a href="http://www.paulgraham.com/progbot.html">Paul Graham</a>, from the
+introduction to <a href="http://www.paulgraham.com/onlisptext.html"><em>On Lisp</em></a></p>
+
+<p>Lisp programmers have a reputation (earned or otherwise) for considering their language of
+  choice <a href="http://xkcd.com/224/">uniquely powerful</a>, capable of
+  extending the <a href="https://tractatus-online.appspot.com/Tractatus/Ajaxs/tlpA.html#56">limits of the
+  world</a>
+  with its special
+  <a href="http://stackoverflow.com/questions/267862/what-makes-lisp-macros-so-special">expressiveness</a>.
+  I find writing Lisp a joy, and for a long time I bought into the
+  mythos. It still <em>feels</em> unique. But I&#8217;ve come to learn that good bottom-up design is possible in any language.</p>
+
+<p>  For the past two weeks, I&#8217;ve been working in Java, a
+  language many programmers consider
+  <a href="http://www.paulgraham.com/avg.html">Blub</a> incarnate. (You don&#8217;t have to take <a href="http://hammerprinciple.com/therighttool/items/java/clojure">my word for
+  it</a>).
+  But even without clever macros and first-class functions, following
+  the rules of <a href="http://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530">test-driven
+  development</a>
+  and the principles of <a href="http://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882">clean
+  code</a>
+  feels a lot like the process of natural, iterative evolution Paul
+  Graham describes.</p>
+
+<p>  A good language can encourage bottom-up, evolutionary design, and
+  this is one of Lisp&#8217;s great strengths. But
+  writing good tests—and writing them first—can go a step further and
+  actually enforce it.</p>
+
+<p> Writing tests first requires describing abstractions before
+ they exist—writing the program you want to read from the very start. Using meaningful names transforms the language you have
+ into the one you want. Revising after every passing test makes
+ simplifying design second nature. And building up a program test by
+ tiny test is an evolutionary process that generates clean, efficient
+ code, whether you&#8217;re writing Common Lisp or COBOL.</p>
+
+<p>Here&#8217;s a function that returns a given game board&#8217;s winner from my
+  first crack at Tic Tac Toe in Clojure:</p>
+
+<figure class='code'><figcaption><span>tictactoe.core/get-win </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">get-win</span>
+</span><span class='line'>  <span class="s">&quot;Takes a 3x3 game board. Returns a vector</span>
+</span><span class='line'><span class="s">  [winner start middle  end] of the winning player,</span>
+</span><span class='line'><span class="s">  and (row, col) grid coordinates of the three-in-a-row elements.&quot;</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">board</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">wins</span>           <span class="p">(</span><span class="nf">check-for-wins</span> <span class="nv">board</span><span class="p">)</span>
+</span><span class='line'>          <span class="nv">winner</span>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="p">(</span><span class="nb">first </span><span class="p">(</span><span class="nb">remove nil? </span><span class="nv">wins</span><span class="p">)))</span> <span class="mi">1</span> <span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>          <span class="p">[</span><span class="nv">row</span> <span class="nv">col</span> <span class="nv">diag</span><span class="p">]</span> <span class="p">(</span><span class="nf">unflatten</span> <span class="nv">wins</span><span class="p">)]</span>
+</span><span class='line'>      <span class="p">(</span><span class="nb">cond </span><span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">row</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">0</span><span class="p">]</span>
+</span><span class='line'>                                          <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">1</span><span class="p">]</span>
+</span><span class='line'>                                          <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">2</span><span class="p">]]</span>
+</span><span class='line'>            <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">col</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
+</span><span class='line'>                                          <span class="p">[</span><span class="mi">1</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
+</span><span class='line'>                                          <span class="p">[</span><span class="mi">2</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]]</span>
+</span><span class='line'>            <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">diag</span><span class="p">)</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">diag</span><span class="p">))</span>
+</span><span class='line'>                                    <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">2</span><span class="p">]]</span>
+</span><span class='line'>                                    <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">2</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">0</span><span class="p">]]))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And here&#8217;s the equivalent I wrote in Java:</p>
+
+<figure class='code'><figcaption><span>Board.winnerIs( ) </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">winnerIs</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">if</span> <span class="o">(</span><span class="n">hasWin</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">return</span> <span class="nf">getWinningRow</span><span class="o">().</span><span class="na">winner</span><span class="o">();</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">_</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Which excerpt reads more like a domain-specific language? Which
+  would you rather read a year from now? I don&#8217;t doubt that I could
+  clean up the Clojure into something just as simple and readable. But
+merely using an elegant language is no guarantee of elegant design.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-05T20:54:00-05:00" data-updated="true" itemprop="datePublished">May 5<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/infinitest/'>Infinitest</a>, <a class='category' href='/blog/categories/junit/'>JUnit</a>, <a class='category' href='/blog/categories/java/'>Java</a>, <a class='category' href='/blog/categories/today-in-yak-shaving/'>Today In Yak Shaving</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/05/testing-console-output-with-junit-and-infinitest/" itemprop="url">Testing Console Output With JUnit and Infinitest</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>I saved the view components of my Tic-Tac-Toe game for last. The
+functionality I need to implement for a command line application is
+pretty simple: the view should be able to print game boards and
+messages to the terminal, prompt for user input and pass it off to a
+controller, and not much more. But doing this the TDD way was harder
+than I expected. Here are the solutions I found to two testing problems.</p>
+
+<h2>Testing text output</h2>
+
+<p>Printing a board should be a one-liner, especially since I added a
+<code>toString()</code> method to my <code>Board</code> objects. <code>System.out.println(Board)</code>
+ought to work just fine. But wait—the tests come first.</p>
+
+<p>Writing tests against printed terminal output isn&#8217;t tough, but it does
+require some setup. <code>System.setOut()</code> redirects Java&#8217;s default output
+to a byte stream of <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/System.html#setOut(Java.io.PrintStream)">your choice</a>.
+First, save the default <code>System.out</code> (It&#8217;s a <code>PrintStream</code>), so you can switch back to stdout later.
+Then, initialize a <code>ByteArrayOutputStream</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>    <span class="nd">@RunWith</span><span class="o">(</span><span class="n">JUnit4</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">class</span> <span class="nc">TerminalViewTest</span> <span class="kd">extends</span> <span class="n">TicTacToeTest</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kd">private</span> <span class="kd">final</span> <span class="n">PrintStream</span> <span class="n">stdout</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">;</span>
+</span><span class='line'>        <span class="kd">private</span> <span class="kd">final</span> <span class="n">ByteArrayOutputStream</span> <span class="n">output</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ByteArrayOutputStream</span><span class="o">();</span>
+</span><span class='line'>        <span class="kd">private</span> <span class="n">TerminalView</span> <span class="n">terminalview</span><span class="o">;</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Add a <code>setUp()</code> method with the JUnit <code>@Before</code> annotation—the usual
+pattern to run some code before your tests. Pass <code>System.setOut()</code> a
+UTF-8 <code>PrintStream</code> object constructed with the byte array (You <em>are</em>
+using <a href="http://www.utf8everywhere.org/">UTF-8 everywhere</a>, right?):</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>        <span class="nd">@Before</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setUp</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">UnsupportedEncodingException</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">terminalview</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TerminalView</span><span class="o">();</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="k">new</span> <span class="n">PrintStream</span><span class="o">(</span><span class="n">output</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="s">&quot;UTF-8&quot;</span><span class="o">));</span>
+</span><span class='line'>        <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then test against <code>output</code>. If the terminal output is as expected, it
+should match the result of the printed object&#8217;s <code>toString()</code> method:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>        <span class="nd">@Test</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">terminalViewShouldPrintBoards</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">terminalview</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="n">nowins</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">assertEquals</span><span class="o">(</span><span class="n">nowins</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="n">output</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Finally, make sure you clean up and redirect output back to stdout, so later print statements don&#8217;t go missing:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>        <span class="nd">@After</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">cleanUp</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now you&#8217;re ready to write that one-liner. You can find the whole test
+class as a gist <a href="https://gist.github.com/ecmendenhall/5523091">here</a>.</p>
+
+<h2>Testing Unicode output with Infinitest</h2>
+
+<p>With my test in place, I wrote a quick print method and waited for the
+green flash. And waited. And waited&#8230; I&#8217;ve been using
+<a href="http://infinitest.github.io/">Infinitest</a>, an excellent continuous testing
+plugin for IntelliJ and Eclipse, but it threw an assertion error, even
+though the tests passed when run directly from IntelliJ.</p>
+
+<p>The problem? I wasn&#8217;t using <a href="http://www.joelonsoftware.com/articles/Unicode.html">Unicode</a>
+everywhere! (Don&#8217;t say I didn&#8217;t warn you.) My boards print with Unicode <a href="http://unicode-table.com/en/#box-drawing">box
+drawing</a> characters that
+threw off Infinitest. IntelliJ runs in a UTF-8 environment by default,
+but character encoding must be passed as an option to the Infinitest
+JVM. Fortunately, this is another one-line
+<a href="http://infinitest.github.io/doc/user_guide.html">solution</a>:
+add a text file named <code>infinitest.args</code> in your project&#8217;s root directory with one argument per
+line. In this case, just:</p>
+
+<pre><code>-D file.encoding=UTF-8
+</code></pre>
+
+<p>With tests back in the green, I was ready to start testing user
+input—but that&#8217;s a yak shave for another day.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-03T01:00:00-05:00" data-updated="true" itemprop="datePublished">May 3<span>rd</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/git/'>git</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/03/building-better-git-habits/" itemprop="url">Building Better Git Habits</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Like many young whippersnapper kids these days, I started using GitHub before I really understood git. The benefits of version control were obvious right away, but I stuck to the very simplest git commands for a long time, and many of them turned into habits.</p>
+
+<p>This week, I&#8217;ve been working on making cleaner commits and writing better messages. Composing <a href="http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html">good commit messages</a> is the best git habit of all, and I&#8217;ve found two simple substitutions that nudge me towards more thoughtful commits.</p>
+
+<p>If you&#8217;re used to <code>git add -u</code> or <code>git add -a</code>, try:</p>
+
+<pre><code>git add -p
+</code></pre>
+
+<p>Instead of committing everything at once, this will walk you through the results of <code>git diff</code>, offering the option to stage each chunk of changed code:</p>
+
+<pre><code>@@ -34,5 +35,45 @@ public class GameTree {
+
++
++        public List&lt;Node&gt; getLeaves() {
++            List&lt;Node&gt; leaves = new ArrayList&lt;Node&gt;();
++
++            for (Node child : children) {
++                if (child.children.isEmpty()) {
++                    leaves.add(child);
++                } else {
++                    leaves.addAll(child.getLeaves());
++                }
++            }
++            return leaves;
++        }
+
+Stage this hunk [y,n,q,a,d,/,K,g,e,?]?
+</code></pre>
+
+<p>(You can find the alphabet soup of staging options <a href="http://git-scm.com/docs/git-add">here</a>). This is easier to read than a full diff, requires a careful review of each change in context, and makes composing small atomic commits much easier.</p>
+
+<p>Then, if you&#8217;re used to <code>git commit -m &lt;message&gt;</code>, try:</p>
+
+<pre><code>git commit -F &lt;filename&gt;
+</code></pre>
+
+<p>Instead of pulling a commit message from the command line or opening an editor, this uses an existing file as your commit message. But the real trick here is to keep an editor open as you page through the previous command, and compose your commit message chunk by chunk.</p>
+
+<p>There are <a href="http://www-cs-students.stanford.edu/~blynn/gitmagic/">many</a>, <a href="http://sethrobertson.github.io/GitBestPractices/">many</a> <a href="http://reinh.com/blog/2009/03/02/a-git-workflow-for-agile-teams.html">more</a> git workflows, including ways to commit with reckless abandon and clean up later with <code>git rebase</code>, but these two simple changes have helped me make much better commits just by switching a few command line flags.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-02T00:29:00-05:00" data-updated="true" itemprop="datePublished">May 2<span>nd</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/gtd/'>GTD</a>, <a class='category' href='/blog/categories/java/'>Java</a>, <a class='category' href='/blog/categories/tdd/'>TDD</a>, <a class='category' href='/blog/categories/uncertainty/'>uncertainty</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/02/gtd-and-tdd/" itemprop="url">GTD and TDD</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>My apprenticeship at 8th Light began with the <a href="http://butunclebob.com/ArticleS.UncleBob.TheThreeRulesOfTdd">Three Laws of TDD</a>:</p>
+
+<blockquote><ul>
+<li>Don&#8217;t write any production code unless it makes a failing test pass.</li>
+<li>Write the most minimal test that is sufficient to fail.</li>
+<li>Don&#8217;t write any more production code than <a href="http://plato.stanford.edu/entries/necessary-sufficient/">necessary and sufficient</a> to pass a failing test.</li>
+</ul>
+</blockquote>
+
+<p>My first project obeying these new commandments is a rewrite of <a href="https://github.com/ecmendenhall/clojurescript-tic-tac-toe">Tic-Tac-Toe</a> in Java, a language completely new to me. Like all new projects, I began in a wilderness of error. IntelliJ was totally unfamiliar. Type declarations felt fussy and foreign. I just wanted to map over an array but had to settle for another for loop. And yet test by test, things slowly started to work.</p>
+
+<p>After three days, I can&#8217;t claim to know Java. But I can claim that I know <em>my</em> Java works.</p>
+
+<p>The clarity and certainty that come from good tests are feelings I&#8217;ve experienced before. Over the past few years, the practices and principles of <a href="http://www.43folders.com/2004/09/08/getting-started-with-getting-things-done">Getting Things Done</a> have transformed the way I work, think, and act. (Have I told you about our church? Would you like to read some <a href="http://www.amazon.com/Getting-Things-Done-Stress-Free-Productivity/dp/0142000280">inspirational literature</a>?) Here is a formulation of the basic idea that might look familiar:</p>
+
+<blockquote><ul>
+<li>Don&#8217;t spend time and effort on anything but a project&#8217;s next incomplete action.</li>
+<li>Choose the smallest <a href="http://www.43folders.com/2004/09/17/next-actions-both-physical-and-visible">next action</a> sufficient to accomplish something useful.</li>
+<li>Don&#8217;t spend more time or effort than necessary to finish an incomplete action.</li>
+</ul>
+</blockquote>
+
+<p>To the uninitiated, writing tests and making lists might seem inflexible, <a href="https://en.wikipedia.org/wiki/Three_laws_of_robotics">robotic</a>, and a little dorky. But TODO lists and test suites are really tools that externalize uncertainty. The vague sense that I really should do that thing becomes a clear action that will be in my inbox later. The nagging fear that a method might misbehave becomes proof that it does and will always do exactly what I expect.</p>
+
+<p>I skated through school and college on cleverness and a keen balance of terror. And it worked! I wrote code that seemed to do what I told it long before I started writing tests. (Tests aren&#8217;t necessary for working code: they&#8217;re sufficient to prove that code works). But to claim that other ways work just fine is to miss the point. GTD and TDD are systems that radically, ruthlessly eliminate uncertainty—not because the rules are necessary in the strictest sense, but because they are sufficient to get things done, make things work, and do it all with a clear mind.</p>
+
+		
+		
+	</div>
+
+</article>
+
+</div>
+<nav id="pagenavi">
+    
+        <a href="/blog/" class="prev">Prev</a>
+    
+    
+    <div class="center"><a href="/blog/blog/archives">Blog Archives</a></div>
+</nav></div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,281 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Enforcing Bottom-up Design - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Enforcing Bottom-up Design &#8220;Experienced Lisp programmers divide up their programs differently.
+As well as top-down design, they follow a &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Enforcing Bottom-up Design</h1>
+	<div class="entry-content" itemprop="articleBody"><blockquote><p>&#8220;Experienced Lisp programmers divide up their programs differently.
+As well as top-down design, they follow a principle which could be
+called bottom-up design–changing the language to suit the problem.
+In Lisp, you don&#8217;t just write your program down toward the language,
+you also build the language up toward your program. As you&#8217;re writing
+a program you may think &#8216;I wish Lisp had such-and-such an operator.&#8217;
+So you go and write it. Afterward you realize that using the new
+operator would simplify the design of another part of the program, and
+so on. Language and program evolve together. Like the border between
+two warring states, the boundary between language and program is drawn
+and redrawn, until eventually it comes to rest along the mountains and
+rivers, the natural frontiers of your problem. In the end your program
+will look as if the language had been designed for it. And when
+language and program fit one another well, you end up with code which
+is clear, small, and efficient.&#8221;</p></blockquote>
+
+<p>–<a href="http://www.paulgraham.com/progbot.html">Paul Graham</a>, from the
+introduction to <a href="http://www.paulgraham.com/onlisptext.html"><em>On Lisp</em></a></p>
+
+<p>Lisp programmers have a reputation (earned or otherwise) for considering their language of
+  choice <a href="http://xkcd.com/224/">uniquely powerful</a>, capable of
+  extending the <a href="https://tractatus-online.appspot.com/Tractatus/Ajaxs/tlpA.html#56">limits of the
+  world</a>
+  with its special
+  <a href="http://stackoverflow.com/questions/267862/what-makes-lisp-macros-so-special">expressiveness</a>.
+  I find writing Lisp a joy, and for a long time I bought into the
+  mythos. It still <em>feels</em> unique. But I&#8217;ve come to learn that good bottom-up design is possible in any language.</p>
+
+<p>  For the past two weeks, I&#8217;ve been working in Java, a
+  language many programmers consider
+  <a href="http://www.paulgraham.com/avg.html">Blub</a> incarnate. (You don&#8217;t have to take <a href="http://hammerprinciple.com/therighttool/items/java/clojure">my word for
+  it</a>).
+  But even without clever macros and first-class functions, following
+  the rules of <a href="http://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530">test-driven
+  development</a>
+  and the principles of <a href="http://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882">clean
+  code</a>
+  feels a lot like the process of natural, iterative evolution Paul
+  Graham describes.</p>
+
+<p>  A good language can encourage bottom-up, evolutionary design, and
+  this is one of Lisp&#8217;s great strengths. But
+  writing good tests—and writing them first—can go a step further and
+  actually enforce it.</p>
+
+<p> Writing tests first requires describing abstractions before
+ they exist—writing the program you want to read from the very start. Using meaningful names transforms the language you have
+ into the one you want. Revising after every passing test makes
+ simplifying design second nature. And building up a program test by
+ tiny test is an evolutionary process that generates clean, efficient
+ code, whether you&#8217;re writing Common Lisp or COBOL.</p>
+
+<p>Here&#8217;s a function that returns a given game board&#8217;s winner from my
+  first crack at Tic Tac Toe in Clojure:</p>
+
+<figure class='code'><figcaption><span>tictactoe.core/get-win </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">get-win</span>
+</span><span class='line'>  <span class="s">&quot;Takes a 3x3 game board. Returns a vector</span>
+</span><span class='line'><span class="s">  [winner start middle  end] of the winning player,</span>
+</span><span class='line'><span class="s">  and (row, col) grid coordinates of the three-in-a-row elements.&quot;</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">board</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">wins</span>           <span class="p">(</span><span class="nf">check-for-wins</span> <span class="nv">board</span><span class="p">)</span>
+</span><span class='line'>          <span class="nv">winner</span>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="p">(</span><span class="nb">first </span><span class="p">(</span><span class="nb">remove nil? </span><span class="nv">wins</span><span class="p">)))</span> <span class="mi">1</span> <span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>          <span class="p">[</span><span class="nv">row</span> <span class="nv">col</span> <span class="nv">diag</span><span class="p">]</span> <span class="p">(</span><span class="nf">unflatten</span> <span class="nv">wins</span><span class="p">)]</span>
+</span><span class='line'>      <span class="p">(</span><span class="nb">cond </span><span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">row</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">0</span><span class="p">]</span>
+</span><span class='line'>                                          <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">1</span><span class="p">]</span>
+</span><span class='line'>                                          <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">2</span><span class="p">]]</span>
+</span><span class='line'>            <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">col</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
+</span><span class='line'>                                          <span class="p">[</span><span class="mi">1</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
+</span><span class='line'>                                          <span class="p">[</span><span class="mi">2</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]]</span>
+</span><span class='line'>            <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">diag</span><span class="p">)</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">diag</span><span class="p">))</span>
+</span><span class='line'>                                    <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">2</span><span class="p">]]</span>
+</span><span class='line'>                                    <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">2</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">0</span><span class="p">]]))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And here&#8217;s the equivalent I wrote in Java:</p>
+
+<figure class='code'><figcaption><span>Board.winnerIs( ) </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">winnerIs</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">if</span> <span class="o">(</span><span class="n">hasWin</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">return</span> <span class="nf">getWinningRow</span><span class="o">().</span><span class="na">winner</span><span class="o">();</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">_</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Which excerpt reads more like a domain-specific language? Which
+  would you rather read a year from now? I don&#8217;t doubt that I could
+  clean up the Clojure into something just as simple and readable. But
+merely using an elegant language is no guarantee of elegant design.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

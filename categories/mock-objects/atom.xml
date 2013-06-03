@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Mock Objects | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/mock-objects/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-06-03T15:45:45-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[A mock object antipattern]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern/"/>
+    <updated>2013-05-12T23:05:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern</id>
+    <content type="html"><![CDATA[<p>For the most part, test-driven development has been a breeze so far.
+In addition to
+<a href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/">enforcing</a>
+good habits, watching red tests turn green provides an extremely satisfying
+dopamine kick every few minutes, all day. Testing simple objects and actions in my Tic Tac Toe game—things
+like the board, player behavior, and the Minimax algorithm—was
+straightforward. But testing the view and controller classes that glue
+them together required a little more thought.</p>
+
+<p>Writing tests required interrupting the game loop to check on the behavior of the view and
+controller objects. To start, I added optional flag arguments to many
+methods that would break the game loop so I could make assertions
+about game state. I quickly came to realize that this was a bad
+solution, and I cringed the next day when a chapter of <em>Clean Code</em>
+described boolean flags as one of the most rancid code smells around.</p>
+
+<p>I came across the concept of <a href="http://martinfowler.com/articles/mocksArentStubs.html">test
+ doubles</a>
+and mock objects, and got the idea right away: create fake objects
+ with the same methods as real ones, override their behavior, and use
+ them as substitutes for their more complicated counterparts in unit tests.</p>
+
+<p>Or at least, I  <em>thought</em> I got the idea. With my tests passing and my game working, I felt pretty good about my
+project. But wiring up a code coverage tool showed that my view and
+controller classes were only half covered by my tests. What went
+wrong? As it turned out, I was testing my mocks! Here's the pattern I was following:</p>
+
+<ul>
+<li>Create a subclass of the object you want to test.</li>
+<li>Override or stub out methods to return predetermined output.</li>
+<li>Write assertions against the behavior of the mock objects.</li>
+</ul>
+
+
+<p>This meant, of course, that I was never actually testing the real
+objects, but only the fake ones, as revealed by the code coverage data. Worse, all the tests
+that I thought showed my code was working were essentialy tautologies.
+This probably appears obvious to experienced TDD practitioners, but it
+was surprisingly easy to fall into this antipattern. For the record,
+here's how you should really use a mock object:</p>
+
+<ul>
+<li>Create mocks of the objects that <em>interact with</em> the one you want to
+test.</li>
+<li>Override or stub out methods to return predetermined output.</li>
+<li>Write assertions against the behavior of the <em>real</em> object
+interacting with the test doubles.</li>
+</ul>
+
+
+<p>In retrospect, this makes perfect sense. But I'll be going over all my
+tests with a careful eye tomorrow. Sometimes the green light isn't
+what it seems.</p>
+]]></content>
+  </entry>
+  
+</feed>

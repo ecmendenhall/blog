@@ -1,0 +1,732 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Estimating Pi with Incanter and Monte Carlo Methods - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Estimating Pi With Incanter and Monte Carlo Methods Of all the things John von
+Neumann
+invented (including the Minimax
+theorem
+behind my Tic Tac Toe &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/05/12/estimating-pi-with-incanter-monte-carlo-methods/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Estimating Pi With Incanter and Monte Carlo Methods</h1>
+	<div class="entry-content" itemprop="articleBody"><p>Of all the things <a href="https://en.wikipedia.org/wiki/John_von_neumann#Career_and_abilities">John von
+Neumann</a>
+invented (including the <a href="https://en.wikipedia.org/wiki/Minimax_theorem#Minimax_theorem">Minimax
+theorem</a>
+behind my Tic Tac Toe AI, and the <a href="https://en.wikipedia.org/wiki/Von_Neumann_architecture">architecture</a> of the computer it runs
+on), Monte Carlo simulation is one of my favorites. Unlike some of his
+other
+<a href="https://en.wikipedia.org/wiki/Ergodic_theory#Mean_ergodic_theorem">breakthroughs</a>,
+the idea behind Monte Carlo simulation is simple: use probability
+and computation to estimate solutions to hard problems.</p>
+
+<p>Think of the craziest integral you&#8217;ve ever solved, and the sheaves of
+notebook paper spent working out the area under that ridiculous curve.
+The Monte Carlo approach is a clever hack: tack a graph of the
+function to a dartboard, and start throwing darts at
+random. As more and more darts hit the board, the ratio of darts that
+land under the curve to total darts thrown will approximate the
+proportion of the dartboard under the curve. Multiply this ratio by
+the area of the dartboard, and you&#8217;ve computed the integral. As a student whose
+favorite fourth grade problem solving strategy was &#8220;guess and check,&#8221;
+and whose favorite tenth grade problem solving strategy was &#8220;plug it
+into your TI-83,&#8221; the idea has a lot of appeal.</p>
+
+<p>Wikipedia has a great example of <a href="https://en.wikipedia.org/wiki/Monte_carlo_simulation#Introduction">estimating the value of
+Pi</a>
+with a Monte Carlo simulation. I wrote a similar simulation <a href="https://gist.github.com/ecmendenhall/5054266">in Python</a> a couple
+months ago, but wanted to check out Clojure&#8217;s <a href="http://incanter.org/">Incanter</a> library for
+statistical computing and try my hand at a TDD solution.</p>
+
+<p>To start, you&#8217;ll want the <a href="https://github.com/slagyr/speclj">speclj</a>
+test framework for Clojure, which uses Rspec-like syntax and provides
+a helpful autorunner. Create a new Leiningen project and add it as a dev
+dependency and plugin in <code>project.clj</code>. Make sure you set up your spec
+directory as <a href="https://github.com/slagyr/speclj">described</a> in the
+documentation. You&#8217;ll also want to add Incanter to your project
+dependencies. Here&#8217;s my final <code>project.clj</code>:</p>
+
+<figure class='code'><figcaption><span>project.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defproject </span><span class="nv">montecarlopi</span> <span class="s">&quot;0.1.0&quot;</span>
+</span><span class='line'>  <span class="ss">:dependencies</span> <span class="p">[[</span><span class="nv">org.clojure/clojure</span> <span class="s">&quot;1.5.0&quot;</span><span class="p">]</span>
+</span><span class='line'>                 <span class="p">[</span><span class="nv">incanter</span> <span class="s">&quot;1.5.0-SNAPSHOT&quot;</span><span class="p">]]</span>
+</span><span class='line'>  <span class="ss">:main</span> <span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="ss">:profiles</span> <span class="p">{</span><span class="ss">:dev</span> <span class="p">{</span><span class="ss">:dependencies</span> <span class="p">[[</span><span class="nv">speclj</span> <span class="s">&quot;2.5.0&quot;</span><span class="p">]]}}</span>
+</span><span class='line'>  <span class="ss">:plugins</span> <span class="p">[[</span><span class="nv">speclj</span> <span class="s">&quot;2.5.0&quot;</span><span class="p">]]</span>
+</span><span class='line'>  <span class="ss">:test-paths</span> <span class="p">[</span><span class="s">&quot;spec/&quot;</span><span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To start, we&#8217;ll need a way to tell whether a given point is inside the
+circle. Here&#8217;s a simple test:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">montecarlopi.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;in-circle?&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return true for points inside the circle.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nf">in-circle?</span> <span class="p">[</span><span class="mi">0</span> <span class="mf">0.1</span><span class="p">])))</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return false for points outside the circle.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should-not</span> <span class="p">(</span><span class="nf">in-circle?</span> <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.9</span><span class="p">]))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Fire up the testrunner with <code>lein spec -a</code>, and you&#8217;ll see an
+exception, since the function doesn&#8217;t exist. Time to add it to
+<code>core.clj</code>:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sq</span><span class="p">]]</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-circle?</span> <span class="p">[</span><span class="nv">point</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[[</span><span class="nv">x</span> <span class="nv">y</span><span class="p">]</span> <span class="nv">point</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt;= </span><span class="p">(</span><span class="nb">+ </span><span class="p">(</span><span class="nf">sq</span> <span class="nv">x</span><span class="p">)</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">sq</span> <span class="nv">y</span><span class="p">))</span>
+</span><span class='line'>            <span class="mf">1.0</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">true</span>
+</span><span class='line'>      <span class="nv">false</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>let</code> binding pulls x and y coordinates out of a vector
+representing a point. If x squared plus y squared are less
+than 1, the point is inside the circle. Save and watch the
+autorunner turn green.</p>
+
+<p>Next, we need a way to generate points at random, with x and y values
+between 0 and 1. Here&#8217;s a test:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;generate-random-point&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return a point with x and y values between 0 and 1.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">let </span><span class="p">[[</span><span class="nv">x</span> <span class="nv">y</span><span class="p">]</span> <span class="p">(</span><span class="nf">generate-random-point</span><span class="p">)]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&gt;= </span><span class="nv">x</span> <span class="mi">0</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">y</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&gt;= </span><span class="nv">y</span> <span class="mi">0</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And a dead-simple implementation (<code>clojure.core/rand</code> conveniently
+generates random floats between 0 and 1).:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">generate-random-point</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">[(</span><span class="nf">rand</span><span class="p">)</span> <span class="p">(</span><span class="nf">rand</span><span class="p">)])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We need a lot of random points, so we&#8217;d better add a function to
+generate them. Here&#8217;s a test and a function that passes:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;generate-random-points&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return the specified number of random points.&quot;</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="mi">100</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">generate-random-points</span> <span class="mi">100</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">generate-random-points</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">take </span><span class="nv">n</span> <span class="p">(</span><span class="nf">repeatedly</span> <span class="nv">generate-random-point</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once we&#8217;ve generated lots of points, we&#8217;ll want to know how many lie
+inside the circle. This test is a little more complicated, since it
+requires some mock points to test against:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;points-in-circle&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return only points inside the circle.&quot;</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">inside</span>  <span class="p">[[</span><span class="mf">0.0</span> <span class="mf">0.0</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.2</span> <span class="mf">0.3</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.1</span> <span class="mf">0.8</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.0</span> <span class="mf">1.0</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">1.0</span> <span class="mf">0.0</span><span class="p">]]</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="nv">outside</span> <span class="p">[[</span><span class="mf">1.0</span> <span class="mf">0.2</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.8</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.9</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.7</span><span class="p">]</span>
+</span><span class='line'>                   <span class="p">[</span><span class="mf">0.9</span> <span class="mf">0.9</span><span class="p">]]</span>
+</span><span class='line'>          <span class="nv">points</span>  <span class="p">(</span><span class="nb">concat </span><span class="nv">inside</span> <span class="nv">outside</span><span class="p">)]</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mi">5</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="nv">inside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should-not=</span> <span class="nv">outside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But a passing solution is as easy as using <code>in-circle?</code> as a filter:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">points-in-circle</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">filter </span><span class="nv">in-circle?</span> <span class="nv">points</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In order to plot the points, we&#8217;ll need to sort them into groups. A
+map should do the trick. Let&#8217;s also take this chance to
+pull <code>inside</code>, <code>outside</code>, and <code>points</code> out of the <code>let</code>
+binding and define them as vars so we can reuse them.
+Here&#8217;s the result after a quick refactor:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">inside</span>  <span class="p">[[</span><span class="mf">0.0</span> <span class="mf">0.0</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.2</span> <span class="mf">0.3</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.1</span> <span class="mf">0.8</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.0</span> <span class="mf">1.0</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">1.0</span> <span class="mf">0.0</span><span class="p">]])</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">outside</span> <span class="p">[[</span><span class="mf">1.0</span> <span class="mf">0.2</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.8</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.9</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.7</span><span class="p">]</span>
+</span><span class='line'>              <span class="p">[</span><span class="mf">0.9</span> <span class="mf">0.9</span><span class="p">]])</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">points</span> <span class="p">(</span><span class="nb">concat </span><span class="nv">inside</span> <span class="nv">outside</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;points-in-circle&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return only points inside the circle.&quot;</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="mi">5</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="nv">inside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should-not=</span> <span class="nv">outside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;sort-points&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return a map of correctly sorted points.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="p">{</span><span class="ss">:inside</span>  <span class="nv">inside</span>
+</span><span class='line'>                <span class="ss">:outside</span> <span class="nv">outside</span><span class="p">}</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">sort-points</span> <span class="nv">points</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This code passes, but it&#8217;s not as clear as it could be:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sort-points</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:inside</span>  <span class="p">(</span><span class="nb">filter </span><span class="nv">in-circle?</span> <span class="nv">points</span><span class="p">)</span>
+</span><span class='line'>   <span class="ss">:outside</span> <span class="p">(</span><span class="nb">filter </span><span class="o">#</span><span class="p">(</span><span class="nb">not </span><span class="p">(</span><span class="nf">in-circle</span> <span class="nv">%</span><span class="p">))</span> <span class="nv">points</span><span class="p">)})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&#8217;d like to rename the inline function <code>outside-circle?</code>. So let&#8217;s add
+a test:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;outside-circle?&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return true for points outside the circle.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nf">outside-circle?</span> <span class="p">[</span><span class="mf">0.9</span> <span class="mf">0.7</span><span class="p">]))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Write the function:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">outside-circle?</span> <span class="p">[</span><span class="nv">point</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">not </span><span class="p">(</span><span class="nf">in-circle?</span> <span class="nv">point</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And refactor <code>sort-points</code> once speclj gives us the green light:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sort-points</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:inside</span>  <span class="p">(</span><span class="nb">filter </span><span class="nv">in-circle?</span> <span class="nv">points</span><span class="p">)</span>
+</span><span class='line'>   <span class="ss">:outside</span> <span class="p">(</span><span class="nb">filter </span><span class="nv">outside-circle?</span> <span class="nv">points</span><span class="p">)})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It shouldn&#8217;t be hard to convert sorted points into a ratio. Here&#8217;s a
+test and solution:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;point-ratio&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return the correct ratio of inside to outside points&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mf">0.5</span> <span class="p">(</span><span class="nf">point-ratio</span> <span class="nv">points</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Make sure you return a float instead of a rational:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">point-ratio</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">float </span><span class="p">(</span><span class="nb">/ </span><span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))</span>
+</span><span class='line'>            <span class="p">(</span><span class="nb">count </span><span class="nv">points</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And now we&#8217;re just a step away from estimating Pi. We&#8217;re considering a
+quarter circle inside a unit square. The area of the
+square is 1, and the quarter circle 1/4 * Pi. So
+multiplying by four gives us our estimate:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;estimate-pi&quot;</span>
+</span><span class='line'> <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return four times the ratio of inside to outside points.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mf">2.0</span> <span class="p">(</span><span class="nf">estimate-pi</span> <span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return something close to pi when given a lot of points.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">let </span> <span class="p">[</span><span class="nv">estimate</span> <span class="p">(</span><span class="nf">estimate-pi</span> <span class="p">(</span><span class="nf">generate-random-points</span> <span class="mi">70000</span><span class="p">))]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&gt; </span><span class="nv">estimate</span> <span class="mf">3.13</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&lt; </span><span class="nv">estimate</span> <span class="mf">3.15</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The second part of this test is a little tricky. Our estimate is
+probabilistic, but with enough points it should almost always generate
+an estimate within range. Passing the test is easy:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">estimate-pi</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">* </span><span class="mi">4</span> <span class="p">(</span><span class="nf">point-ratio</span> <span class="nv">points</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>All that&#8217;s left is to create an Incanter
+chart. We&#8217;ll start by plotting the circle with Incanter. First, we
+need to write a function. Here&#8217;s a test for points on 1 = x<sup>2</sup> + y<sup>2</sup>:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;circle&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should equal 1 when x is 0.&quot;</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="mf">1.0</span> <span class="p">(</span><span class="nf">circle</span> <span class="mi">0</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should equal 0 when x is 1.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mf">0.0</span> <span class="p">(</span><span class="nf">circle</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should equal 0.866 when x is 0.5&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="s">&quot;0.866&quot;</span> <span class="p">(</span><span class="nf">format</span> <span class="s">&quot;%.3f&quot;</span> <span class="p">(</span><span class="nf">circle</span> <span class="mf">0.5</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To write the function, make sure you refer <code>incanter.core/sqrt</code> to
+your namespace:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sqrt</span> <span class="nv">sq</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">circle</span> <span class="p">[</span><span class="nv">x</span><span class="p">]</span> <span class="p">(</span><span class="nf">sqrt</span> <span class="p">(</span><span class="nb">- </span><span class="mf">1.0</span> <span class="p">(</span><span class="nf">sq</span> <span class="nv">x</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At this point, writing tests gets a little hairy. The <code>JFreeChart</code>
+object on which Incanter plots are based doesn&#8217;t
+<a href="http://www.jfree.org/jfreechart/api/javadoc/index.html">offer much</a>
+in the way of public fields to test against. But we
+can at least check that the function returns a chart:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;draw-circle&quot;</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should be a JFreeChart object.&quot;</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="s">&quot;class org.jfree.chart.JFreeChart&quot;</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">str </span><span class="p">(</span><span class="nf">.getClass</span> <span class="p">(</span><span class="nf">draw-circle</span><span class="p">))))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Refer <code>incanter.charts/function-plot</code> to plot the function:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sqrt</span> <span class="nv">sq</span> <span class="nv">view</span><span class="p">]]</span>
+</span><span class='line'>           <span class="p">[</span><span class="nv">incanter.charts</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">function-plot</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">draw-circle</span> <span class="p">[]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">function-plot</span> <span class="nv">circle</span> <span class="mi">0</span> <span class="mi">1</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Running <code>(view (draw-circle))</code> from the REPL should produce a chart
+like this:</p>
+
+<p><img src="/blog/images/circle-plot.png"></p>
+
+<p>The last step is to add the points and some annotations to the
+Incanter plot:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sqrt</span> <span class="nv">sq</span> <span class="nv">view</span><span class="p">]]</span>
+</span><span class='line'>           <span class="p">[</span><span class="nv">incanter.charts</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">function-plot</span>
+</span><span class='line'>                                    <span class="nv">add-points</span>
+</span><span class='line'>                                    <span class="nv">add-text</span>
+</span><span class='line'>                                    <span class="nv">set-x-label</span>
+</span><span class='line'>                                    <span class="nv">set-y-label</span>
+</span><span class='line'>                                    <span class="nv">set-y-range</span>
+</span><span class='line'>                                    <span class="nv">xy-plot</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">plot-points</span> <span class="p">[</span><span class="nv">chart</span> <span class="nv">points</span> <span class="nv">label</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">xs</span> <span class="p">(</span><span class="nb">map first </span> <span class="nv">points</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">ys</span> <span class="p">(</span><span class="nb">map second </span><span class="nv">points</span><span class="p">)]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">add-points</span> <span class="nv">chart</span> <span class="nv">xs</span> <span class="nv">ys</span> <span class="ss">:series-label</span> <span class="nv">label</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-plot</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">points</span> <span class="p">(</span><span class="nf">generate-random-points</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">sorted</span> <span class="p">(</span><span class="nf">sort-points</span> <span class="nv">points</span><span class="p">)]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">doto </span><span class="p">(</span><span class="nf">draw-circle</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">set-y-range</span> <span class="mf">-0.25</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">plot-points</span> <span class="p">(</span><span class="ss">:inside</span>  <span class="nv">sorted</span><span class="p">)</span> <span class="s">&quot;inside&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">plot-points</span> <span class="p">(</span><span class="ss">:outside</span> <span class="nv">sorted</span><span class="p">)</span> <span class="s">&quot;outside&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">set-x-label</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">set-y-label</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.10</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Total: &quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="nb">count </span><span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.05</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Inside: &quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="ss">:inside</span> <span class="nv">sorted</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.15</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Ratio: &quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="nf">point-ratio</span> <span class="nv">points</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.20</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Pi: &quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="nf">format</span> <span class="s">&quot;%4f&quot;</span> <span class="p">(</span><span class="nf">estimate-pi</span> <span class="nv">points</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">view</span> <span class="ss">:width</span> <span class="mi">500</span> <span class="ss">:height</span> <span class="mi">600</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here&#8217;s a plot and estimate with 100 points:</p>
+
+<p><img src="/blog/images/pi-100.png"></p>
+
+<p>With 10000:</p>
+
+<p><img src="/blog/images/pi-10000.png"></p>
+
+<p>And with 100000:</p>
+
+<p><img src="/blog/images/pi-100000.png"></p>
+
+<p>A gist with all the code from this post is <a href="https://gist.github.com/ecmendenhall/5565604">available here</a>.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/05/12/estimating-pi-with-incanter-monte-carlo-methods/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/05/12/estimating-pi-with-incanter-monte-carlo-methods/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>
