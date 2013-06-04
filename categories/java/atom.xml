@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-06-03T15:49:26-05:00</updated>
+  <updated>2013-06-04T10:55:02-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -687,23 +687,18 @@ used by all my tests, I wasn't using inheritance to create universal setup and t
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
 </pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@RunWith</span><span class="o">(</span><span class="n">JUnit4</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
 </span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TicTacToeTest</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
 </span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="nd">@Before</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="nd">@Before</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setUp</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="o">}&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
 </span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">public</span> <span class="kt">void</span> <span class="n">setUp</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>  <span class="nd">@After</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">cleanUp</span><span class="o">()</span> <span class="o">{</span>
 </span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nd">@After</span>
-</span><span class='line'>      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">cleanUp</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-</code></pre>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>Now, extract a <code>setUpRecorder()</code> method including all the setup-related lines:</p>
 
@@ -792,7 +787,7 @@ used by all my tests, I wasn't using inheritance to create universal setup and t
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 </code></pre>
 
-<p>The last line of the second test was meant as a mini-teardown, to reset stdout before the next test. I wrote it before I understood the JUnit execution, in which each test runs in its own environment. It survived around 80 commits, but it doesn't actually do anything, so I can safely delete it. (I know because none of the tests fail afterwards).I know because none of the tests fail afterwards. In fact, this whole refactor should be possible while keeping the tests green.</p>
+<p>The last line of the second test was meant as a mini-teardown, to reset stdout before the next test. I wrote it before I understood JUnit execution, in which each test runs in its own environment. It survived around 80 commits, but it doesn't actually do anything, so I can safely delete it. (I know because none of the tests fail afterwards). In fact, this whole refactor should be possible while keeping the tests green.</p>
 
 <p>After searching for usages of the old pattern and replacing them with the new methods, there's just one thing left: pull up the new methods to a Test superclass. Here's the result:</p>
 
