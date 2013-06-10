@@ -3,11 +3,12 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>Category: TDD, - Connor Mendenhall</title>
+	<title>Abstraction barriers big and small - Connor Mendenhall</title>
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Category: TDD,">
+	<meta name="description" content="Abstraction Barriers Big and Small Working on my HTTP server has required me to learn a little more about
+the technology that makes the web work. At &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -17,7 +18,7 @@
 
 	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
 	
-	<link rel="canonical" href="http://ecmendenhall.github.io/blogcategories/tdd/">
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/06/10/abstraction-barriers-big-and-small/">
 	<link href="/blog/favicon.png" rel="shortcut icon">
 	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
 	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -84,30 +85,53 @@
 				
 			
 			<div class="mid-col-container">
-				<div id="content" class="inner">
-	
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Abstraction Barriers Big and Small</h1>
+	<div class="entry-content" itemprop="articleBody"><p>Working on my HTTP server has required me to learn a little more about
+the technology that makes the web work. At the outset, I had only the vaguest notion
+of what a socket was, but once I saw a diagram of the TCP/IP <a href="http://www.sis.pitt.edu/~icucart/networking_basics/4LayersofTCPIPModel.html">layer
+model</a>,
+it was clear—a socket is an abstraction. (More on the model
+<a href="https://en.wikipedia.org/wiki/Internet_Protocol_Suite#Layers_in_the_Internet_protocol_suite">here</a>).</p>
 
+<p>I was reminded right away of the diagram in <a href="http://ecmendenhall.github.io/sicpclojure/pages/14.html#sec_2.1.2">Chapter
+2.1</a>
+of <a href="https://mitpress.mit.edu/sicp/">SICP</a> (the section on building
+a rational number arithmetic system). It&#8217;s not a coincidence:
+enforcing abstraction between layers is one reason the Internet and
+TCP/IP are such powerful tools. Any system that does anything
+interesting is necessarily composed of smaller
+parts. Whether they&#8217;re functions, objects, or
+<a href="https://en.wikipedia.org/wiki/Logic_programming">sentences</a>, the way
+they&#8217;re put together
+<a href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/">matters</a>.
+But equally important is the way they interact, and how they&#8217;re separated.
+(Network protocols give <a href="https://en.wikipedia.org/wiki/Robustness_Principle">good
+advice</a> on this,
+too.)</p>
+</div>
 
-	
-	
-	<section class="archives"><h1 class="year">2013</h1>
-
-<article itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<span class="date"><time datetime="2013-06-10T01:03:00-05:00" itemprop="datePublished">Jun 10</time></span>
-		<br>
-		<span class="tags">
-
-
-	<a class='category' href='/blog/categories/tdd/'>TDD,</a>, <a class='category' href='/blog/categories/craft/'>craft</a>
-
-
-</span>
-	    
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/10/shitty-first-drafts/">Shitty first drafts</a></h1>
 </article>
 
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
 </div>
 			</div>
 			<footer id="footer" class="inner"><p>
@@ -129,7 +153,10 @@ Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Sha
       var disqus_shortname = 'ecmgithub';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/06/10/abstraction-barriers-big-and-small/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/06/10/abstraction-barriers-big-and-small/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

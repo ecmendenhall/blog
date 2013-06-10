@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: design | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/design/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-06-10T02:11:23-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Abstraction barriers big and small]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/10/abstraction-barriers-big-and-small/"/>
+    <updated>2013-06-10T01:37:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/10/abstraction-barriers-big-and-small</id>
+    <content type="html"><![CDATA[<p>Working on my HTTP server has required me to learn a little more about
+the technology that makes the web work. At the outset, I had only the vaguest notion
+of what a socket was, but once I saw a diagram of the TCP/IP <a href="http://www.sis.pitt.edu/~icucart/networking_basics/4LayersofTCPIPModel.html">layer
+model</a>,
+it was clear—a socket is an abstraction. (More on the model
+<a href="https://en.wikipedia.org/wiki/Internet_Protocol_Suite#Layers_in_the_Internet_protocol_suite">here</a>).</p>
+
+<p>I was reminded right away of the diagram in <a href="http://ecmendenhall.github.io/sicpclojure/pages/14.html#sec_2.1.2">Chapter
+2.1</a>
+of <a href="https://mitpress.mit.edu/sicp/">SICP</a> (the section on building
+a rational number arithmetic system). It's not a coincidence:
+enforcing abstraction between layers is one reason the Internet and
+TCP/IP are such powerful tools. Any system that does anything
+interesting is necessarily composed of smaller
+parts. Whether they're functions, objects, or
+<a href="https://en.wikipedia.org/wiki/Logic_programming">sentences</a>, the way
+they're put together
+<a href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/">matters</a>.
+But equally important is the way they interact, and how they're separated.
+(Network protocols give <a href="https://en.wikipedia.org/wiki/Robustness_Principle">good
+advice</a> on this,
+too.)</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -4,7 +4,7 @@
   <title><![CDATA[Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-06-10T00:34:58-05:00</updated>
+  <updated>2013-06-10T02:11:23-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -14,13 +14,86 @@
 
   
   <entry>
+    <title type="html"><![CDATA[Abstraction barriers big and small]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/10/abstraction-barriers-big-and-small/"/>
+    <updated>2013-06-10T01:37:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/10/abstraction-barriers-big-and-small</id>
+    <content type="html"><![CDATA[<p>Working on my HTTP server has required me to learn a little more about
+the technology that makes the web work. At the outset, I had only the vaguest notion
+of what a socket was, but once I saw a diagram of the TCP/IP <a href="http://www.sis.pitt.edu/~icucart/networking_basics/4LayersofTCPIPModel.html">layer
+model</a>,
+it was clear—a socket is an abstraction. (More on the model
+<a href="https://en.wikipedia.org/wiki/Internet_Protocol_Suite#Layers_in_the_Internet_protocol_suite">here</a>).</p>
+
+<p>I was reminded right away of the diagram in <a href="http://ecmendenhall.github.io/sicpclojure/pages/14.html#sec_2.1.2">Chapter
+2.1</a>
+of <a href="https://mitpress.mit.edu/sicp/">SICP</a> (the section on building
+a rational number arithmetic system). It&#8217;s not a coincidence:
+enforcing abstraction between layers is one reason the Internet and
+TCP/IP are such powerful tools. Any system that does anything
+interesting is necessarily composed of smaller
+parts. Whether they&#8217;re functions, objects, or
+<a href="https://en.wikipedia.org/wiki/Logic_programming">sentences</a>, the way
+they&#8217;re put together
+<a href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/">matters</a>.
+But equally important is the way they interact, and how they&#8217;re separated.
+(Network protocols give <a href="https://en.wikipedia.org/wiki/Robustness_Principle">good
+advice</a> on this,
+too.)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Shitty first drafts]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/10/shitty-first-drafts/"/>
+    <updated>2013-06-10T01:03:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/10/shitty-first-drafts</id>
+    <content type="html"><![CDATA[<blockquote><p>&#8220;Very few writers really know what they are doing until they&#8217;ve done it. Nor do
+they go about their business feeling dewy and thrilled. They do not type a few stiff
+warm-up sentences and then find themselves bounding along like huskies across the
+snow. One writer I know tells me that he sits down every morning and says to
+himself nicely, &#8220;It&#8217;s not like you don&#8217;t have a choice, because you do &#8211; you can
+either type, or kill yourself.&#8221; We all often feel like we are pulling teeth, even those
+writers whose prose ends up being the most natural and fluid. The right words and
+sentences just do not come pouring out like ticker tape most of the time. […] For me and
+most of the other writers I know, writing is not rapturous. In fact, the only way I can get
+anything written at all is to write really, really shitty first drafts.&#8221;</p></blockquote>
+
+<p>–Anne Lamott on <a href="http://wrd.as.uky.edu/sites/default/files/1-Shitty%20First%20Drafts.pdf">shitty first drafts</a>, from <a href="http://www.amazon.com/Bird-Some-Instructions-Writing-Life/dp/0385480016/ref=sr_1_1?ie=UTF8&amp;qid=1370844305&amp;sr=8-1&amp;keywords=bird+by+bird"><em>Bird By Bird</em></a></p>
+
+<p>This is supposed to be a professional blog, but I hope you&#8217;ll pardon
+this bit of language, which comes with some of the best and dearest
+ advice on professionalism I&#8217;ve read.</p>
+
+<p>At the end of last week, I moved on to the second project of my
+  apprenticeship: writing a simple HTTP server from scratch.
+  Starting the project was not rapturous. I knew the basics—model the
+  filesystem, connect over a socket, and transfer specially-formatted
+  text back and forth—but had no idea where to start or what test to
+  write first. I read up on sockets, browsed through the HTTP spec,
+  and stared dumbly into IntelliJ for a while, and at long last, I
+  started typing. What Anne Lamott calls &#8220;shitty first drafts&#8221; the TDD
+  world calls
+  <a href="http://stackoverflow.com/questions/249969/why-are-tdd-spikes-called-spikes">&#8220;spikes&#8221;</a>—short
+  experiments, sometimes without tests, to figure out what to work on
+  next. A spike is like a &#8220;child&#8217;s draft,&#8221; allowed to run wild and
+  break things on condition that it will be thrown out and replaced
+  with something decent (and well-tested).</p>
+
+<p>Of course, as soon as I had a few lines of code down, the ideas
+  started to flow (I started by parsing headers, by the way), and
+  within an hour I had a feature-complete <a href="https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol">HTCPCP server</a> (HTTP is still a work in progress). Another reminder that programming is craft, and writing code really is a creative act.</p>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[The N-Taps problem]]></title>
     <link href="http://ecmendenhall.github.io/blog/blog/2013/06/10/the-n-taps-problem/"/>
     <updated>2013-06-10T00:20:00-05:00</updated>
     <id>http://ecmendenhall.github.io/blog/blog/2013/06/10/the-n-taps-problem</id>
     <content type="html"><![CDATA[<p>This week, I was introduced to Hopleaf, a craft beer bar in Chicago with 60 rotating taps. One of my favorite bars in Tucson, 1702, was similar. But every time I visited, I would face a dilemma: I usually only visit twice a month, and drink 3±1 beers each time. As a reformed economist, I insist on optimizing every decision I make, and with each beer I order, I face a trade-off between tasting a new beer of uncertain quality or choosing my favorite so far. If I want to maximize expected utility for each month&#8217;s visits, what is my best strategy? How many beers should I spend exploring for better ones, and how many should I spend enjoying my favorite?</p>
 
-<p>Richard Feynman posed <a href="http://www.feynmanlectures.info/exercises/Feynmans_restaurant_problem.html">this problem</a> in the context of finding the best dish at a new restaurant. (But beers are way more interesting). His answer was $\sqrt{2(drink + 1}-1$. The <a href="http://www.feynmanlectures.info/solutions/restaurant_problem_sol_1.html">solution</a> makes sense (and come on, it&#8217;s Richard Feynman), but I wanted to check his work with a simulation.</p>
+<p>Richard Feynman posed <a href="http://www.feynmanlectures.info/exercises/Feynmans_restaurant_problem.html">this problem</a> in the context of finding the best dish at a new restaurant. (But beers are way more interesting). The <a href="http://www.feynmanlectures.info/solutions/restaurant_problem_sol_1.html">solution</a> makes sense (and come on, it&#8217;s Richard Feynman), but I wanted to check his work with a simulation.</p>
 
 <p>You can find the results (and the rest of this post) in <a href="http://nbviewer.ipython.org/5229689">this iPython notebook</a>. There&#8217;s much more there, including an interesting result!</p>
 ]]></content>
