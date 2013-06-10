@@ -4,7 +4,7 @@
   <title><![CDATA[Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-06-10T00:26:51-05:00</updated>
+  <updated>2013-06-10T00:28:52-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -22,7 +22,7 @@
 
 <p>Richard Feynman posed <a href="http://www.feynmanlectures.info/exercises/Feynmans_restaurant_problem.html">this problem</a> in the context of finding the best dish at a new restaurant. (But beers are way more interesting). His answer was $\sqrt{2(drink + 1}-1$. The <a href="http://www.feynmanlectures.info/solutions/restaurant_problem_sol_1.html">solution</a> makes sense (and come on, it&#8217;s Richard Feynman), but I wanted to check his work with a simulation.</p>
 
-<p>You can find the results (and the rest of this post) in <a href="http://nbviewer.ipython.org/5229689">this iPython notebook</a>.</p>
+<p>You can find the results (and the rest of this post) in <a href="http://nbviewer.ipython.org/5229689">this iPython notebook</a>. There&#8217;s much more there, including an interesting result!</p>
 ]]></content>
   </entry>
   
