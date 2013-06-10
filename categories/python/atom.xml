@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Python, | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/python/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-06-10T00:26:51-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[The N-Taps problem]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/10/the-n-taps-problem/"/>
+    <updated>2013-06-10T00:20:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/10/the-n-taps-problem</id>
+    <content type="html"><![CDATA[<p>This week, I was introduced to Hopleaf, a craft beer bar in Chicago with 60 rotating taps. One of my favorite bars in Tucson, 1702, was similar. But every time I visited, I would face a dilemma: I usually only visit twice a month, and drink 3±1 beers each time. As a reformed economist, I insist on optimizing every decision I make, and with each beer I order, I face a trade-off between tasting a new beer of uncertain quality or choosing my favorite so far. If I want to maximize expected utility for each month's visits, what is my best strategy? How many beers should I spend exploring for better ones, and how many should I spend enjoying my favorite?</p>
+
+<p>Richard Feynman posed <a href="http://www.feynmanlectures.info/exercises/Feynmans_restaurant_problem.html">this problem</a> in the context of finding the best dish at a new restaurant. (But beers are way more interesting). His answer was $\sqrt{2(drink + 1}-1$. The <a href="http://www.feynmanlectures.info/solutions/restaurant_problem_sol_1.html">solution</a> makes sense (and come on, it's Richard Feynman), but I wanted to check his work with a simulation.</p>
+
+<p>You can find the results (and the rest of this post) in <a href="http://nbviewer.ipython.org/5229689">this iPython notebook</a>.</p>
+]]></content>
+  </entry>
+  
+</feed>
