@@ -1,0 +1,224 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Making scope explicit - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Making Scope Explicit As a young software engineer, I learned three variables by which to
+manage projects: speed, quality, and price. The sponsor &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/06/16/making-scope-explicit/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Making Scope Explicit</h1>
+	<div class="entry-content" itemprop="articleBody"><blockquote><p>As a young software engineer, I learned three variables by which to
+manage projects: speed, quality, and price. The sponsor gets to fix
+two of these variables and the team gets to estimate the third. If the
+plan is unacceptable, the negotiating starts.
+This model doesn&#8217;t work well in practice. Time and costs are
+generally set outside the project. That leaves quality as the only
+variable you can manipulate. Lowering the quality of your work doesn&#8217;t
+eliminate work, it just shifts it later so delays are not clearly your
+responsibility. You can create the illusion of progress this way, but
+you pay in reduced satisfaction and damaged relationships.
+Satisfaction comes from doing quality work.
+The variable left out of this model is scope. If we make scope explicit, then we have a safe
+way to adapt, we have a safe way to negotiate, we have a limit to
+ridiculous and unnecessary demands.</p></blockquote>
+
+<p>—Kent Beck, <a href="http://www.amazon.com/Extreme-Programming-Explained-Embrace-Edition/dp/0321278658/ref=sr_1_1?ie=UTF8&amp;qid=1371444145&amp;sr=8-1&amp;keywords=extreme+programming">Extreme Programming
+Explained</a></p>
+
+<p>I spent all last week working on my <a href="https://github.com/ecmendenhall/schtitt">web
+server</a>. It&#8217;s a fun project
+so far, filled with the joy of taking something apart and looking
+inside to see how it works, but it&#8217;s also been a challenge: I had a
+long checklist of features to implement and only a week to get them
+all working.</p>
+
+<p>Even though I was still frantically coding on the train to work the
+day of my demo, I managed to check off all the boxes. Like the 100% test
+coverage my project reported, 100% box coverage felt great—like the
+satisfaction of crossing the last item off a long to-do list. But as
+any test-driven developer knows, even 100% test coverage can&#8217;t
+guarantee that a project will work. This week I learned that box coverage is the same: ticking
+off features is no guarantee of quality.</p>
+
+<p>Sure, my server met the requirements, but much of the code wasn&#8217;t
+pretty, and I knew it. And though I was proud of the progress I made and looking
+forward to showing off my work, the demo went
+off the rails early on, when the server hung and crashed trying to handle
+concurrent connections. (If you&#8217;re thinking of using <code>Thread.run()</code>,
+you probably want <code>Thread.start()</code>, by the way). In an instant, all
+the little details I&#8217;d put effort into—nice looking directory pages,
+support for extra headers and obscure content types, clean request
+parsing under the hood— were outweighed by one big defect.</p>
+
+<p>The attitude towards quality at 8th Light is clear: quality is
+non-negotiable, we will never ship software with known defects, and
+when an unknown one slips by, we&#8217;ll fix it for free. That leaves scope
+as the only free variable in the planning and development process.
+Although the scope of my web server project was already explicit, I
+didn&#8217;t do a good job negotiating. In retrospect, it&#8217;s clear that
+showing a clean, stable server that only handles GET requests is a
+greater accomplishment than one with extra bells and whistles that&#8217;s
+prone to random catastrophic failure. But it sure felt good to check
+  off all those boxes.</p>
+
+<p>I&#8217;ve learned two lessons over the last week: first, quality and stability matter most. Never sacrifice
+quality, and never ever tolerate unstable code. Second, renegotiating
+and giving feedback is part of making scope explicit. Trading off
+  quality for features is guaranteed to be a bad bargain.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/06/16/making-scope-explicit/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/06/16/making-scope-explicit/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

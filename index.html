@@ -7,8 +7,8 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Jun 10th, 2013 design Abstraction Barriers Big and Small Working on my HTTP server has required me to learn a little more about
-the technology that &hellip;">
+	<meta name="description" content="Jun 17th, 2013 TDD Why Does That Exist? I was puzzled. Reading raw POST requests across a network socket
+returned headers, but never body content. &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +87,151 @@ the technology that &hellip;">
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-17T00:30:00-05:00" data-updated="true" itemprop="datePublished">Jun 17<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/tdd/'>TDD</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/17/why-does-that-exist/" itemprop="url">Why Does That Exist?</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>I was puzzled. Reading raw POST requests across a network socket
+returned headers, but never body content. When I mentioned it to Colin
+and showed him the method I suspected was misbehaving, he asked me a
+question: &#8220;Why does that exist? Which test brought that line of code
+into being?&#8221;</p>
+
+<p>In a perfect TDD world, this question always has a good answer. In my
+case, it didn&#8217;t: this was a complicated line that was
+twice removed from the test that &#8220;created&#8221; it. But the path forward
+was clear right away: write a test for this line, in isolation, the
+way I should have done from the start.</p>
+
+<p>Good test-driven development requires a lot of restraint and self-discipline, and lines
+like my faulty byte reader are guaranteed to sneak in if I break one
+of the laws of TDD—even if it&#8217;s only a couple lines of
+support code that aren&#8217;t written just to pass a test, or a test that
+looks comprehensive really trying to cover too much at once. This
+question is a great way to hunt them down and fix them: ask every line
+of code you write to justify its existence.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-16T23:37:00-05:00" data-updated="true" itemprop="datePublished">Jun 16<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/planning/'>planning</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/16/making-scope-explicit/" itemprop="url">Making Scope Explicit</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<blockquote><p>As a young software engineer, I learned three variables by which to
+manage projects: speed, quality, and price. The sponsor gets to fix
+two of these variables and the team gets to estimate the third. If the
+plan is unacceptable, the negotiating starts.
+This model doesn&#8217;t work well in practice. Time and costs are
+generally set outside the project. That leaves quality as the only
+variable you can manipulate. Lowering the quality of your work doesn&#8217;t
+eliminate work, it just shifts it later so delays are not clearly your
+responsibility. You can create the illusion of progress this way, but
+you pay in reduced satisfaction and damaged relationships.
+Satisfaction comes from doing quality work.
+The variable left out of this model is scope. If we make scope explicit, then we have a safe
+way to adapt, we have a safe way to negotiate, we have a limit to
+ridiculous and unnecessary demands.</p></blockquote>
+
+<p>—Kent Beck, <a href="http://www.amazon.com/Extreme-Programming-Explained-Embrace-Edition/dp/0321278658/ref=sr_1_1?ie=UTF8&amp;qid=1371444145&amp;sr=8-1&amp;keywords=extreme+programming">Extreme Programming
+Explained</a></p>
+
+<p>I spent all last week working on my <a href="https://github.com/ecmendenhall/schtitt">web
+server</a>. It&#8217;s a fun project
+so far, filled with the joy of taking something apart and looking
+inside to see how it works, but it&#8217;s also been a challenge: I had a
+long checklist of features to implement and only a week to get them
+all working.</p>
+
+<p>Even though I was still frantically coding on the train to work the
+day of my demo, I managed to check off all the boxes. Like the 100% test
+coverage my project reported, 100% box coverage felt great—like the
+satisfaction of crossing the last item off a long to-do list. But as
+any test-driven developer knows, even 100% test coverage can&#8217;t
+guarantee that a project will work. This week I learned that box coverage is the same: ticking
+off features is no guarantee of quality.</p>
+
+<p>Sure, my server met the requirements, but much of the code wasn&#8217;t
+pretty, and I knew it. And though I was proud of the progress I made and looking
+forward to showing off my work, the demo went
+off the rails early on, when the server hung and crashed trying to handle
+concurrent connections. (If you&#8217;re thinking of using <code>Thread.run()</code>,
+you probably want <code>Thread.start()</code>, by the way). In an instant, all
+the little details I&#8217;d put effort into—nice looking directory pages,
+support for extra headers and obscure content types, clean request
+parsing under the hood— were outweighed by one big defect.</p>
+
+<p>The attitude towards quality at 8th Light is clear: quality is
+non-negotiable, we will never ship software with known defects, and
+when an unknown one slips by, we&#8217;ll fix it for free. That leaves scope
+as the only free variable in the planning and development process.
+Although the scope of my web server project was already explicit, I
+didn&#8217;t do a good job negotiating. In retrospect, it&#8217;s clear that
+showing a clean, stable server that only handles GET requests is a
+greater accomplishment than one with extra bells and whistles that&#8217;s
+prone to random catastrophic failure. But it sure felt good to check
+  off all those boxes.</p>
+
+<p>I&#8217;ve learned two lessons over the last week: first, quality and stability matter most. Never sacrifice
+quality, and never ever tolerate unstable code. Second, renegotiating
+and giving feedback is part of making scope explicit. Trading off
+  quality for features is guaranteed to be a bad bargain.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1627,504 +1772,6 @@ code</a> for inspiration.</p>
   available on my
   <a href="https://github.com/ecmendenhall/macro-challenges">Github</a>, if you&#8217;d
   like to have a hand at reconstructing Clojure yourself.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-25T12:38:00-05:00" data-updated="true" itemprop="datePublished">May 25<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/clojure/'>Clojure</a>, <a class='category' href='/blog/categories/lisp/'>Lisp</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/25/network-closures-in-clojure/" itemprop="url">Network Closures in Clojure</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Clojure may be a new language, but Lisp has a long history.
-Translating Scheme and Common Lisp classics into Clojure is always an
-interesting exercise, and often illuminates the differences and
-comparative advantages of various Lisp-y languages. (For more
-Lisp-to-Clojure resources see <a href="http://juliangamble.com/blog/2012/07/13/amazing-lisp-books-living-again-in-clojure/">this
-list</a>.
-Or, if you&#8217;d like to try porting some Scheme, consider <a href="https://github.com/ecmendenhall/sicpclojure">helping
-translate SICP</a>).</p>
-
-<p>This weekend, I spent some time with Paul Graham&#8217;s classic <a href="http://www.paulgraham.com/onlisp.html"><em>On
-Lisp</em></a>.
-In Chapter 6, Graham shows how to use
-<a href="https://en.wikipedia.org/wiki/Closure_(computer_science)">closures</a>
-to model nodes in a network, representing a 20 questions game as a self-traversing binary
-tree. Here&#8217;s his original code, and my best attempts at Clojure translations.</p>
-
-<p>The most obvious model for a set of connected nodes is a nested data
-structure, like a map of maps. In Common Lisp, Graham uses a mutable
-hashmap of <a href="http://www.lispworks.com/documentation/HyperSpec/Body/m_defstr.htm">structured
-types</a>,
-each pointing to their neighbors in the network:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='common-lisp'><span class='line'><span class="p">(</span><span class="nb">defstruct</span> <span class="nv">node</span> <span class="nv">contents</span> <span class="nv">yes</span> <span class="nv">no</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nb">defvar</span> <span class="vg">*nodes*</span> <span class="p">(</span><span class="nb">make-hash-table</span><span class="p">))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">defnode</span> <span class="p">(</span><span class="nv">name</span> <span class="nv">conts</span> <span class="k">&amp;optional</span> <span class="nv">yes</span> <span class="nv">no</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">name</span> <span class="vg">*nodes*</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nv">make-node</span> <span class="ss">:contents</span> <span class="nv">conts</span>
-</span><span class='line'>    <span class="ss">:yes</span> <span class="nv">yes</span>
-</span><span class='line'>    <span class="ss">:no</span> <span class="nv">no</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>A simple map seems like a sufficient replacement in Clojure. A single
-node looks like this:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">{</span><span class="ss">:people</span> <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is the person a man?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:male</span>, <span class="ss">:no</span> <span class="ss">:female</span><span class="p">}}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And the full tree looks like the following. Each node&#8217;s <code>:yes</code> or <code>:no</code> keyword
-points to the next node in the tree:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">{</span><span class="ss">:penny</span> <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Abraham Lincoln.&quot;</span>, <span class="ss">:yes</span> <span class="nv">nil</span>, <span class="ss">:no</span> <span class="nv">nil</span><span class="p">}</span>,
-</span><span class='line'> <span class="ss">:coin</span>  <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is the coin a penny?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:penny</span>, <span class="ss">:no</span> <span class="ss">:other-coin</span><span class="p">}</span>,
-</span><span class='line'> <span class="ss">:USA</span>   <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is he on a coin?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:coin</span>, <span class="ss">:no</span> <span class="ss">:no-coin</span><span class="p">}</span>,
-</span><span class='line'> <span class="ss">:dead</span>  <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Was he from the USA?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:USA</span>, <span class="ss">:no</span> <span class="ss">:elsewhere</span><span class="p">}</span>,
-</span><span class='line'> <span class="ss">:male</span>  <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is he living?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:live</span>, <span class="ss">:no</span> <span class="ss">:dead</span><span class="p">}</span>,
-</span><span class='line'> <span class="ss">:people</span> <span class="p">{</span><span class="ss">:contents</span> <span class="s">&quot;Is the person a man?&quot;</span>, <span class="ss">:yes</span> <span class="ss">:male</span>, <span class="ss">:no</span> <span class="ss">:female</span><span class="p">}}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Here&#8217;s my first draft for defining nodes in Clojure. Since the Common
-Lisp version used a mutable variable, I used a Clojure atom to store
-network state:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">nodes</span> <span class="p">(</span><span class="nf">atom</span> <span class="p">{}))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">defnode</span> <span class="p">[</span><span class="nb">name </span><span class="nv">contents</span> <span class="o">&amp;</span> <span class="p">[</span><span class="nv">yes</span> <span class="nv">no</span><span class="p">]]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">swap!</span> <span class="nv">nodes</span> <span class="nb">assoc name </span><span class="p">{</span><span class="ss">:contents</span> <span class="nv">contents</span> <span class="ss">:yes</span> <span class="nv">yes</span> <span class="ss">:no</span> <span class="nv">no</span><span class="p">}))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-nodes</span> <span class="p">[]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:people</span> <span class="s">&quot;Is the person a man?&quot;</span> <span class="ss">:male</span> <span class="ss">:female</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:male</span> <span class="s">&quot;Is he living?&quot;</span> <span class="ss">:live</span> <span class="ss">:dead</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:dead</span> <span class="s">&quot;Was he from the USA?&quot;</span> <span class="ss">:USA</span> <span class="ss">:elsewhere</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:USA</span> <span class="s">&quot;Is he on a coin?&quot;</span> <span class="ss">:coin</span> <span class="ss">:no-coin</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:coin</span> <span class="s">&quot;Is the coin a penny?&quot;</span> <span class="ss">:penny</span> <span class="ss">:other-coin</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:penny</span> <span class="s">&quot;Abraham Lincoln.&quot;</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Traversing the network is simple: get a node, print the associated
-question, prompt for input, get the next node, and repeat. Here&#8217;s the original Common Lisp:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='common-lisp'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">run-node</span> <span class="p">(</span><span class="nv">name</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">n</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">name</span> <span class="vg">*nodes*</span><span class="p">)))</span>
-</span><span class='line'>    <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nv">node-yes</span> <span class="nv">n</span><span class="p">)</span>
-</span><span class='line'>           <span class="p">(</span><span class="nb">format</span> <span class="no">t</span> <span class="s">&quot;~A~%&gt;&gt; &quot;</span> <span class="p">(</span><span class="nv">node-contents</span> <span class="nv">n</span><span class="p">))</span>
-</span><span class='line'>           <span class="p">(</span><span class="nb">case</span> <span class="p">(</span><span class="nb">read</span><span class="p">)</span>
-</span><span class='line'>             <span class="p">(</span><span class="nv">yes</span> <span class="p">(</span><span class="nv">run-node</span> <span class="p">(</span><span class="nv">node-yes</span> <span class="nv">n</span><span class="p">)))</span>
-</span><span class='line'>             <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nv">run-node</span> <span class="p">(</span><span class="nv">node-no</span> <span class="nv">n</span><span class="p">)))))</span>
-</span><span class='line'>          <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nv">node-contents</span> <span class="nv">n</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And here&#8217;s an equivalent in Clojure:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">run-node</span> <span class="p">[</span><span class="nv">name</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nb">node </span>    <span class="p">(</span><span class="err">@</span><span class="nv">nodes</span> <span class="nv">name</span><span class="p">)</span>
-</span><span class='line'>        <span class="nv">contents</span> <span class="p">(</span><span class="nb">node </span><span class="ss">:contents</span><span class="p">)</span>
-</span><span class='line'>        <span class="nv">yes</span>      <span class="p">(</span><span class="nb">node </span><span class="ss">:yes</span><span class="p">)</span>
-</span><span class='line'>        <span class="nv">no</span>       <span class="p">(</span><span class="nb">node </span><span class="ss">:no</span><span class="p">)]</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="nv">yes</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">do</span>
-</span><span class='line'>        <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)</span>
-</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="s">&quot;yes&quot;</span> <span class="p">(</span><span class="nf">read-line</span><span class="p">))</span>
-</span><span class='line'>           <span class="p">(</span><span class="nf">run-node</span> <span class="nv">yes</span><span class="p">)</span>
-</span><span class='line'>           <span class="p">(</span><span class="nf">run-node</span> <span class="nv">no</span><span class="p">)))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Of course, there&#8217;s no reason to bother swapping and dereferencing an
-atom as long as the tree won&#8217;t need to change at runtime. This
-immutable version works just as well:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">defnode</span> <span class="p">[</span><span class="nv">nodes</span> <span class="nb">name </span><span class="nv">contents</span> <span class="o">&amp;</span> <span class="p">[</span><span class="nv">yes</span> <span class="nv">no</span><span class="p">]]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nb">assoc </span><span class="nv">nodes</span> <span class="nb">name </span><span class="p">{</span><span class="ss">:contents</span> <span class="nv">contents</span> <span class="ss">:yes</span> <span class="nv">yes</span> <span class="ss">:no</span> <span class="nv">no</span><span class="p">}))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-nodes</span> <span class="p">[]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nb">-&gt; </span><span class="p">{}</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:people</span> <span class="s">&quot;Is the person a man?&quot;</span> <span class="ss">:male</span> <span class="ss">:female</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:male</span> <span class="s">&quot;Is he living?&quot;</span> <span class="ss">:live</span> <span class="ss">:dead</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:dead</span> <span class="s">&quot;Was he from the USA?&quot;</span> <span class="ss">:USA</span> <span class="ss">:elsewhere</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:USA</span> <span class="s">&quot;Is he on a coin?&quot;</span> <span class="ss">:coin</span> <span class="ss">:no-coin</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:coin</span> <span class="s">&quot;Is the coin a penny?&quot;</span> <span class="ss">:penny</span> <span class="ss">:other-coin</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">defnode</span> <span class="ss">:penny</span> <span class="s">&quot;Abraham Lincoln.&quot;</span><span class="p">)))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">nodes</span> <span class="p">(</span><span class="nf">make-nodes</span><span class="p">))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">run-node</span> <span class="p">[</span><span class="nv">nodes</span> <span class="nv">name</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nb">node </span>    <span class="p">(</span><span class="nf">nodes</span> <span class="nv">name</span><span class="p">)</span>
-</span><span class='line'>        <span class="nv">contents</span> <span class="p">(</span><span class="nb">node </span><span class="ss">:contents</span><span class="p">)</span>
-</span><span class='line'>        <span class="nv">yes</span>      <span class="p">(</span><span class="nb">node </span><span class="ss">:yes</span><span class="p">)</span>
-</span><span class='line'>        <span class="nv">no</span>       <span class="p">(</span><span class="nb">node </span><span class="ss">:no</span><span class="p">)]</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="nv">yes</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">do</span>
-</span><span class='line'>        <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)</span>
-</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="s">&quot;yes&quot;</span> <span class="p">(</span><span class="nf">read-line</span><span class="p">))</span>
-</span><span class='line'>           <span class="p">(</span><span class="nf">run-node</span> <span class="nv">nodes</span> <span class="nv">yes</span><span class="p">)</span>
-</span><span class='line'>           <span class="p">(</span><span class="nf">run-node</span> <span class="nv">nodes</span> <span class="nv">no</span><span class="p">)))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Using a closure rolls the data structure and traversal code into one,
-by associating the <code>yes</code> and <code>no</code> fields with anonymous functions that
-handle the same logic as <code>run-node</code>. Here&#8217;s Graham&#8217;s CL version:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='common-lisp'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">defnode</span> <span class="p">(</span><span class="nv">name</span> <span class="nv">conts</span> <span class="k">&amp;optional</span> <span class="nv">yes</span> <span class="nv">no</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">name</span> <span class="vg">*nodes*</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">(</span><span class="k">if</span> <span class="nv">yes</span>
-</span><span class='line'>          <span class="err">#’</span><span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
-</span><span class='line'>              <span class="p">(</span><span class="nb">format</span> <span class="no">t</span> <span class="s">&quot;~A~%&gt;&gt; &quot;</span> <span class="nv">conts</span><span class="p">)</span>
-</span><span class='line'>              <span class="p">(</span><span class="nb">case</span> <span class="p">(</span><span class="nb">read</span><span class="p">)</span>
-</span><span class='line'>                <span class="p">(</span><span class="nv">yes</span> <span class="p">(</span><span class="nb">funcall</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">yes</span> <span class="vg">*nodes*</span><span class="p">)))</span>
-</span><span class='line'>                <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nb">funcall</span> <span class="p">(</span><span class="nb">gethash</span> <span class="nv">no</span> <span class="vg">*nodes*</span><span class="p">)))))</span>
-</span><span class='line'>          <span class="err">#’</span><span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="nv">conts</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And here&#8217;s mine in Clojure. The double-parens around <code>(@nodes yes)</code>
-and <code>(@nodes no)</code> call the anonymous function, instead of just
-returning it.</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">nodes</span> <span class="p">(</span><span class="nf">atom</span> <span class="p">{}))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">defclosure</span> <span class="p">[</span><span class="nb">name </span><span class="nv">contents</span> <span class="o">&amp;</span> <span class="p">[</span><span class="nv">yes</span> <span class="nv">no</span><span class="p">]]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">swap!</span> <span class="nv">nodes</span> <span class="nb">assoc </span><span class="nv">name</span>
-</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="nv">yes</span>
-</span><span class='line'>           <span class="p">(</span><span class="k">fn </span><span class="p">[]</span>
-</span><span class='line'>             <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)</span>
-</span><span class='line'>             <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="s">&quot;yes&quot;</span> <span class="p">(</span><span class="nf">read-line</span><span class="p">))</span>
-</span><span class='line'>               <span class="p">((</span><span class="err">@</span><span class="nv">nodes</span> <span class="nv">yes</span><span class="p">))</span>
-</span><span class='line'>               <span class="p">((</span><span class="err">@</span><span class="nv">nodes</span> <span class="nv">no</span><span class="p">))))</span>
-</span><span class='line'>           <span class="p">(</span><span class="k">fn </span><span class="p">[]</span>
-</span><span class='line'>             <span class="p">(</span><span class="nb">println </span><span class="nv">contents</span><span class="p">)))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-nodes</span> <span class="p">[]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:people</span> <span class="s">&quot;Is the person a man?&quot;</span> <span class="ss">:male</span> <span class="ss">:female</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:male</span> <span class="s">&quot;Is he living?&quot;</span> <span class="ss">:live</span> <span class="ss">:dead</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:dead</span> <span class="s">&quot;Was he from the USA?&quot;</span> <span class="ss">:USA</span> <span class="ss">:elsewhere</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:USA</span> <span class="s">&quot;Is he on a coin?&quot;</span> <span class="ss">:coin</span> <span class="ss">:no-coin</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:coin</span> <span class="s">&quot;Is the coin a penny?&quot;</span> <span class="ss">:penny</span> <span class="ss">:other-coin</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">defclosure</span> <span class="ss">:penny</span> <span class="s">&quot;Abraham Lincoln.&quot;</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now, traversing the tree is as simple as calling:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">((</span><span class="nf">nodes</span> <span class="ss">:people</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And watching the tree traverse itself. You can find my code from this
-post <a href="https://gist.github.com/ecmendenhall/5646594">here</a>. For more on closures in Lisp,
-check out the rest of <a href="http://lib.store.yahoo.net/lib/paulgraham/onlisp.pdf">Chapter 6</a>.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-19T21:31:00-05:00" data-updated="true" itemprop="datePublished">May 19<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/java/'>Java</a>, <a class='category' href='/blog/categories/tdd/'>TDD</a>, <a class='category' href='/blog/categories/testing-recipes/'>testing recipes</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/19/the-joy-of-exceptions/" itemprop="url">The Joy of Exceptions</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>One more recipe for the TDD cookbook before I move on to more
-interesting things. You might have noticed a new <code>GameOverException</code>
-and a try-catch block in the final example of my last post.</p>
-
-<p>Before adding a game over exception, methods that checked for final
-game states directly called <code>System.exit()</code>. Testing this proved
-difficult, and I ended up importing a <a href="http://stefanbirkner.github.io/system-rules/">third-party library</a> of extra
-JUnit rules. This week, I refactored them to throw a custom exception:</p>
-
-<figure class='code'><figcaption><span>TerminalView.java </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TerminalView</span> <span class="kd">implements</span> <span class="n">View</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">endGame</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{</span>
-</span><span class='line'>        <span class="k">throw</span> <span class="k">new</span> <span class="nf">GameOverException</span><span class="o">(</span><span class="s">&quot;Game over.&quot;</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This exception will bubble up until it&#8217;s caught in <code>Main</code>, which calls
-<code>System.exit()</code> on behalf of any method that throws a
-<code>GameOverException</code>.</p>
-
-<figure class='code'><figcaption><span>Main.java </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="n">View</span> <span class="n">view</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TerminalView</span><span class="o">();</span>
-</span><span class='line'>            <span class="n">GameController</span> <span class="n">controller</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GameController</span><span class="o">(</span><span class="n">view</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
-</span><span class='line'>            <span class="n">controller</span><span class="o">.</span><span class="na">setUp</span><span class="o">();</span>
-</span><span class='line'>            <span class="n">controller</span><span class="o">.</span><span class="na">startGame</span><span class="o">();</span>
-</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">GameOverException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This is not only a <a href="http://stackoverflow.com/questions/6171265/best-way-to-exit-a-program-when-i-want-an-exception-to-be-thrown">better practice</a>,
-but also provides a much better way to test methods that might detect
-a completed game—just add a try/catch block to the tests!</p>
-
-<p>Exceptions have come in handy elsewhere in my tests, too. Once the
-controller starts a game, there&#8217;s nothing to break the back-and-forth
-game loop but a win, draw, or error. Figuring out how to test game
-states without getting stuck in an infinite loop or loading up entire
-games was a challenge. &#8220;If only there
-were some special syntax for breaking normal control flow in special
-situations,&#8221; I wondered to myself more times than I&#8217;d like to admit.
-Well, duh—use exceptions!  My mock view objects throw a <code>NoSuchElementException</code> when their input
-queue runs empty. Catching this exception breaks the normal game flow
-and allows me to access game state as soon as the fake input I&#8217;m
-interested in has been sent to the controller. Here&#8217;s an example:</p>
-
-<figure class='code'><figcaption><span>GameControllerTest.java </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Test</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">controllerShouldPassErrorMessageToViewOnInvalidInput</span><span class="o">()</span><span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;invalid phrase&quot;</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputRecorder</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">controller</span><span class="o">.</span><span class="na">playRound</span><span class="o">();</span>
-</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchElementException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="n">outputRecorder</span><span class="o">.</span><span class="na">discardFirstNStrings</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;That&#39;s not a valid board location.&quot;</span><span class="o">,</span> <span class="n">output</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">clearInput</span><span class="o">();</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Normally, <code>Controller.playRound()</code> will continue querying players for
-moves until the game ends. But once this test catches the empty queue
-exception, it tests against the expected output, which should show an
-error message. Exceptions have proved extremely handy so far—as long as I remember
-that they&#8217;re in my control flow toolbox, too.</p>
 
 		
 		

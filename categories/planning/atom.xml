@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: planning | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/planning/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-06-17T01:15:22-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Making scope explicit]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/16/making-scope-explicit/"/>
+    <updated>2013-06-16T23:37:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/16/making-scope-explicit</id>
+    <content type="html"><![CDATA[<blockquote><p>As a young software engineer, I learned three variables by which to
+manage projects: speed, quality, and price. The sponsor gets to fix
+two of these variables and the team gets to estimate the third. If the
+plan is unacceptable, the negotiating starts.
+This model doesn't work well in practice. Time and costs are
+generally set outside the project. That leaves quality as the only
+variable you can manipulate. Lowering the quality of your work doesn't
+eliminate work, it just shifts it later so delays are not clearly your
+responsibility. You can create the illusion of progress this way, but
+you pay in reduced satisfaction and damaged relationships.
+Satisfaction comes from doing quality work.
+The variable left out of this model is scope. If we make scope explicit, then we have a safe
+way to adapt, we have a safe way to negotiate, we have a limit to
+ridiculous and unnecessary demands.</p></blockquote>
+
+<p>—Kent Beck, <a href="http://www.amazon.com/Extreme-Programming-Explained-Embrace-Edition/dp/0321278658/ref=sr_1_1?ie=UTF8&amp;qid=1371444145&amp;sr=8-1&amp;keywords=extreme+programming">Extreme Programming
+Explained</a></p>
+
+<p>I spent all last week working on my <a href="https://github.com/ecmendenhall/schtitt">web
+server</a>. It's a fun project
+so far, filled with the joy of taking something apart and looking
+inside to see how it works, but it's also been a challenge: I had a
+long checklist of features to implement and only a week to get them
+all working.</p>
+
+<p>Even though I was still frantically coding on the train to work the
+day of my demo, I managed to check off all the boxes. Like the 100% test
+coverage my project reported, 100% box coverage felt great—like the
+satisfaction of crossing the last item off a long to-do list. But as
+any test-driven developer knows, even 100% test coverage can't
+guarantee that a project will work. This week I learned that box coverage is the same: ticking
+off features is no guarantee of quality.</p>
+
+<p>Sure, my server met the requirements, but much of the code wasn't
+pretty, and I knew it. And though I was proud of the progress I made and looking
+forward to showing off my work, the demo went
+off the rails early on, when the server hung and crashed trying to handle
+concurrent connections. (If you're thinking of using <code>Thread.run()</code>,
+you probably want <code>Thread.start()</code>, by the way). In an instant, all
+the little details I'd put effort into—nice looking directory pages,
+support for extra headers and obscure content types, clean request
+parsing under the hood— were outweighed by one big defect.</p>
+
+<p>The attitude towards quality at 8th Light is clear: quality is
+non-negotiable, we will never ship software with known defects, and
+when an unknown one slips by, we'll fix it for free. That leaves scope
+as the only free variable in the planning and development process.
+Although the scope of my web server project was already explicit, I
+didn't do a good job negotiating. In retrospect, it's clear that
+showing a clean, stable server that only handles GET requests is a
+greater accomplishment than one with extra bells and whistles that's
+prone to random catastrophic failure. But it sure felt good to check
+  off all those boxes.</p>
+
+<p>I've learned two lessons over the last week: first, quality and stability matter most. Never sacrifice
+quality, and never ever tolerate unstable code. Second, renegotiating
+and giving feedback is part of making scope explicit. Trading off
+  quality for features is guaranteed to be a bad bargain.</p>
+]]></content>
+  </entry>
+  
+</feed>
