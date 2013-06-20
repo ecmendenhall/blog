@@ -106,7 +106,7 @@ macro that wraps calls to
 <code>?&lt;-</code> in <code>with-log-level</code> to
 quiet down Hadoop:</p>
 
-<pre><code>  (require '[cascalog.io :refer [with-log-level])
+<pre><code>  (require '[cascalog.io :refer [with-log-level]])
   (defmacro ?&lt;-- [&amp; forms] `(with-log-level :fatal (?&lt;- ~@forms)))
 </code></pre>
 
