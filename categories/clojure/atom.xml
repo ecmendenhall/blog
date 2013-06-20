@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Clojure | Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/categories/clojure/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-06-17T01:15:22-05:00</updated>
+  <updated>2013-06-19T21:47:52-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -12,6 +12,39 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Quieter Cascalog]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/19/quieter-cascalog/"/>
+    <updated>2013-06-19T21:23:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/19/quieter-cascalog</id>
+    <content type="html"><![CDATA[<p>Tonight I attended a meetup on <a href="http://cascalog.org/">Cascalog</a>, a clojure DSL built on top of the <a href="https://en.wikipedia.org/wiki/Hadoop">Hadoop</a> map-reduce framework. (Slides <a href="https://docs.google.com/presentation/d/1DPD1v2sDwJ0G1LkvDwSzg9H4y26ce6j1l1zeu8t1FLo/edit?pli=1#slide=id.geccfa070_076">here</a> and code <a href="https://github.com/chairmanK/cascalog-workshop">here</a> if you'd like to check it out yourself).</p>
+
+<p>Running huge, complicated queries with a few lines of code was
+awesome, but my Hadoop installation made a lot of noise whenever I
+tried a query in the REPL using the <code>?&lt;-</code> query executor, printing
+lots of unwanted log info to
+stdout. (I was using Hadoop
+installed over homebrew
+instead of the
+<a href="https://github.com/chairmanK/cascalog-workshop">readme</a>
+recommendation).
+Fortunately, it's easy to
+hush the logger a little by
+running queries inside
+<code>cascalog.io/with-log-level</code>.
+Here's a quick two-line
+macro that wraps calls to
+<code>?&lt;-</code> in <code>with-log-level</code> to
+quiet down Hadoop:</p>
+
+<pre><code>  (require '[cascalog.io :refer [with-log-level])
+  (defmacro ?&lt;-- [&amp; forms] `(with-log-level :fatal (?&lt;- ~@forms)))
+</code></pre>
+
+<p>For future reference, you can find a gist <a href="https://gist.github.com/ecmendenhall/5819322">here</a>.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Reconstructing Clojure macros with speclj]]></title>

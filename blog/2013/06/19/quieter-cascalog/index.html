@@ -3,11 +3,11 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>Category: Clojure - Connor Mendenhall</title>
+	<title>Quieter Cascalog - Connor Mendenhall</title>
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Category: Clojure">
+	<meta name="description" content="Quieter Cascalog Tonight I attended a meetup on Cascalog, a clojure DSL built on top of the Hadoop map-reduce framework. (Slides here and code here &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -17,7 +17,7 @@
 
 	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
 	
-	<link rel="canonical" href="http://ecmendenhall.github.io/blogcategories/clojure/">
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/06/19/quieter-cascalog/">
 	<link href="/blog/favicon.png" rel="shortcut icon">
 	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
 	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -84,87 +84,56 @@
 				
 			
 			<div class="mid-col-container">
-				<div id="content" class="inner">
-	
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Quieter Cascalog</h1>
+	<div class="entry-content" itemprop="articleBody"><p>Tonight I attended a meetup on <a href="http://cascalog.org/">Cascalog</a>, a clojure DSL built on top of the <a href="https://en.wikipedia.org/wiki/Hadoop">Hadoop</a> map-reduce framework. (Slides <a href="https://docs.google.com/presentation/d/1DPD1v2sDwJ0G1LkvDwSzg9H4y26ce6j1l1zeu8t1FLo/edit?pli=1#slide=id.geccfa070_076">here</a> and code <a href="https://github.com/chairmanK/cascalog-workshop">here</a> if you&#8217;d like to check it out yourself).</p>
 
+<p>Running huge, complicated queries with a few lines of code was
+awesome, but my Hadoop installation made a lot of noise whenever I
+tried a query in the REPL using the <code>?&lt;-</code> query executor, printing
+lots of unwanted log info to
+stdout. (I was using Hadoop
+installed over homebrew
+instead of the
+<a href="https://github.com/chairmanK/cascalog-workshop">readme</a>
+recommendation).
+Fortunately, it&#8217;s easy to
+hush the logger a little by
+running queries inside
+<code>cascalog.io/with-log-level</code>.
+Here&#8217;s a quick two-line
+macro that wraps calls to
+<code>?&lt;-</code> in <code>with-log-level</code> to
+quiet down Hadoop:</p>
 
-	
-	
-	<section class="archives"><h1 class="year">2013</h1>
+<pre><code>  (require '[cascalog.io :refer [with-log-level])
+  (defmacro ?&lt;-- [&amp; forms] `(with-log-level :fatal (?&lt;- ~@forms)))
+</code></pre>
 
-<article itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<span class="date"><time datetime="2013-06-19T21:23:00-05:00" itemprop="datePublished">Jun 19</time></span>
-		<br>
-		<span class="tags">
+<p>For future reference, you can find a gist <a href="https://gist.github.com/ecmendenhall/5819322">here</a>.</p>
+</div>
 
-
-	<a class='category' href='/blog/categories/cascalog/'>Cascalog</a>, <a class='category' href='/blog/categories/clojure/'>Clojure</a>
-
-
-</span>
-	    
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/19/quieter-cascalog/">Quieter Cascalog</a></h1>
 </article>
 
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
 	
-
-
-<article itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<span class="date"><time datetime="2013-05-27T17:01:00-05:00" itemprop="datePublished">May 27</time></span>
-		<br>
-		<span class="tags">
-
-
-	<a class='category' href='/blog/categories/clojure/'>Clojure</a>, <a class='category' href='/blog/categories/macros/'>macros</a>, <a class='category' href='/blog/categories/speclj/'>speclj</a>
-
-
-</span>
-	    
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/27/learning-clojure-macros-with-speclj/">Reconstructing Clojure macros with speclj</a></h1>
-</article>
-
 	
-
-
-<article itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<span class="date"><time datetime="2013-05-25T12:38:00-05:00" itemprop="datePublished">May 25</time></span>
-		<br>
-		<span class="tags">
-
-
-	<a class='category' href='/blog/categories/clojure/'>Clojure</a>, <a class='category' href='/blog/categories/lisp/'>Lisp</a>
-
-
-</span>
-	    
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/25/network-closures-in-clojure/">Network closures in Clojure</a></h1>
-</article>
-
+	<a class="addthis_button_tweet"></a>
 	
-
-
-<article itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<span class="date"><time datetime="2013-05-12T14:26:00-05:00" itemprop="datePublished">May 12</time></span>
-		<br>
-		<span class="tags">
-
-
-	<a class='category' href='/blog/categories/clojure/'>Clojure</a>, <a class='category' href='/blog/categories/incanter/'>Incanter</a>
-
-
-</span>
-	    
+	
+	<a class="addthis_counter addthis_pill_style"></a>
 	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/12/estimating-pi-with-incanter-monte-carlo-methods/">Estimating Pi with Incanter and Monte Carlo Methods</a></h1>
-</article>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
 
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
 </div>
 			</div>
 			<footer id="footer" class="inner"><p>
@@ -186,7 +155,10 @@ Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Sha
       var disqus_shortname = 'ecmgithub';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/06/19/quieter-cascalog/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/06/19/quieter-cascalog/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
