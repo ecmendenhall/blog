@@ -1,0 +1,424 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Breadth-first numbering: Functional queues - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Breadth-first Numbering: Functional Queues I spent some time this weekend (okay fine, most of Saturday and
+Sunday afternoon) on an exercise Michael &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-functional-queues/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Breadth-first Numbering: Functional Queues</h1>
+	<div class="entry-content" itemprop="articleBody"><p>I spent some time this weekend (okay fine, most of Saturday and
+Sunday afternoon) on an exercise <a href="https://twitter.com/Twernmilt">Michael
+Baker</a> shared on our &#8220;geeks&#8221; mailing
+list. The problem is a <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">functional
+pearl</a>
+from Chris Okasaki: given a binary tree, reproduce a structurally
+identical tree with its nodes numbered in breadth-first order.</p>
+
+<p>For example, numbering this tree:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>_       a
+</span><span class='line'>       / \
+</span><span class='line'>      /   \
+</span><span class='line'>    b       d
+</span><span class='line'>   / \     / \
+</span><span class='line'>  .   c   .   .
+</span><span class='line'>     / \
+</span><span class='line'>    .   .</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Should yield this tree:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>_       1
+</span><span class='line'>       / \
+</span><span class='line'>      /   \
+</span><span class='line'>    2       3
+</span><span class='line'>   / \     / \
+</span><span class='line'>  .   4   .   .
+</span><span class='line'>     / \
+</span><span class='line'>    .   .</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you&#8217;ve ever solved a search problem, this might sound stupid easy.
+But getting the details of a functional solution right can be a challenge. As Okasaki
+puts it in <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">the paper</a>:</p>
+
+<blockquote><p>…I presented the problem to many other
+functional programmers and was continually amazed at the
+baroque solutions I received in reply. With only a single
+exception, everyone who came near a workable answer went
+in a very different direction from my solution right from the
+very beginning of the design process. I gradually realized
+that I was witnessing some sort of mass mental block, a
+communal blind spot, that was steering programmers away
+from what seemed to be a very natural solution.</p></blockquote>
+
+<p>Before you read my baroque solution, you might want to try for
+yourself. I&#8217;ll wait.</p>
+
+<p>Although I love Clojure, using built-in <a href="http://stackoverflow.com/questions/2493996/hidden-features-of-clojure">queues</a>
+and <a href="http://clojure.org/lazy">lazy seqs</a> felt like cheating. So I chose
+to use <a href="http://racket-lang.org/">Racket</a> with
+<a href="http://docs.racket-lang.org/rackunit/api.html#%28part._.Checks%29">Rackunit</a>,
+and tried to use as many primitives as possible.</p>
+
+<p>Breadth-first traversal is easy with a queue, but an efficient
+functional queue can be tricky. Consing an element to the front of a
+Scheme list is cheap, but appending is expensive—it requires &#8220;cdring
+down&#8221; over all the elements. One solution (cribbed from <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.47.8825">Okasaki
+himself</a>)
+is to represent a queue as a pair of lists. The list on the left is
+the head of the queue, so elements can be popped of in O(1) time. The
+right side represents the rest of the elements <em>in reverse</em>, so
+elements can be pushed on to the end in constant time. Here are the first
+steps towards an implementation: an empty queue with left and right selectors.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">simple-q</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">empty-queue</span> <span class="o">&#39;</span><span class="p">(()()))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="nv">empty-queue</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">())</span>
+</span><span class='line'>              <span class="s">&quot;An empty queue is a list containing two empty lists.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">right-side</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;The right side of a queue is the second list.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">left-side</span> <span class="p">(</span><span class="k">lambda </span> <span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">car </span><span class="nv">queue</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;The left side of a queue is the first list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Inserting an item conses it on to the right-side list:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">insert</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="nv">item</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">insert</span> <span class="mi">7</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">7</span> <span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;Inserting an element adds it to the beginning of the</span>
+</span><span class='line'><span class="s">              right side list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To dequeue an item, &#8220;remove&#8221; it from the left side with <code>car</code>, and
+return a new queue, with the <code>cdr</code> of the left side list:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">remove</span>
+</span><span class='line'> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>              <span class="s">&quot;Removing an element returns a pair: the removed</span>
+</span><span class='line'><span class="s">               element and the new queue.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When the left side is out of elements, reverse the right side list,
+and swap it with the left. Here&#8217;s the buildup to <code>swap-and-reverse-car</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">swap</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">swap</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;The right side and left side can be swapped.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">reverse</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))</span>
+</span><span class='line'>        <span class="nv">items</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">simple-q</span><span class="p">))</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;A list&#39;s elements can be reversed.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">reverse-car</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">))</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">reverse-car</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">2</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span> <span class="mi">4</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;The first item in a list can be reversed.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">swap-and-reverse-car</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nf">reverse-car</span> <span class="p">(</span><span class="nf">swap</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">swap-and-reverse-car</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span> <span class="p">())</span>
+</span><span class='line'>              <span class="s">&quot;Swap and reverse-car can be composed to swap sides,</span>
+</span><span class='line'><span class="s">              then reverse the left.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we can write a dequeue function that really works:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">remove</span>
+</span><span class='line'>   <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>         <span class="p">(</span><span class="nf">remove</span> <span class="p">(</span><span class="nf">swap-and-reverse-car</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>         <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">4</span> <span class="p">((</span><span class="mi">5</span> <span class="mi">6</span><span class="p">)</span> <span class="p">()))</span>
+</span><span class='line'>              <span class="s">&quot;To remove an element when the left side is empty, swap</span>
+</span><span class='line'><span class="s">              and reverse, then try again.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>              <span class="s">&quot;Removing an element returns a pair: the removed element</span>
+</span><span class='line'><span class="s">              and the new queue.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&#8217;s all it takes to build a simple functional queue. Unfortunately,
+it&#8217;s not very efficient. Reversing a list is the kind of O(n)
+operation we built our queue to avoid in the first place, but if many
+more items are inserted than removed, we&#8217;ll end up reversing and
+swapping a lot. We can do better—and I&#8217;ll explain how in my next post.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-functional-queues/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-functional-queues/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

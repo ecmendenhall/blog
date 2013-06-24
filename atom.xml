@@ -4,7 +4,7 @@
   <title><![CDATA[Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-06-20T09:12:31-05:00</updated>
+  <updated>2013-06-24T13:46:51-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -12,6 +12,1174 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Breadth-first numbering: A solution]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-a-solution/"/>
+    <updated>2013-06-24T12:00:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-a-solution</id>
+    <content type="html"><![CDATA[<p>Now that we&#8217;ve built an <a href="blog/2013/06/24/breadth-first-numbering-a-lazy-functional-queue/">efficient functional
+queue</a>,
+we can finally put it to work in a breadth-first numbering solution.</p>
+
+<p>First, let&#8217;s define a few trees up front for testing. The first is the
+example given in the introduction of <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">the
+paper</a>.
+The other two are a little trickier, and the twelve-node tree is not binary.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">example-tree</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                     <span class="s">&quot;leaf&quot;</span><span class="p">))</span>
+</span><span class='line'>                           <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                            <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">five-nodes</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                   <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                              <span class="p">(</span><span class="s">&quot;E&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                   <span class="s">&quot;leaf&quot;</span><span class="p">))</span>
+</span><span class='line'>                         <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                              <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">twelve-nodes</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                           <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="p">(</span><span class="s">&quot;F&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                          <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                     <span class="p">(</span><span class="s">&quot;G&quot;</span> <span class="p">(</span><span class="s">&quot;I&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                               <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                          <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                     <span class="p">(</span><span class="s">&quot;H&quot;</span> <span class="p">(</span><span class="s">&quot;J&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                               <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                               <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                          <span class="p">(</span><span class="s">&quot;K&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                          <span class="p">(</span><span class="s">&quot;L&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'>                                <span class="p">(</span><span class="s">&quot;E&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To calculate the visit order, we can perform a simple <a href="https://en.wikipedia.org/wiki/Breadth-first_search">breadth-first
+traversal</a> of the
+tree. Now that we have a queue, the solution is pretty close to the pseudocode: Start with the
+root node in the queue, and assign it a number. Then recur with three
+new parameters: A queue with this node&#8217;s children inserted, a list
+with this node&#8217;s number consed on, and an incremented node number.
+When the queue is empty, we&#8217;re done:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">visit-order</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">tree</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">define </span><span class="nv">bfs-iter</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span> <span class="nv">visited</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">))</span> <span class="nv">visited</span>
+</span><span class='line'>            <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">node</span>  <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">)))</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nf">new-q</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">)))))</span>
+</span><span class='line'>              <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">equal? </span><span class="s">&quot;leaf&quot;</span> <span class="nv">node</span><span class="p">)</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nf">bfs-iter</span> <span class="nv">new-q</span> <span class="nv">visited</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nf">bfs-iter</span> <span class="p">(</span><span class="nf">ins-items</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">node</span><span class="p">)</span> <span class="nv">new-q</span><span class="p">)</span>
+</span><span class='line'>                            <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">car </span><span class="nv">node</span><span class="p">)</span> <span class="nv">n</span><span class="p">)</span> <span class="nv">visited</span><span class="p">)</span>
+</span><span class='line'>                            <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">n</span><span class="p">)))))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">bfs-iter</span> <span class="p">(</span><span class="nf">ins</span> <span class="nv">tree</span> <span class="nv">empty-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">()</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span>  <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">example-tree</span><span class="p">)</span>
+</span><span class='line'>              <span class="o">&#39;</span><span class="p">((</span><span class="s">&quot;C&quot;</span> <span class="o">.</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;B&quot;</span><span class="o">.</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="o">.</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;Visit-order searches a tree breadth-first and returns a</span>
+</span><span class='line'><span class="s">              list of nodes and their numbers.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span>  <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">five-nodes</span><span class="p">)</span>
+</span><span class='line'>              <span class="o">&#39;</span><span class="p">((</span><span class="s">&quot;E&quot;</span> <span class="o">.</span> <span class="mi">5</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="o">.</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="o">.</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="o">.</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span>   <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">twelve-nodes</span><span class="p">)</span>
+</span><span class='line'>               <span class="o">&#39;</span><span class="p">((</span><span class="s">&quot;L&quot;</span> <span class="o">.</span> <span class="mi">12</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;K&quot;</span> <span class="o">.</span> <span class="mi">11</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;J&quot;</span> <span class="o">.</span> <span class="mi">10</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;I&quot;</span> <span class="o">.</span> <span class="mi">9</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;H&quot;</span> <span class="o">.</span> <span class="mi">8</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;G&quot;</span> <span class="o">.</span> <span class="mi">7</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;F&quot;</span> <span class="o">.</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class='line'>                 <span class="p">(</span><span class="s">&quot;E&quot;</span> <span class="o">.</span> <span class="mi">5</span><span class="p">)</span>  <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="o">.</span> <span class="mi">4</span><span class="p">)</span>  <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span>  <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="o">.</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="o">.</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>               <span class="s">&quot;Visit-order works on non-binary trees.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s possible to map a visit queue back to a binary tree (check out
+ Michael&#8217;s <a href="https://gist.github.com/MichaelBaker/5810053">concise Haskell
+ solution</a>), but I
+ wanted a solution that would work for all trees. In the end, I settled for performing a second <a href="https://en.wikipedia.org/wiki/Depth-first_search">depth-first
+ traversal</a>
+to label nodes. This <code>walk-map</code> function works like a recursive <code>map</code>,
+ traversing a nested structure and applying a function to every
+ element that&#8217;s not a list:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">walk-map</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">func</span> <span class="nv">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">define </span><span class="nv">apply-or-map</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">cond </span><span class="p">((</span><span class="nb">null? </span><span class="nv">item</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">())</span>
+</span><span class='line'>              <span class="p">((</span><span class="nb">pair? </span><span class="nv">item</span><span class="p">)</span> <span class="p">(</span><span class="nb">map </span><span class="nv">apply-or-map</span> <span class="nv">item</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="k">else </span><span class="p">(</span><span class="nf">func</span> <span class="nv">item</span><span class="p">)))))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">map </span><span class="nv">apply-or-map</span> <span class="nv">items</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span>  <span class="p">(</span><span class="nf">walk-map</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">i</span><span class="p">)</span> <span class="p">(</span><span class="k">cond </span><span class="p">((</span><span class="nb">= </span><span class="nv">i</span> <span class="mi">1</span><span class="p">)</span> <span class="s">&quot;one&quot;</span><span class="p">)</span> <span class="p">((</span><span class="nb">= </span><span class="nv">i</span> <span class="mi">2</span><span class="p">)</span> <span class="s">&quot;two&quot;</span><span class="p">)</span> <span class="p">((</span><span class="nb">= </span><span class="nv">i</span> <span class="mi">3</span><span class="p">)</span> <span class="s">&quot;three&quot;</span><span class="p">)</span> <span class="p">))</span>
+</span><span class='line'>              <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">2</span> <span class="p">(</span><span class="mi">3</span> <span class="p">(</span><span class="mi">1</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">1</span> <span class="mi">3</span><span class="p">))))</span>
+</span><span class='line'>              <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;one&quot;</span> <span class="s">&quot;two&quot;</span> <span class="p">(</span><span class="s">&quot;one&quot;</span> <span class="s">&quot;one&quot;</span> <span class="s">&quot;two&quot;</span> <span class="p">(</span><span class="s">&quot;three&quot;</span> <span class="p">(</span><span class="s">&quot;one&quot;</span> <span class="p">(</span><span class="s">&quot;two&quot;</span><span class="p">)</span><span class="s">&quot;two&quot;</span><span class="p">)</span> <span class="s">&quot;one&quot;</span> <span class="s">&quot;three&quot;</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here&#8217;s a convenience function to store node order in a hash set:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">make-label-map</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">labels</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">label-map</span> <span class="p">(</span><span class="nf">make-hash</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">define </span><span class="nv">add-labels</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">labels</span><span class="p">)</span>
+</span><span class='line'>          <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">labels</span><span class="p">)</span>
+</span><span class='line'>              <span class="nv">label-map</span>
+</span><span class='line'>              <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">node</span>   <span class="p">(</span><span class="nb">car </span> <span class="p">(</span><span class="nb">car </span><span class="nv">labels</span><span class="p">)))</span>
+</span><span class='line'>                    <span class="p">(</span><span class="nf">number</span> <span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">car </span><span class="nv">labels</span><span class="p">))))</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">hash-set!</span> <span class="nv">label-map</span> <span class="nv">node</span> <span class="nv">number</span><span class="p">)</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">add-labels</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">labels</span><span class="p">))))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-labels</span> <span class="nv">labels</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">label-map</span> <span class="p">(</span><span class="nf">make-label-map</span> <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">example-tree</span><span class="p">))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="s">&quot;A&quot;</span><span class="p">)</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="s">&quot;B&quot;</span><span class="p">)</span> <span class="mi">2</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="s">&quot;C&quot;</span><span class="p">)</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="s">&quot;D&quot;</span><span class="p">)</span> <span class="mi">3</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And at long last, a solution for breadth-first numbering: calculate
+node order, then map over the tree to apply the labels:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">number-tree</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">tree</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">label-map</span> <span class="p">(</span><span class="nf">make-label-map</span> <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">tree</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">walk-map</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">node</span><span class="p">)</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">equal? </span><span class="s">&quot;leaf&quot;</span> <span class="nv">node</span><span class="p">)</span>
+</span><span class='line'>                                   <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                               <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="nv">node</span><span class="p">)))</span>
+</span><span class='line'>                <span class="nv">tree</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">number-tree</span> <span class="nv">example-tree</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">(</span><span class="mi">2</span> <span class="s">&quot;leaf&quot;</span> <span class="p">(</span><span class="mi">4</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">))</span> <span class="p">(</span><span class="mi">3</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">number-tree</span> <span class="nv">five-nodes</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">(</span><span class="mi">2</span> <span class="p">(</span><span class="mi">4</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)</span> <span class="p">(</span><span class="mi">5</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">))</span> <span class="p">(</span><span class="mi">3</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">number-tree</span> <span class="nv">twelve-nodes</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span>
+</span><span class='line'>                                           <span class="p">(</span><span class="mi">2</span> <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                           <span class="p">(</span><span class="mi">3</span>
+</span><span class='line'>                                              <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                              <span class="p">(</span><span class="mi">4</span>
+</span><span class='line'>                                                <span class="p">(</span><span class="mi">6</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                                   <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                <span class="p">(</span><span class="mi">7</span> <span class="p">(</span><span class="mi">9</span>     <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                                          <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                   <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                <span class="p">(</span><span class="mi">8</span> <span class="p">(</span><span class="mi">10</span>    <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                                          <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                                          <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                   <span class="p">(</span><span class="mi">11</span>    <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                   <span class="p">(</span><span class="mi">12</span>    <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'>                                              <span class="p">(</span><span class="mi">5</span>   <span class="s">&quot;leaf&quot;</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On the plus side, this solution generalizes to non-binary trees, and
+is built almost entirely out of Scheme primitives. It&#8217;s not as concise
+or efficient as I&#8217;d like, but I&#8217;m happy with my lazy lists and
+functional queue, even if the implementation is a little long. You can
+find an edited version of my solution
+<a href="https://gist.github.com/ecmendenhall/5847792">here</a>, and all the code
+from these posts as a Gist <a href="https://gist.github.com/ecmendenhall/5847793">here</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Breadth-first numbering: A lazy functional queue]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-a-lazy-functional-queue/"/>
+    <updated>2013-06-24T00:22:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-a-lazy-functional-queue</id>
+    <content type="html"><![CDATA[<p>On the way to a <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">breadth-first
+numbering</a>
+solution, I&#8217;ve built a simple functional queue and <a href="http://ecmendenhall.github.io/blog/2013/06/24/breadth-first-numbering-lazy-lists/">created lazy
+lists</a>
+from Scheme primitives (and a couple handy macros). In this post,
+I&#8217;ll bring the pieces together to create an improved queue. (And yes,
+I promise I&#8217;ll actually start numbering trees sometime soon).</p>
+
+<p>Our simple queue consisted of two lists: one for the head of the
+queue, and a reversed one for the tail:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">5</span> <span class="mi">4</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Our improved queue makes two changes: lazy lists and incremental
+reversal. It will look like this:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="o">&#39;</span><span class="p">(((</span><span class="mi">1</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">me/bfs/queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">((</span><span class="mi">5</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">me/bfs/queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span> <span class="o">.</span> <span class="mi">2</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This looks a little complicated, but just like the simple queue, it&#8217;s also a list of a head and
+reversed tail, with each side storing the length of the associated
+list. This equivalent is a little simpler:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="o">&#39;</span><span class="p">((</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">5</span> <span class="mi">4</span><span class="p">))</span> <span class="o">.</span> <span class="mi">2</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To start implementing the improvements, we need to update the
+selectors to get the lists and lengths from both sides:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">empty-q</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cons </span><span class="o">&#39;</span><span class="p">()</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="o">&#39;</span><span class="p">()</span> <span class="mi">0</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">five-items</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span><span class="p">))</span> <span class="mi">3</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lhs-len</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">lhs-len</span> <span class="nv">five-items</span><span class="p">)</span> <span class="mi">2</span>
+</span><span class='line'>              <span class="s">&quot;Our lazy queue stores the length of the lists on each side.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rhs-len</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">rhs-len</span> <span class="nv">five-items</span><span class="p">)</span> <span class="mi">3</span>
+</span><span class='line'>              <span class="s">&quot;Our lazy queue stores the length of the lists on each side.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lhs-list</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">five-items</span><span class="p">))</span> <span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rhs-list</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">five-items</span><span class="p">))</span> <span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we can write an updated insert function:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">ins</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>          <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">lcons</span> <span class="nv">item</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>                <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="p">(</span><span class="nf">rhs-len</span> <span class="nv">queue</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">three-items</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">six-items</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">6</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">5</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">))))))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">three-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">3</span> <span class="mi">2</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">six-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>                    <span class="s">&quot;Ins adds elements to the right side.&quot;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Remove is a little more complicated. In the simple queue, we simply
+swapped and reversed the right side. We want our improved queue to
+avoid reversing long right side lists. The solution is <em>incremental
+reversal</em>: rebalance the queue every time an element is removed.</p>
+
+<p>In <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.47.8825">Okasaki&#8217;s implementation</a>,
+this is done with functions called <code>make-queue</code> and <code>rotate</code>. Below
+are my Scheme translations.</p>
+
+<p><code>Rotate</code> reverses the right side list and concatenates it to the left.
+ It&#8217;s similar to the simple queue implementation, but it uses lazy
+ list operators and it&#8217;s designed to work incrementally:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rotate</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">left</span> <span class="nv">right</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">define </span><span class="nv">rotate-recur</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">left</span> <span class="nv">right</span> <span class="nv">accumulator</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">left</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">lcar</span> <span class="nv">right</span><span class="p">)</span> <span class="nv">accumulator</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">lcar</span> <span class="nv">left</span><span class="p">)</span> <span class="p">(</span><span class="nf">rotate-recur</span> <span class="p">(</span><span class="nf">lcdr</span> <span class="nv">left</span><span class="p">)</span>
+</span><span class='line'>                                             <span class="p">(</span><span class="nf">lcdr</span> <span class="nv">right</span><span class="p">)</span>
+</span><span class='line'>                                             <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">lcar</span> <span class="nv">right</span><span class="p">)</span> <span class="nv">accumulator</span><span class="p">))))))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">rotate-recur</span> <span class="nv">left</span> <span class="nv">right</span> <span class="o">&#39;</span><span class="p">())))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">rotated</span> <span class="p">(</span><span class="nf">rotate</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">five-items</span><span class="p">)</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">five-items</span><span class="p">))))</span>
+</span><span class='line'>     <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">5</span> <span class="nv">rotated</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">5</span> <span class="mi">4</span> <span class="mi">3</span><span class="p">)</span>
+</span><span class='line'>                    <span class="s">&quot;Rotate reverses the right side list and concatenates it to the left.&quot;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>Make-queue</code> implements the incremental reversal logic. Now, we no
+longer wait until the head list is empty to swap and reverse. Instead,
+we rotate the queue as soon as the tail list contains one more element
+than the head. This keeps the queue balanced, and ensures that we
+won&#8217;t run into an expensive reversal:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">make-queue</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">left</span> <span class="nv">right</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt;= </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">right</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">left</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="nv">left</span> <span class="nv">right</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">rotate</span> <span class="p">(</span><span class="nb">car </span><span class="nv">left</span><span class="p">)</span>
+</span><span class='line'>                            <span class="p">(</span><span class="nb">car </span><span class="nv">right</span><span class="p">))</span>
+</span><span class='line'>                    <span class="p">(</span><span class="nb">+ </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">left</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">right</span><span class="p">)))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nb">cons </span><span class="o">&#39;</span><span class="p">()</span> <span class="mi">0</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">rebalanced</span> <span class="p">(</span><span class="nf">make-queue</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">five-items</span><span class="p">)</span>
+</span><span class='line'>                              <span class="p">(</span><span class="nf">right-side</span> <span class="nv">five-items</span><span class="p">))))</span>
+</span><span class='line'> <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">5</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">rebalanced</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">5</span> <span class="mi">4</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'> <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">rebalanced</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">()</span>
+</span><span class='line'>               <span class="s">&quot;Make-queue rebalances the queue when the right side is longer than the left.&quot;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To maintain a balanced queue, we&#8217;ll want to call <code>make-queue</code> on
+insertion and removal. Here&#8217;s an improved insert, and a new remove:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">ins</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">make-queue</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>                <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">lcons</span> <span class="nv">item</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>                      <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="p">(</span><span class="nf">rhs-len</span> <span class="nv">queue</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">three-items</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">six-items</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">6</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">5</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">))))))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">three-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">six-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">six-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>                <span class="s">&quot;Ins adds elements to the right side and </span>
+</span><span class='line'><span class="s">                 rebalances if it&#39;s longer than the left.&quot;</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rem</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">queue</span><span class="p">)))</span>
+</span><span class='line'>        <span class="o">&#39;</span><span class="p">()</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">make-queue</span> <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">lcdr</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)))</span>
+</span><span class='line'>                                      <span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nf">lhs-len</span> <span class="nv">queue</span><span class="p">)</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>                          <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">removed</span> <span class="p">(</span><span class="nf">rem</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">)))))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="nv">removed</span><span class="p">)</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="p">(</span><span class="nb">cadr </span><span class="nv">removed</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">1</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="p">(</span><span class="nb">cadr </span><span class="nv">removed</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>                <span class="s">&quot;Rem returns a pair: the element removed</span>
+</span><span class='line'><span class="s">                 from the queue and the new queue.&quot;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Finally, let&#8217;s add a couple convenience functions to insert and remove
+multiple items:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">ins-items</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">items</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">queue</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">ins-items</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">)</span> <span class="p">(</span><span class="nf">ins</span> <span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">)</span> <span class="nv">queue</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">seven-items</span> <span class="p">(</span><span class="nf">ins-items</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span><span class="p">)</span> <span class="nv">empty-q</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">7</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">seven-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span><span class="p">)</span>
+</span><span class='line'>                <span class="s">&quot;Ins-items adds multiple items to the queue.&quot;</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rem-n</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">n</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">define </span><span class="nv">rem-n-iter</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">n</span> <span class="nv">queue</span> <span class="nv">items</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">reverse </span><span class="nv">items</span><span class="p">)</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="nf">rem-n-iter</span> <span class="p">(</span><span class="nb">- </span><span class="nv">n</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>                        <span class="p">(</span><span class="nb">car </span> <span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">)))</span>
+</span><span class='line'>                        <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">))</span> <span class="nv">items</span><span class="p">)))))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">rem-n-iter</span> <span class="nv">n</span> <span class="nv">queue</span> <span class="o">&#39;</span><span class="p">())))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">remove-four</span> <span class="p">(</span><span class="nf">rem-n</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">ins-items</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span><span class="p">)</span> <span class="nv">empty-q</span><span class="p">))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="nv">remove-four</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">+ </span><span class="p">(</span><span class="nf">lhs-len</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">remove-four</span><span class="p">))</span>
+</span><span class='line'>                   <span class="p">(</span><span class="nf">rhs-len</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">remove-four</span><span class="p">)))</span> <span class="mi">3</span>
+</span><span class='line'>                <span class="s">&quot;Rem-n returns a list of removed items and the new queue.&quot;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Next time, we&#8217;ll finally bring everything together to solve the
+breadth-first numbering problem.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Breadth-first numbering: Lazy lists]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-lazy-lists/"/>
+    <updated>2013-06-24T00:15:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-lazy-lists</id>
+    <content type="html"><![CDATA[<p>In my <a href="http://ecmendenhall.github.io/blog/2013/06/24/breadth-first-numbering-functional-queues/">last
+post</a>,
+I wrote a simple functional queue as a stepping stone towards a
+<a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">breadth-first-numbering</a>
+solution. By using an ordered and reversed list to represent the front
+and back of the queue, it&#8217;s cheap and easy to enqueue and dequeue
+items. A simple queue is fine for this toy example, but it&#8217;s
+inefficient, since it requires reversing the tail list whenever the
+head list is empty. We can do better with two improvements: lazy lists
+and incremental reversal.</p>
+
+<p>Clojure&#8217;s lazy seqs seemed powerful and mysterious until I read
+through <a href="https://mitpress.mit.edu/sicp/full-text/book/book-Z-H-24.html#%_sec_3.5">chapter
+3</a>
+of SICP. Building a lazy list is based on two simple operations,
+<code>delay</code> and <code>force</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define-syntax </span><span class="nv">delay</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">syntax-rules </span><span class="p">()</span>
+</span><span class='line'>    <span class="p">((</span><span class="k">delay </span><span class="nv">form</span><span class="p">)</span> <span class="p">(</span><span class="k">lambda </span><span class="p">()</span> <span class="nv">form</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">force</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">delayed</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">delayed</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">add-ones</span> <span class="p">(</span><span class="k">delay </span><span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">1</span><span class="p">))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-pred</span> <span class="nv">procedure?</span> <span class="nv">add-ones</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">force </span><span class="nv">add-ones</span><span class="p">)</span> <span class="mi">2</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>Delay</code> wraps a form in an anonymous function of no arguments. It can
+be stored and passed around like any other list, but won&#8217;t perform the
+computation &#8220;stored&#8221; inside until it&#8217;s evaluated. <code>Force</code> is the
+opposite of delay, forcing a delayed form to evaluate. From these two
+basics, we can build a lazy versions of <code>cons</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define-syntax </span><span class="nv">lcons</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">syntax-rules </span><span class="p">()</span>
+</span><span class='line'>    <span class="p">((</span><span class="nf">lcons</span> <span class="nv">item</span> <span class="nv">items</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="nv">item</span> <span class="p">(</span><span class="k">delay </span><span class="nv">items</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Racket&#8217;s macro system uses <a href="http://blog.racket-lang.org/2011/04/writing-syntax-case-macros.html">syntax-case
+ macros</a>,
+which are a little different from the comma-spliced <code>defmacro</code> beasts you know
+ and love from Common Lisp and Clojure. In addition to enforcing <a href="https://en.wikipedia.org/wiki/Hygienic_macros">good
+ hygiene</a>,
+the syntax-case macro system works by pattern matching against syntax
+ objects. In <code>lcons</code>, any form that matches the pattern <code>(lcons item
+ items)</code> is mapped to <code>(cons item (delay items))</code>. In the <code>delay</code>
+ macro above, anything matching <code>(delay form)</code> maps to <code>(lambda ()
+ form)</code>. We&#8217;re still defining the ways we want to
+ change the syntax of our program, but the transformation is applied
+ at a different level: to syntax objects instead of raw s-expressions.</p>
+
+<p>With <code>lcons</code> finished, it&#8217;s easy to create lazy lists:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">llist</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">items</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">&#39;</span><span class="p">()</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">)</span> <span class="p">(</span><span class="nf">llist</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lazy</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-pred</span> <span class="nv">pair?</span> <span class="nv">lazy</span>
+</span><span class='line'>            <span class="s">&quot;A lazy list is a pair: the head of the list and a delayed</span>
+</span><span class='line'><span class="s">            function.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="nv">lazy</span><span class="p">)</span> <span class="mi">1</span>
+</span><span class='line'>               <span class="s">&quot;A lazy list stores its head as the first item of a</span>
+</span><span class='line'><span class="s">               pair.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-pred</span> <span class="nv">procedure?</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">lazy</span><span class="p">)</span>
+</span><span class='line'>            <span class="s">&quot;A lazy list stores a delayed function as the second item</span>
+</span><span class='line'><span class="s">            of a pair.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="p">((</span><span class="nb">cdr </span><span class="nv">lazy</span><span class="p">)))</span> <span class="mi">2</span>
+</span><span class='line'>               <span class="s">&quot;Evaluating the delayed function returns the next item</span>
+</span><span class='line'><span class="s">               in the list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Just as eager lists are composed of nested pairs, lazy lists are
+composed of nested, <em>delayed</em> pairs:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">eager-list</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">1</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">2</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">3</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">4</span> <span class="o">&#39;</span><span class="p">())))))</span>
+</span><span class='line'><span class="nv">&gt;</span> <span class="nv">eager-list</span>
+</span><span class='line'><span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lazy-list</span> <span class="p">(</span><span class="nf">lcons</span> <span class="mi">1</span> <span class="p">(</span><span class="nf">lcons</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">lcons</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">lcons</span> <span class="mi">4</span> <span class="o">&#39;</span><span class="p">())))))</span>
+</span><span class='line'><span class="nv">&gt;</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">me/bfs/queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Like a normal list, the <code>car</code> of each pair is the list item, and the
+  <code>cdr</code> represents the rest of the list. But it doesn&#8217;t return the
+  next pair until it&#8217;s evaluated:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="nv">&gt;</span> <span class="p">(</span><span class="nb">car </span><span class="nv">lazy-list</span><span class="p">)</span>
+</span><span class='line'><span class="mi">1</span>
+</span><span class='line'><span class="nv">&gt;</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">lazy-list</span><span class="p">)</span>
+</span><span class='line'><span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span>
+</span><span class='line'><span class="nv">&gt;</span> <span class="p">((</span><span class="nb">cdr </span><span class="nv">lazy-list</span><span class="p">))</span>
+</span><span class='line'><span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With this behavior in mind, we can write lazy <code>car</code> and lazy <code>cdr</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lcar</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">llist</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">car </span><span class="nv">llist</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">lcar</span> <span class="nv">lazy</span><span class="p">)</span> <span class="mi">1</span>
+</span><span class='line'>              <span class="s">&quot;Lazy-car is just like regular car!&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lcdr</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">llist</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">force </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">llist</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">lcdr</span> <span class="nv">lazy</span><span class="p">))</span> <span class="mi">2</span>
+</span><span class='line'>              <span class="s">&quot;Lazy-cdr forces evaluation of the next list element.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A <code>take-n</code> function is also handy for converting lazy lists back to
+eager ones:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">take-n</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">n</span> <span class="nv">lazy-list</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="nv">n</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">()</span>
+</span><span class='line'>      <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">lcar</span> <span class="nv">lazy-list</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="nf">take-n</span> <span class="p">(</span><span class="nb">- </span><span class="nv">n</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">lcdr</span> <span class="nv">lazy-list</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;Take-n returns the first n elements of a lazy list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And that&#8217;s it! We&#8217;ve written all the basics necessary for lazy lists.
+(For a few more lazy-fied list operations, see <a href="https://mitpress.mit.edu/sicp/full-text/book/book-Z-H-24.html#%_sec_3.5.1">section 3.5.1</a>
+of SICP).</p>
+
+<p>Finally, we should make one important optimization. Over the course of
+list operations like <code>lcdr</code>, the same delayed form can be called many
+times. If the delayed computation is simple, this won&#8217;t be noticeably
+inefficient. In our case, we&#8217;re just storing values that are
+immediately returned (integers in these examples, and eventually some
+node representation in our numbering solution). But there&#8217;s no
+guarantee that delayed computations will be cheap! We could put
+functions in a lazy list just as easily:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="nv">&gt;</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">4</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">()))))</span>
+</span><span class='line'><span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And those functions could require a lot of work:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="nv">&gt;</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">read-book</span> <span class="s">&quot;Finnegans Wake&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">read-book</span> <span class="s">&quot;In Search of Lost Time&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">read-book</span> <span class="s">&quot;Gravity&#39;s Rainbow&quot;</span><span class="p">))))</span>
+</span><span class='line'><span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;riverrun, past Eve and Adam&#39;s...&quot;</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">read</span><span class="o">.</span><span class="nv">scm:10:5&gt;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In practice, we should memoize lazy computations, so subsequent calls
+look up their previously computed values. It&#8217;s an easy fix:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">memoize</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">func</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">already-run?</span> <span class="no">#f</span><span class="p">)</span> <span class="p">(</span><span class="nf">result</span> <span class="no">#f</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">not </span><span class="nv">already-run?</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="k">begin </span><span class="p">(</span><span class="k">set! </span><span class="nv">result</span> <span class="p">(</span><span class="nf">func</span><span class="p">))</span>
+</span><span class='line'>                   <span class="p">(</span><span class="k">set! </span><span class="nv">already-run?</span> <span class="no">#t</span><span class="p">)</span>
+</span><span class='line'>                   <span class="nv">result</span><span class="p">)</span>
+</span><span class='line'>             <span class="nv">result</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define-syntax </span><span class="nv">delay</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">syntax-rules </span><span class="p">()</span>
+</span><span class='line'>    <span class="p">((</span><span class="k">delay </span><span class="nv">form</span><span class="p">)</span> <span class="p">(</span><span class="nf">memoize</span> <span class="p">(</span><span class="k">lambda </span><span class="p">()</span> <span class="nv">form</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now that we&#8217;ve written lazy lists, we can use them to build an
+efficient functional queue for the breadth-first numbering problem.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Breadth-first numbering: Functional queues]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-functional-queues/"/>
+    <updated>2013-06-24T00:14:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-functional-queues</id>
+    <content type="html"><![CDATA[<p>I spent some time this weekend (okay fine, most of Saturday and
+Sunday afternoon) on an exercise <a href="https://twitter.com/Twernmilt">Michael
+Baker</a> shared on our &#8220;geeks&#8221; mailing
+list. The problem is a <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">functional
+pearl</a>
+from Chris Okasaki: given a binary tree, reproduce a structurally
+identical tree with its nodes numbered in breadth-first order.</p>
+
+<p>For example, numbering this tree:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>_       a
+</span><span class='line'>       / \
+</span><span class='line'>      /   \
+</span><span class='line'>    b       d
+</span><span class='line'>   / \     / \
+</span><span class='line'>  .   c   .   .
+</span><span class='line'>     / \
+</span><span class='line'>    .   .</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Should yield this tree:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>_       1
+</span><span class='line'>       / \
+</span><span class='line'>      /   \
+</span><span class='line'>    2       3
+</span><span class='line'>   / \     / \
+</span><span class='line'>  .   4   .   .
+</span><span class='line'>     / \
+</span><span class='line'>    .   .</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you&#8217;ve ever solved a search problem, this might sound stupid easy.
+But getting the details of a functional solution right can be a challenge. As Okasaki
+puts it in <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">the paper</a>:</p>
+
+<blockquote><p>…I presented the problem to many other
+functional programmers and was continually amazed at the
+baroque solutions I received in reply. With only a single
+exception, everyone who came near a workable answer went
+in a very different direction from my solution right from the
+very beginning of the design process. I gradually realized
+that I was witnessing some sort of mass mental block, a
+communal blind spot, that was steering programmers away
+from what seemed to be a very natural solution.</p></blockquote>
+
+<p>Before you read my baroque solution, you might want to try for
+yourself. I&#8217;ll wait.</p>
+
+<p>Although I love Clojure, using built-in <a href="http://stackoverflow.com/questions/2493996/hidden-features-of-clojure">queues</a>
+and <a href="http://clojure.org/lazy">lazy seqs</a> felt like cheating. So I chose
+to use <a href="http://racket-lang.org/">Racket</a> with
+<a href="http://docs.racket-lang.org/rackunit/api.html#%28part._.Checks%29">Rackunit</a>,
+and tried to use as many primitives as possible.</p>
+
+<p>Breadth-first traversal is easy with a queue, but an efficient
+functional queue can be tricky. Consing an element to the front of a
+Scheme list is cheap, but appending is expensive—it requires &#8220;cdring
+down&#8221; over all the elements. One solution (cribbed from <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.47.8825">Okasaki
+himself</a>)
+is to represent a queue as a pair of lists. The list on the left is
+the head of the queue, so elements can be popped of in O(1) time. The
+right side represents the rest of the elements <em>in reverse</em>, so
+elements can be pushed on to the end in constant time. Here are the first
+steps towards an implementation: an empty queue with left and right selectors.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">simple-q</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">empty-queue</span> <span class="o">&#39;</span><span class="p">(()()))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="nv">empty-queue</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">())</span>
+</span><span class='line'>              <span class="s">&quot;An empty queue is a list containing two empty lists.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">right-side</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;The right side of a queue is the second list.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">left-side</span> <span class="p">(</span><span class="k">lambda </span> <span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">car </span><span class="nv">queue</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;The left side of a queue is the first list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Inserting an item conses it on to the right-side list:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">insert</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="nv">item</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">insert</span> <span class="mi">7</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">7</span> <span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;Inserting an element adds it to the beginning of the</span>
+</span><span class='line'><span class="s">              right side list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To dequeue an item, &#8220;remove&#8221; it from the left side with <code>car</code>, and
+return a new queue, with the <code>cdr</code> of the left side list:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">remove</span>
+</span><span class='line'> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>              <span class="s">&quot;Removing an element returns a pair: the removed</span>
+</span><span class='line'><span class="s">               element and the new queue.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When the left side is out of elements, reverse the right side list,
+and swap it with the left. Here&#8217;s the buildup to <code>swap-and-reverse-car</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">swap</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">swap</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;The right side and left side can be swapped.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">reverse</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))</span>
+</span><span class='line'>        <span class="nv">items</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">simple-q</span><span class="p">))</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;A list&#39;s elements can be reversed.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">reverse-car</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">))</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">reverse-car</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">2</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span> <span class="mi">4</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;The first item in a list can be reversed.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">swap-and-reverse-car</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nf">reverse-car</span> <span class="p">(</span><span class="nf">swap</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">swap-and-reverse-car</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span> <span class="p">())</span>
+</span><span class='line'>              <span class="s">&quot;Swap and reverse-car can be composed to swap sides,</span>
+</span><span class='line'><span class="s">              then reverse the left.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we can write a dequeue function that really works:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">remove</span>
+</span><span class='line'>   <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>         <span class="p">(</span><span class="nf">remove</span> <span class="p">(</span><span class="nf">swap-and-reverse-car</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>         <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">4</span> <span class="p">((</span><span class="mi">5</span> <span class="mi">6</span><span class="p">)</span> <span class="p">()))</span>
+</span><span class='line'>              <span class="s">&quot;To remove an element when the left side is empty, swap</span>
+</span><span class='line'><span class="s">              and reverse, then try again.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>              <span class="s">&quot;Removing an element returns a pair: the removed element</span>
+</span><span class='line'><span class="s">              and the new queue.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&#8217;s all it takes to build a simple functional queue. Unfortunately,
+it&#8217;s not very efficient. Reversing a list is the kind of O(n)
+operation we built our queue to avoid in the first place, but if many
+more items are inserted than removed, we&#8217;ll end up reversing and
+swapping a lot. We can do better—and I&#8217;ll explain how in my next post.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Quieter Cascalog]]></title>
@@ -2388,869 +3556,6 @@ interacting with the test doubles.</li>
 <p>In retrospect, this makes perfect sense. But I&#8217;ll be going over all my
 tests with a careful eye tomorrow. Sometimes the green light isn&#8217;t
 what it seems.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Estimating Pi with Incanter and Monte Carlo Methods]]></title>
-    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/12/estimating-pi-with-incanter-monte-carlo-methods/"/>
-    <updated>2013-05-12T14:26:00-05:00</updated>
-    <id>http://ecmendenhall.github.io/blog/blog/2013/05/12/estimating-pi-with-incanter-monte-carlo-methods</id>
-    <content type="html"><![CDATA[<p>Of all the things <a href="https://en.wikipedia.org/wiki/John_von_neumann#Career_and_abilities">John von
-Neumann</a>
-invented (including the <a href="https://en.wikipedia.org/wiki/Minimax_theorem#Minimax_theorem">Minimax
-theorem</a>
-behind my Tic Tac Toe AI, and the <a href="https://en.wikipedia.org/wiki/Von_Neumann_architecture">architecture</a> of the computer it runs
-on), Monte Carlo simulation is one of my favorites. Unlike some of his
-other
-<a href="https://en.wikipedia.org/wiki/Ergodic_theory#Mean_ergodic_theorem">breakthroughs</a>,
-the idea behind Monte Carlo simulation is simple: use probability
-and computation to estimate solutions to hard problems.</p>
-
-<p>Think of the craziest integral you&#8217;ve ever solved, and the sheaves of
-notebook paper spent working out the area under that ridiculous curve.
-The Monte Carlo approach is a clever hack: tack a graph of the
-function to a dartboard, and start throwing darts at
-random. As more and more darts hit the board, the ratio of darts that
-land under the curve to total darts thrown will approximate the
-proportion of the dartboard under the curve. Multiply this ratio by
-the area of the dartboard, and you&#8217;ve computed the integral. As a student whose
-favorite fourth grade problem solving strategy was &#8220;guess and check,&#8221;
-and whose favorite tenth grade problem solving strategy was &#8220;plug it
-into your TI-83,&#8221; the idea has a lot of appeal.</p>
-
-<p>Wikipedia has a great example of <a href="https://en.wikipedia.org/wiki/Monte_carlo_simulation#Introduction">estimating the value of
-Pi</a>
-with a Monte Carlo simulation. I wrote a similar simulation <a href="https://gist.github.com/ecmendenhall/5054266">in Python</a> a couple
-months ago, but wanted to check out Clojure&#8217;s <a href="http://incanter.org/">Incanter</a> library for
-statistical computing and try my hand at a TDD solution.</p>
-
-<p>To start, you&#8217;ll want the <a href="https://github.com/slagyr/speclj">speclj</a>
-test framework for Clojure, which uses Rspec-like syntax and provides
-a helpful autorunner. Create a new Leiningen project and add it as a dev
-dependency and plugin in <code>project.clj</code>. Make sure you set up your spec
-directory as <a href="https://github.com/slagyr/speclj">described</a> in the
-documentation. You&#8217;ll also want to add Incanter to your project
-dependencies. Here&#8217;s my final <code>project.clj</code>:</p>
-
-<figure class='code'><figcaption><span>project.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defproject </span><span class="nv">montecarlopi</span> <span class="s">&quot;0.1.0&quot;</span>
-</span><span class='line'>  <span class="ss">:dependencies</span> <span class="p">[[</span><span class="nv">org.clojure/clojure</span> <span class="s">&quot;1.5.0&quot;</span><span class="p">]</span>
-</span><span class='line'>                 <span class="p">[</span><span class="nv">incanter</span> <span class="s">&quot;1.5.0-SNAPSHOT&quot;</span><span class="p">]]</span>
-</span><span class='line'>  <span class="ss">:main</span> <span class="nv">montecarlopi.core</span>
-</span><span class='line'>  <span class="ss">:profiles</span> <span class="p">{</span><span class="ss">:dev</span> <span class="p">{</span><span class="ss">:dependencies</span> <span class="p">[[</span><span class="nv">speclj</span> <span class="s">&quot;2.5.0&quot;</span><span class="p">]]}}</span>
-</span><span class='line'>  <span class="ss">:plugins</span> <span class="p">[[</span><span class="nv">speclj</span> <span class="s">&quot;2.5.0&quot;</span><span class="p">]]</span>
-</span><span class='line'>  <span class="ss">:test-paths</span> <span class="p">[</span><span class="s">&quot;spec/&quot;</span><span class="p">])</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>To start, we&#8217;ll need a way to tell whether a given point is inside the
-circle. Here&#8217;s a simple test:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core-spec</span>
-</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
-</span><span class='line'>            <span class="p">[</span><span class="nv">montecarlopi.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;in-circle?&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return true for points inside the circle.&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nf">in-circle?</span> <span class="p">[</span><span class="mi">0</span> <span class="mf">0.1</span><span class="p">])))</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return false for points outside the circle.&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should-not</span> <span class="p">(</span><span class="nf">in-circle?</span> <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.9</span><span class="p">]))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Fire up the testrunner with <code>lein spec -a</code>, and you&#8217;ll see an
-exception, since the function doesn&#8217;t exist. Time to add it to
-<code>core.clj</code>:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sq</span><span class="p">]]</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-circle?</span> <span class="p">[</span><span class="nv">point</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[[</span><span class="nv">x</span> <span class="nv">y</span><span class="p">]</span> <span class="nv">point</span><span class="p">]</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt;= </span><span class="p">(</span><span class="nb">+ </span><span class="p">(</span><span class="nf">sq</span> <span class="nv">x</span><span class="p">)</span>
-</span><span class='line'>               <span class="p">(</span><span class="nf">sq</span> <span class="nv">y</span><span class="p">))</span>
-</span><span class='line'>            <span class="mf">1.0</span><span class="p">)</span>
-</span><span class='line'>      <span class="nv">true</span>
-</span><span class='line'>      <span class="nv">false</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The <code>let</code> binding pulls x and y coordinates out of a vector
-representing a point. If x squared plus y squared are less
-than 1, the point is inside the circle. Save and watch the
-autorunner turn green.</p>
-
-<p>Next, we need a way to generate points at random, with x and y values
-between 0 and 1. Here&#8217;s a test:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;generate-random-point&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return a point with x and y values between 0 and 1.&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="k">let </span><span class="p">[[</span><span class="nv">x</span> <span class="nv">y</span><span class="p">]</span> <span class="p">(</span><span class="nf">generate-random-point</span><span class="p">)]</span>
-</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">))</span>
-</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&gt;= </span><span class="nv">x</span> <span class="mi">0</span><span class="p">))</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">y</span> <span class="mi">1</span><span class="p">))</span>
-</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&gt;= </span><span class="nv">y</span> <span class="mi">0</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And a dead-simple implementation (<code>clojure.core/rand</code> conveniently
-generates random floats between 0 and 1).:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">generate-random-point</span> <span class="p">[]</span>
-</span><span class='line'>  <span class="p">[(</span><span class="nf">rand</span><span class="p">)</span> <span class="p">(</span><span class="nf">rand</span><span class="p">)])</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>We need a lot of random points, so we&#8217;d better add a function to
-generate them. Here&#8217;s a test and a function that passes:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;generate-random-points&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return the specified number of random points.&quot;</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="mi">100</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">generate-random-points</span> <span class="mi">100</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">generate-random-points</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nb">take </span><span class="nv">n</span> <span class="p">(</span><span class="nf">repeatedly</span> <span class="nv">generate-random-point</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Once we&#8217;ve generated lots of points, we&#8217;ll want to know how many lie
-inside the circle. This test is a little more complicated, since it
-requires some mock points to test against:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;points-in-circle&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return only points inside the circle.&quot;</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">inside</span>  <span class="p">[[</span><span class="mf">0.0</span> <span class="mf">0.0</span><span class="p">]</span>
-</span><span class='line'>                   <span class="p">[</span><span class="mf">0.2</span> <span class="mf">0.3</span><span class="p">]</span>
-</span><span class='line'>                   <span class="p">[</span><span class="mf">0.1</span> <span class="mf">0.8</span><span class="p">]</span>
-</span><span class='line'>                   <span class="p">[</span><span class="mf">0.0</span> <span class="mf">1.0</span><span class="p">]</span>
-</span><span class='line'>                   <span class="p">[</span><span class="mf">1.0</span> <span class="mf">0.0</span><span class="p">]]</span>
-</span><span class='line'>
-</span><span class='line'>          <span class="nv">outside</span> <span class="p">[[</span><span class="mf">1.0</span> <span class="mf">0.2</span><span class="p">]</span>
-</span><span class='line'>                   <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.8</span><span class="p">]</span>
-</span><span class='line'>                   <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.9</span><span class="p">]</span>
-</span><span class='line'>                   <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.7</span><span class="p">]</span>
-</span><span class='line'>                   <span class="p">[</span><span class="mf">0.9</span> <span class="mf">0.9</span><span class="p">]]</span>
-</span><span class='line'>          <span class="nv">points</span>  <span class="p">(</span><span class="nb">concat </span><span class="nv">inside</span> <span class="nv">outside</span><span class="p">)]</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mi">5</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">)))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="nv">inside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should-not=</span> <span class="nv">outside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But a passing solution is as easy as using <code>in-circle?</code> as a filter:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">points-in-circle</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nb">filter </span><span class="nv">in-circle?</span> <span class="nv">points</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>In order to plot the points, we&#8217;ll need to sort them into groups. A
-map should do the trick. Let&#8217;s also take this chance to
-pull <code>inside</code>, <code>outside</code>, and <code>points</code> out of the <code>let</code>
-binding and define them as vars so we can reuse them.
-Here&#8217;s the result after a quick refactor:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">inside</span>  <span class="p">[[</span><span class="mf">0.0</span> <span class="mf">0.0</span><span class="p">]</span>
-</span><span class='line'>              <span class="p">[</span><span class="mf">0.2</span> <span class="mf">0.3</span><span class="p">]</span>
-</span><span class='line'>              <span class="p">[</span><span class="mf">0.1</span> <span class="mf">0.8</span><span class="p">]</span>
-</span><span class='line'>              <span class="p">[</span><span class="mf">0.0</span> <span class="mf">1.0</span><span class="p">]</span>
-</span><span class='line'>              <span class="p">[</span><span class="mf">1.0</span> <span class="mf">0.0</span><span class="p">]])</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">outside</span> <span class="p">[[</span><span class="mf">1.0</span> <span class="mf">0.2</span><span class="p">]</span>
-</span><span class='line'>              <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.8</span><span class="p">]</span>
-</span><span class='line'>              <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.9</span><span class="p">]</span>
-</span><span class='line'>              <span class="p">[</span><span class="mf">0.8</span> <span class="mf">0.7</span><span class="p">]</span>
-</span><span class='line'>              <span class="p">[</span><span class="mf">0.9</span> <span class="mf">0.9</span><span class="p">]])</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">points</span> <span class="p">(</span><span class="nb">concat </span><span class="nv">inside</span> <span class="nv">outside</span><span class="p">))</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;points-in-circle&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return only points inside the circle.&quot;</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="mi">5</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">)))</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="nv">inside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">should-not=</span> <span class="nv">outside</span> <span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;sort-points&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return a map of correctly sorted points.&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="p">{</span><span class="ss">:inside</span>  <span class="nv">inside</span>
-</span><span class='line'>                <span class="ss">:outside</span> <span class="nv">outside</span><span class="p">}</span>
-</span><span class='line'>               <span class="p">(</span><span class="nf">sort-points</span> <span class="nv">points</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This code passes, but it&#8217;s not as clear as it could be:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sort-points</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">{</span><span class="ss">:inside</span>  <span class="p">(</span><span class="nb">filter </span><span class="nv">in-circle?</span> <span class="nv">points</span><span class="p">)</span>
-</span><span class='line'>   <span class="ss">:outside</span> <span class="p">(</span><span class="nb">filter </span><span class="o">#</span><span class="p">(</span><span class="nb">not </span><span class="p">(</span><span class="nf">in-circle</span> <span class="nv">%</span><span class="p">))</span> <span class="nv">points</span><span class="p">)})</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>I&#8217;d like to rename the inline function <code>outside-circle?</code>. So let&#8217;s add
-a test:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;outside-circle?&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return true for points outside the circle.&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nf">outside-circle?</span> <span class="p">[</span><span class="mf">0.9</span> <span class="mf">0.7</span><span class="p">]))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Write the function:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">outside-circle?</span> <span class="p">[</span><span class="nv">point</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nb">not </span><span class="p">(</span><span class="nf">in-circle?</span> <span class="nv">point</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And refactor <code>sort-points</code> once speclj gives us the green light:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sort-points</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">{</span><span class="ss">:inside</span>  <span class="p">(</span><span class="nb">filter </span><span class="nv">in-circle?</span> <span class="nv">points</span><span class="p">)</span>
-</span><span class='line'>   <span class="ss">:outside</span> <span class="p">(</span><span class="nb">filter </span><span class="nv">outside-circle?</span> <span class="nv">points</span><span class="p">)})</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It shouldn&#8217;t be hard to convert sorted points into a ratio. Here&#8217;s a
-test and solution:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;point-ratio&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return the correct ratio of inside to outside points&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mf">0.5</span> <span class="p">(</span><span class="nf">point-ratio</span> <span class="nv">points</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Make sure you return a float instead of a rational:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">point-ratio</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nb">float </span><span class="p">(</span><span class="nb">/ </span><span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nf">points-in-circle</span> <span class="nv">points</span><span class="p">))</span>
-</span><span class='line'>            <span class="p">(</span><span class="nb">count </span><span class="nv">points</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And now we&#8217;re just a step away from estimating Pi. We&#8217;re considering a
-quarter circle inside a unit square. The area of the
-square is 1, and the quarter circle 1/4 * Pi. So
-multiplying by four gives us our estimate:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;estimate-pi&quot;</span>
-</span><span class='line'> <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return four times the ratio of inside to outside points.&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mf">2.0</span> <span class="p">(</span><span class="nf">estimate-pi</span> <span class="nv">points</span><span class="p">)))</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should return something close to pi when given a lot of points.&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="k">let </span> <span class="p">[</span><span class="nv">estimate</span> <span class="p">(</span><span class="nf">estimate-pi</span> <span class="p">(</span><span class="nf">generate-random-points</span> <span class="mi">70000</span><span class="p">))]</span>
-</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&gt; </span><span class="nv">estimate</span> <span class="mf">3.13</span><span class="p">))</span>
-</span><span class='line'>        <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">&lt; </span><span class="nv">estimate</span> <span class="mf">3.15</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The second part of this test is a little tricky. Our estimate is
-probabilistic, but with enough points it should almost always generate
-an estimate within range. Passing the test is easy:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">estimate-pi</span> <span class="p">[</span><span class="nv">points</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nb">* </span><span class="mi">4</span> <span class="p">(</span><span class="nf">point-ratio</span> <span class="nv">points</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>All that&#8217;s left is to create an Incanter
-chart. We&#8217;ll start by plotting the circle with Incanter. First, we
-need to write a function. Here&#8217;s a test for points on 1 = x<sup>2</sup> + y<sup>2</sup>:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;circle&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should equal 1 when x is 0.&quot;</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">should=</span> <span class="mf">1.0</span> <span class="p">(</span><span class="nf">circle</span> <span class="mi">0</span><span class="p">)))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should equal 0 when x is 1.&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="mf">0.0</span> <span class="p">(</span><span class="nf">circle</span> <span class="mi">1</span><span class="p">)))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should equal 0.866 when x is 0.5&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="s">&quot;0.866&quot;</span> <span class="p">(</span><span class="nf">format</span> <span class="s">&quot;%.3f&quot;</span> <span class="p">(</span><span class="nf">circle</span> <span class="mf">0.5</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>To write the function, make sure you refer <code>incanter.core/sqrt</code> to
-your namespace:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sqrt</span> <span class="nv">sq</span><span class="p">]]))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">circle</span> <span class="p">[</span><span class="nv">x</span><span class="p">]</span> <span class="p">(</span><span class="nf">sqrt</span> <span class="p">(</span><span class="nb">- </span><span class="mf">1.0</span> <span class="p">(</span><span class="nf">sq</span> <span class="nv">x</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>At this point, writing tests gets a little hairy. The <code>JFreeChart</code>
-object on which Incanter plots are based doesn&#8217;t
-<a href="http://www.jfree.org/jfreechart/api/javadoc/index.html">offer much</a>
-in the way of public fields to test against. But we
-can at least check that the function returns a chart:</p>
-
-<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;draw-circle&quot;</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;should be a JFreeChart object.&quot;</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">should=</span> <span class="s">&quot;class org.jfree.chart.JFreeChart&quot;</span>
-</span><span class='line'>               <span class="p">(</span><span class="nb">str </span><span class="p">(</span><span class="nf">.getClass</span> <span class="p">(</span><span class="nf">draw-circle</span><span class="p">))))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Refer <code>incanter.charts/function-plot</code> to plot the function:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sqrt</span> <span class="nv">sq</span> <span class="nv">view</span><span class="p">]]</span>
-</span><span class='line'>           <span class="p">[</span><span class="nv">incanter.charts</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">function-plot</span><span class="p">]]))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">draw-circle</span> <span class="p">[]</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">function-plot</span> <span class="nv">circle</span> <span class="mi">0</span> <span class="mi">1</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Running <code>(view (draw-circle))</code> from the REPL should produce a chart
-like this:</p>
-
-<p><img src="http://ecmendenhall.github.io/blog/images/circle-plot.png"></p>
-
-<p>The last step is to add the points and some annotations to the
-Incanter plot:</p>
-
-<figure class='code'><figcaption><span>core.clj </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">montecarlopi.core</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">require</span> <span class="p">[</span><span class="nv">incanter.core</span>   <span class="ss">:refer</span> <span class="p">[</span><span class="nv">sqrt</span> <span class="nv">sq</span> <span class="nv">view</span><span class="p">]]</span>
-</span><span class='line'>           <span class="p">[</span><span class="nv">incanter.charts</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">function-plot</span>
-</span><span class='line'>                                    <span class="nv">add-points</span>
-</span><span class='line'>                                    <span class="nv">add-text</span>
-</span><span class='line'>                                    <span class="nv">set-x-label</span>
-</span><span class='line'>                                    <span class="nv">set-y-label</span>
-</span><span class='line'>                                    <span class="nv">set-y-range</span>
-</span><span class='line'>                                    <span class="nv">xy-plot</span><span class="p">]]))</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">plot-points</span> <span class="p">[</span><span class="nv">chart</span> <span class="nv">points</span> <span class="nv">label</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">xs</span> <span class="p">(</span><span class="nb">map first </span> <span class="nv">points</span><span class="p">)</span>
-</span><span class='line'>        <span class="nv">ys</span> <span class="p">(</span><span class="nb">map second </span><span class="nv">points</span><span class="p">)]</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">add-points</span> <span class="nv">chart</span> <span class="nv">xs</span> <span class="nv">ys</span> <span class="ss">:series-label</span> <span class="nv">label</span><span class="p">)))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-plot</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">points</span> <span class="p">(</span><span class="nf">generate-random-points</span> <span class="nv">n</span><span class="p">)</span>
-</span><span class='line'>        <span class="nv">sorted</span> <span class="p">(</span><span class="nf">sort-points</span> <span class="nv">points</span><span class="p">)]</span>
-</span><span class='line'>    <span class="p">(</span><span class="nb">doto </span><span class="p">(</span><span class="nf">draw-circle</span><span class="p">)</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">set-y-range</span> <span class="mf">-0.25</span> <span class="mi">1</span><span class="p">)</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">plot-points</span> <span class="p">(</span><span class="ss">:inside</span>  <span class="nv">sorted</span><span class="p">)</span> <span class="s">&quot;inside&quot;</span><span class="p">)</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">plot-points</span> <span class="p">(</span><span class="ss">:outside</span> <span class="nv">sorted</span><span class="p">)</span> <span class="s">&quot;outside&quot;</span><span class="p">)</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">set-x-label</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">set-y-label</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.10</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Total: &quot;</span>
-</span><span class='line'>                                <span class="p">(</span><span class="nb">count </span><span class="nv">points</span><span class="p">)))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.05</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Inside: &quot;</span>
-</span><span class='line'>                                <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="ss">:inside</span> <span class="nv">sorted</span><span class="p">))))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.15</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Ratio: &quot;</span>
-</span><span class='line'>                                <span class="p">(</span><span class="nf">point-ratio</span> <span class="nv">points</span><span class="p">)))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">add-text</span> <span class="mf">0.10</span> <span class="mf">-0.20</span> <span class="p">(</span><span class="nb">str </span><span class="s">&quot;Pi: &quot;</span>
-</span><span class='line'>                                <span class="p">(</span><span class="nf">format</span> <span class="s">&quot;%4f&quot;</span> <span class="p">(</span><span class="nf">estimate-pi</span> <span class="nv">points</span><span class="p">))))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">view</span> <span class="ss">:width</span> <span class="mi">500</span> <span class="ss">:height</span> <span class="mi">600</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Here&#8217;s a plot and estimate with 100 points:</p>
-
-<p><img src="http://ecmendenhall.github.io/blog/images/pi-100.png"></p>
-
-<p>With 10000:</p>
-
-<p><img src="http://ecmendenhall.github.io/blog/images/pi-10000.png"></p>
-
-<p>And with 100000:</p>
-
-<p><img src="http://ecmendenhall.github.io/blog/images/pi-100000.png"></p>
-
-<p>A gist with all the code from this post is <a href="https://gist.github.com/ecmendenhall/5565604">available here</a>.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Enforcing Bottom-up Design]]></title>
-    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/"/>
-    <updated>2013-05-10T00:21:00-05:00</updated>
-    <id>http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design</id>
-    <content type="html"><![CDATA[<blockquote><p>&#8220;Experienced Lisp programmers divide up their programs differently.
-As well as top-down design, they follow a principle which could be
-called bottom-up design–changing the language to suit the problem.
-In Lisp, you don&#8217;t just write your program down toward the language,
-you also build the language up toward your program. As you&#8217;re writing
-a program you may think &#8216;I wish Lisp had such-and-such an operator.&#8217;
-So you go and write it. Afterward you realize that using the new
-operator would simplify the design of another part of the program, and
-so on. Language and program evolve together. Like the border between
-two warring states, the boundary between language and program is drawn
-and redrawn, until eventually it comes to rest along the mountains and
-rivers, the natural frontiers of your problem. In the end your program
-will look as if the language had been designed for it. And when
-language and program fit one another well, you end up with code which
-is clear, small, and efficient.&#8221;</p></blockquote>
-
-<p>–<a href="http://www.paulgraham.com/progbot.html">Paul Graham</a>, from the
-introduction to <a href="http://www.paulgraham.com/onlisptext.html"><em>On Lisp</em></a></p>
-
-<p>Lisp programmers have a reputation (earned or otherwise) for considering their language of
-  choice <a href="http://xkcd.com/224/">uniquely powerful</a>, capable of
-  extending the <a href="https://tractatus-online.appspot.com/Tractatus/Ajaxs/tlpA.html#56">limits of the
-  world</a>
-  with its special
-  <a href="http://stackoverflow.com/questions/267862/what-makes-lisp-macros-so-special">expressiveness</a>.
-  I find writing Lisp a joy, and for a long time I bought into the
-  mythos. It still <em>feels</em> unique. But I&#8217;ve come to learn that good bottom-up design is possible in any language.</p>
-
-<p>  For the past two weeks, I&#8217;ve been working in Java, a
-  language many programmers consider
-  <a href="http://www.paulgraham.com/avg.html">Blub</a> incarnate. (You don&#8217;t have to take <a href="http://hammerprinciple.com/therighttool/items/java/clojure">my word for
-  it</a>).
-  But even without clever macros and first-class functions, following
-  the rules of <a href="http://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530">test-driven
-  development</a>
-  and the principles of <a href="http://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882">clean
-  code</a>
-  feels a lot like the process of natural, iterative evolution Paul
-  Graham describes.</p>
-
-<p>  A good language can encourage bottom-up, evolutionary design, and
-  this is one of Lisp&#8217;s great strengths. But
-  writing good tests—and writing them first—can go a step further and
-  actually enforce it.</p>
-
-<p> Writing tests first requires describing abstractions before
- they exist—writing the program you want to read from the very start. Using meaningful names transforms the language you have
- into the one you want. Revising after every passing test makes
- simplifying design second nature. And building up a program test by
- tiny test is an evolutionary process that generates clean, efficient
- code, whether you&#8217;re writing Common Lisp or COBOL.</p>
-
-<p>Here&#8217;s a function that returns a given game board&#8217;s winner from my
-  first crack at Tic Tac Toe in Clojure:</p>
-
-<figure class='code'><figcaption><span>tictactoe.core/get-win </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">get-win</span>
-</span><span class='line'>  <span class="s">&quot;Takes a 3x3 game board. Returns a vector</span>
-</span><span class='line'><span class="s">  [winner start middle  end] of the winning player,</span>
-</span><span class='line'><span class="s">  and (row, col) grid coordinates of the three-in-a-row elements.&quot;</span>
-</span><span class='line'>  <span class="p">[</span><span class="nv">board</span><span class="p">]</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">wins</span>           <span class="p">(</span><span class="nf">check-for-wins</span> <span class="nv">board</span><span class="p">)</span>
-</span><span class='line'>          <span class="nv">winner</span>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="p">(</span><span class="nb">first </span><span class="p">(</span><span class="nb">remove nil? </span><span class="nv">wins</span><span class="p">)))</span> <span class="mi">1</span> <span class="mi">0</span><span class="p">)</span>
-</span><span class='line'>          <span class="p">[</span><span class="nv">row</span> <span class="nv">col</span> <span class="nv">diag</span><span class="p">]</span> <span class="p">(</span><span class="nf">unflatten</span> <span class="nv">wins</span><span class="p">)]</span>
-</span><span class='line'>      <span class="p">(</span><span class="nb">cond </span><span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">row</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">0</span><span class="p">]</span>
-</span><span class='line'>                                          <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">1</span><span class="p">]</span>
-</span><span class='line'>                                          <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">2</span><span class="p">]]</span>
-</span><span class='line'>            <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">col</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
-</span><span class='line'>                                          <span class="p">[</span><span class="mi">1</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
-</span><span class='line'>                                          <span class="p">[</span><span class="mi">2</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]]</span>
-</span><span class='line'>            <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">diag</span><span class="p">)</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">diag</span><span class="p">))</span>
-</span><span class='line'>                                    <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">2</span><span class="p">]]</span>
-</span><span class='line'>                                    <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">2</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">0</span><span class="p">]]))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And here&#8217;s the equivalent I wrote in Java:</p>
-
-<figure class='code'><figcaption><span>Board.winnerIs( ) </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">winnerIs</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>      <span class="k">if</span> <span class="o">(</span><span class="n">hasWin</span><span class="o">())</span> <span class="o">{</span>
-</span><span class='line'>          <span class="k">return</span> <span class="nf">getWinningRow</span><span class="o">().</span><span class="na">winner</span><span class="o">();</span>
-</span><span class='line'>      <span class="o">}</span>
-</span><span class='line'>      <span class="k">return</span> <span class="n">_</span><span class="o">;</span>
-</span><span class='line'>  <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Which excerpt reads more like a domain-specific language? Which
-  would you rather read a year from now? I don&#8217;t doubt that I could
-  clean up the Clojure into something just as simple and readable. But
-merely using an elegant language is no guarantee of elegant design.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Testing Console Output with JUnit and Infinitest]]></title>
-    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/05/testing-console-output-with-junit-and-infinitest/"/>
-    <updated>2013-05-05T20:54:00-05:00</updated>
-    <id>http://ecmendenhall.github.io/blog/blog/2013/05/05/testing-console-output-with-junit-and-infinitest</id>
-    <content type="html"><![CDATA[<p>I saved the view components of my Tic-Tac-Toe game for last. The
-functionality I need to implement for a command line application is
-pretty simple: the view should be able to print game boards and
-messages to the terminal, prompt for user input and pass it off to a
-controller, and not much more. But doing this the TDD way was harder
-than I expected. Here are the solutions I found to two testing problems.</p>
-
-<h2>Testing text output</h2>
-
-<p>Printing a board should be a one-liner, especially since I added a
-<code>toString()</code> method to my <code>Board</code> objects. <code>System.out.println(Board)</code>
-ought to work just fine. But wait—the tests come first.</p>
-
-<p>Writing tests against printed terminal output isn&#8217;t tough, but it does
-require some setup. <code>System.setOut()</code> redirects Java&#8217;s default output
-to a byte stream of <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/System.html#setOut(Java.io.PrintStream)">your choice</a>.
-First, save the default <code>System.out</code> (It&#8217;s a <code>PrintStream</code>), so you can switch back to stdout later.
-Then, initialize a <code>ByteArrayOutputStream</code>:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>    <span class="nd">@RunWith</span><span class="o">(</span><span class="n">JUnit4</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="kd">class</span> <span class="nc">TerminalViewTest</span> <span class="kd">extends</span> <span class="n">TicTacToeTest</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="kd">private</span> <span class="kd">final</span> <span class="n">PrintStream</span> <span class="n">stdout</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">;</span>
-</span><span class='line'>        <span class="kd">private</span> <span class="kd">final</span> <span class="n">ByteArrayOutputStream</span> <span class="n">output</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ByteArrayOutputStream</span><span class="o">();</span>
-</span><span class='line'>        <span class="kd">private</span> <span class="n">TerminalView</span> <span class="n">terminalview</span><span class="o">;</span>
-</span><span class='line'>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Add a <code>setUp()</code> method with the JUnit <code>@Before</code> annotation—the usual
-pattern to run some code before your tests. Pass <code>System.setOut()</code> a
-UTF-8 <code>PrintStream</code> object constructed with the byte array (You <em>are</em>
-using <a href="http://www.utf8everywhere.org/">UTF-8 everywhere</a>, right?):</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>        <span class="nd">@Before</span>
-</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setUp</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">UnsupportedEncodingException</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">terminalview</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TerminalView</span><span class="o">();</span>
-</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="k">new</span> <span class="n">PrintStream</span><span class="o">(</span><span class="n">output</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="s">&quot;UTF-8&quot;</span><span class="o">));</span>
-</span><span class='line'>        <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Then test against <code>output</code>. If the terminal output is as expected, it
-should match the result of the printed object&#8217;s <code>toString()</code> method:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>        <span class="nd">@Test</span>
-</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">terminalViewShouldPrintBoards</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">terminalview</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="n">nowins</span><span class="o">);</span>
-</span><span class='line'>            <span class="n">assertEquals</span><span class="o">(</span><span class="n">nowins</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="n">output</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Finally, make sure you clean up and redirect output back to stdout, so later print statements don&#8217;t go missing:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>        <span class="nd">@After</span>
-</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">cleanUp</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>    <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now you&#8217;re ready to write that one-liner. You can find the whole test
-class as a gist <a href="https://gist.github.com/ecmendenhall/5523091">here</a>.</p>
-
-<h2>Testing Unicode output with Infinitest</h2>
-
-<p>With my test in place, I wrote a quick print method and waited for the
-green flash. And waited. And waited&#8230; I&#8217;ve been using
-<a href="http://infinitest.github.io/">Infinitest</a>, an excellent continuous testing
-plugin for IntelliJ and Eclipse, but it threw an assertion error, even
-though the tests passed when run directly from IntelliJ.</p>
-
-<p>The problem? I wasn&#8217;t using <a href="http://www.joelonsoftware.com/articles/Unicode.html">Unicode</a>
-everywhere! (Don&#8217;t say I didn&#8217;t warn you.) My boards print with Unicode <a href="http://unicode-table.com/en/#box-drawing">box
-drawing</a> characters that
-threw off Infinitest. IntelliJ runs in a UTF-8 environment by default,
-but character encoding must be passed as an option to the Infinitest
-JVM. Fortunately, this is another one-line
-<a href="http://infinitest.github.io/doc/user_guide.html">solution</a>:
-add a text file named <code>infinitest.args</code> in your project&#8217;s root directory with one argument per
-line. In this case, just:</p>
-
-<pre><code>-D file.encoding=UTF-8
-</code></pre>
-
-<p>With tests back in the green, I was ready to start testing user
-input—but that&#8217;s a yak shave for another day.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Building better git habits]]></title>
-    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/03/building-better-git-habits/"/>
-    <updated>2013-05-03T01:00:00-05:00</updated>
-    <id>http://ecmendenhall.github.io/blog/blog/2013/05/03/building-better-git-habits</id>
-    <content type="html"><![CDATA[<p>Like many young whippersnapper kids these days, I started using GitHub before I really understood git. The benefits of version control were obvious right away, but I stuck to the very simplest git commands for a long time, and many of them turned into habits.</p>
-
-<p>This week, I&#8217;ve been working on making cleaner commits and writing better messages. Composing <a href="http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html">good commit messages</a> is the best git habit of all, and I&#8217;ve found two simple substitutions that nudge me towards more thoughtful commits.</p>
-
-<p>If you&#8217;re used to <code>git add -u</code> or <code>git add -a</code>, try:</p>
-
-<pre><code>git add -p
-</code></pre>
-
-<p>Instead of committing everything at once, this will walk you through the results of <code>git diff</code>, offering the option to stage each chunk of changed code:</p>
-
-<pre><code>@@ -34,5 +35,45 @@ public class GameTree {
-
-+
-+        public List&lt;Node&gt; getLeaves() {
-+            List&lt;Node&gt; leaves = new ArrayList&lt;Node&gt;();
-+
-+            for (Node child : children) {
-+                if (child.children.isEmpty()) {
-+                    leaves.add(child);
-+                } else {
-+                    leaves.addAll(child.getLeaves());
-+                }
-+            }
-+            return leaves;
-+        }
-
-Stage this hunk [y,n,q,a,d,/,K,g,e,?]?
-</code></pre>
-
-<p>(You can find the alphabet soup of staging options <a href="http://git-scm.com/docs/git-add">here</a>). This is easier to read than a full diff, requires a careful review of each change in context, and makes composing small atomic commits much easier.</p>
-
-<p>Then, if you&#8217;re used to <code>git commit -m &lt;message&gt;</code>, try:</p>
-
-<pre><code>git commit -F &lt;filename&gt;
-</code></pre>
-
-<p>Instead of pulling a commit message from the command line or opening an editor, this uses an existing file as your commit message. But the real trick here is to keep an editor open as you page through the previous command, and compose your commit message chunk by chunk.</p>
-
-<p>There are <a href="http://www-cs-students.stanford.edu/~blynn/gitmagic/">many</a>, <a href="http://sethrobertson.github.io/GitBestPractices/">many</a> <a href="http://reinh.com/blog/2009/03/02/a-git-workflow-for-agile-teams.html">more</a> git workflows, including ways to commit with reckless abandon and clean up later with <code>git rebase</code>, but these two simple changes have helped me make much better commits just by switching a few command line flags.</p>
 ]]></content>
   </entry>
   

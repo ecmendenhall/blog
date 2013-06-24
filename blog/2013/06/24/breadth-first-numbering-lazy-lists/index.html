@@ -1,0 +1,446 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Breadth-first numbering: Lazy lists - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Breadth-first Numbering: Lazy Lists In my last
+post,
+I wrote a simple functional queue as a stepping stone towards a
+breadth-first-numbering &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-lazy-lists/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Breadth-first Numbering: Lazy Lists</h1>
+	<div class="entry-content" itemprop="articleBody"><p>In my <a href="http://ecmendenhall.github.io/blog/2013/06/24/breadth-first-numbering-functional-queues/">last
+post</a>,
+I wrote a simple functional queue as a stepping stone towards a
+<a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">breadth-first-numbering</a>
+solution. By using an ordered and reversed list to represent the front
+and back of the queue, it&#8217;s cheap and easy to enqueue and dequeue
+items. A simple queue is fine for this toy example, but it&#8217;s
+inefficient, since it requires reversing the tail list whenever the
+head list is empty. We can do better with two improvements: lazy lists
+and incremental reversal.</p>
+
+<p>Clojure&#8217;s lazy seqs seemed powerful and mysterious until I read
+through <a href="https://mitpress.mit.edu/sicp/full-text/book/book-Z-H-24.html#%_sec_3.5">chapter
+3</a>
+of SICP. Building a lazy list is based on two simple operations,
+<code>delay</code> and <code>force</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define-syntax </span><span class="nv">delay</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">syntax-rules </span><span class="p">()</span>
+</span><span class='line'>    <span class="p">((</span><span class="k">delay </span><span class="nv">form</span><span class="p">)</span> <span class="p">(</span><span class="k">lambda </span><span class="p">()</span> <span class="nv">form</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">force</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">delayed</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">delayed</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">add-ones</span> <span class="p">(</span><span class="k">delay </span><span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">1</span><span class="p">))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-pred</span> <span class="nv">procedure?</span> <span class="nv">add-ones</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">force </span><span class="nv">add-ones</span><span class="p">)</span> <span class="mi">2</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>Delay</code> wraps a form in an anonymous function of no arguments. It can
+be stored and passed around like any other list, but won&#8217;t perform the
+computation &#8220;stored&#8221; inside until it&#8217;s evaluated. <code>Force</code> is the
+opposite of delay, forcing a delayed form to evaluate. From these two
+basics, we can build a lazy versions of <code>cons</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define-syntax </span><span class="nv">lcons</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">syntax-rules </span><span class="p">()</span>
+</span><span class='line'>    <span class="p">((</span><span class="nf">lcons</span> <span class="nv">item</span> <span class="nv">items</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="nv">item</span> <span class="p">(</span><span class="k">delay </span><span class="nv">items</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Racket&#8217;s macro system uses <a href="http://blog.racket-lang.org/2011/04/writing-syntax-case-macros.html">syntax-case
+ macros</a>,
+which are a little different from the comma-spliced <code>defmacro</code> beasts you know
+ and love from Common Lisp and Clojure. In addition to enforcing <a href="https://en.wikipedia.org/wiki/Hygienic_macros">good
+ hygiene</a>,
+the syntax-case macro system works by pattern matching against syntax
+ objects. In <code>lcons</code>, any form that matches the pattern <code>(lcons item
+ items)</code> is mapped to <code>(cons item (delay items))</code>. In the <code>delay</code>
+ macro above, anything matching <code>(delay form)</code> maps to <code>(lambda ()
+ form)</code>. We&#8217;re still defining the ways we want to
+ change the syntax of our program, but the transformation is applied
+ at a different level: to syntax objects instead of raw s-expressions.</p>
+
+<p>With <code>lcons</code> finished, it&#8217;s easy to create lazy lists:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">llist</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">items</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">&#39;</span><span class="p">()</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">)</span> <span class="p">(</span><span class="nf">llist</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lazy</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-pred</span> <span class="nv">pair?</span> <span class="nv">lazy</span>
+</span><span class='line'>            <span class="s">&quot;A lazy list is a pair: the head of the list and a delayed</span>
+</span><span class='line'><span class="s">            function.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="nv">lazy</span><span class="p">)</span> <span class="mi">1</span>
+</span><span class='line'>               <span class="s">&quot;A lazy list stores its head as the first item of a</span>
+</span><span class='line'><span class="s">               pair.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-pred</span> <span class="nv">procedure?</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">lazy</span><span class="p">)</span>
+</span><span class='line'>            <span class="s">&quot;A lazy list stores a delayed function as the second item</span>
+</span><span class='line'><span class="s">            of a pair.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="p">((</span><span class="nb">cdr </span><span class="nv">lazy</span><span class="p">)))</span> <span class="mi">2</span>
+</span><span class='line'>               <span class="s">&quot;Evaluating the delayed function returns the next item</span>
+</span><span class='line'><span class="s">               in the list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Just as eager lists are composed of nested pairs, lazy lists are
+composed of nested, <em>delayed</em> pairs:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">eager-list</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">1</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">2</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">3</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">4</span> <span class="o">&#39;</span><span class="p">())))))</span>
+</span><span class='line'><span class="nv">&gt;</span> <span class="nv">eager-list</span>
+</span><span class='line'><span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lazy-list</span> <span class="p">(</span><span class="nf">lcons</span> <span class="mi">1</span> <span class="p">(</span><span class="nf">lcons</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">lcons</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">lcons</span> <span class="mi">4</span> <span class="o">&#39;</span><span class="p">())))))</span>
+</span><span class='line'><span class="nv">&gt;</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">me/bfs/queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Like a normal list, the <code>car</code> of each pair is the list item, and the
+  <code>cdr</code> represents the rest of the list. But it doesn&#8217;t return the
+  next pair until it&#8217;s evaluated:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="nv">&gt;</span> <span class="p">(</span><span class="nb">car </span><span class="nv">lazy-list</span><span class="p">)</span>
+</span><span class='line'><span class="mi">1</span>
+</span><span class='line'><span class="nv">&gt;</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">lazy-list</span><span class="p">)</span>
+</span><span class='line'><span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span>
+</span><span class='line'><span class="nv">&gt;</span> <span class="p">((</span><span class="nb">cdr </span><span class="nv">lazy-list</span><span class="p">))</span>
+</span><span class='line'><span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With this behavior in mind, we can write lazy <code>car</code> and lazy <code>cdr</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lcar</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">llist</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">car </span><span class="nv">llist</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">lcar</span> <span class="nv">lazy</span><span class="p">)</span> <span class="mi">1</span>
+</span><span class='line'>              <span class="s">&quot;Lazy-car is just like regular car!&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lcdr</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">llist</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">force </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">llist</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">lcdr</span> <span class="nv">lazy</span><span class="p">))</span> <span class="mi">2</span>
+</span><span class='line'>              <span class="s">&quot;Lazy-cdr forces evaluation of the next list element.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A <code>take-n</code> function is also handy for converting lazy lists back to
+eager ones:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">take-n</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">n</span> <span class="nv">lazy-list</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="nv">n</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">()</span>
+</span><span class='line'>      <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">lcar</span> <span class="nv">lazy-list</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="nf">take-n</span> <span class="p">(</span><span class="nb">- </span><span class="nv">n</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">lcdr</span> <span class="nv">lazy-list</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;Take-n returns the first n elements of a lazy list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And that&#8217;s it! We&#8217;ve written all the basics necessary for lazy lists.
+(For a few more lazy-fied list operations, see <a href="https://mitpress.mit.edu/sicp/full-text/book/book-Z-H-24.html#%_sec_3.5.1">section 3.5.1</a>
+of SICP).</p>
+
+<p>Finally, we should make one important optimization. Over the course of
+list operations like <code>lcdr</code>, the same delayed form can be called many
+times. If the delayed computation is simple, this won&#8217;t be noticeably
+inefficient. In our case, we&#8217;re just storing values that are
+immediately returned (integers in these examples, and eventually some
+node representation in our numbering solution). But there&#8217;s no
+guarantee that delayed computations will be cheap! We could put
+functions in a lazy list just as easily:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="nv">&gt;</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">4</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">()))))</span>
+</span><span class='line'><span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And those functions could require a lot of work:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="nv">&gt;</span> <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">read-book</span> <span class="s">&quot;Finnegans Wake&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">read-book</span> <span class="s">&quot;In Search of Lost Time&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">read-book</span> <span class="s">&quot;Gravity&#39;s Rainbow&quot;</span><span class="p">))))</span>
+</span><span class='line'><span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;riverrun, past Eve and Adam&#39;s...&quot;</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">read</span><span class="o">.</span><span class="nv">scm:10:5&gt;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In practice, we should memoize lazy computations, so subsequent calls
+look up their previously computed values. It&#8217;s an easy fix:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">memoize</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">func</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">already-run?</span> <span class="no">#f</span><span class="p">)</span> <span class="p">(</span><span class="nf">result</span> <span class="no">#f</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">not </span><span class="nv">already-run?</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="k">begin </span><span class="p">(</span><span class="k">set! </span><span class="nv">result</span> <span class="p">(</span><span class="nf">func</span><span class="p">))</span>
+</span><span class='line'>                   <span class="p">(</span><span class="k">set! </span><span class="nv">already-run?</span> <span class="no">#t</span><span class="p">)</span>
+</span><span class='line'>                   <span class="nv">result</span><span class="p">)</span>
+</span><span class='line'>             <span class="nv">result</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define-syntax </span><span class="nv">delay</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">syntax-rules </span><span class="p">()</span>
+</span><span class='line'>    <span class="p">((</span><span class="k">delay </span><span class="nv">form</span><span class="p">)</span> <span class="p">(</span><span class="nf">memoize</span> <span class="p">(</span><span class="k">lambda </span><span class="p">()</span> <span class="nv">form</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now that we&#8217;ve written lazy lists, we can use them to build an
+efficient functional queue for the breadth-first numbering problem.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-lazy-lists/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-lazy-lists/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>
