@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Scheme | Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/categories/scheme/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-06-24T13:52:24-05:00</updated>
+  <updated>2013-06-24T13:56:04-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -358,7 +358,7 @@ from these posts as a Gist <a href="https://gist.github.com/ecmendenhall/5847793
     <id>http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-a-lazy-functional-queue</id>
     <content type="html"><![CDATA[<p>On the way to a <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">breadth-first
 numbering</a>
-solution, I've built a simple functional queue and <a href="http://ecmendenhall.github.io/blog/2013/06/24/breadth-first-numbering-lazy-lists/">created lazy
+solution, I've built a simple functional queue and <a href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-lazy-lists/">created lazy
 lists</a>
 from Scheme primitives (and a couple handy macros). In this post,
 I'll bring the pieces together to create an improved queue. (And yes,
@@ -797,7 +797,7 @@ breadth-first numbering problem.</p>
     <link href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-lazy-lists/"/>
     <updated>2013-06-24T00:15:00-05:00</updated>
     <id>http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-lazy-lists</id>
-    <content type="html"><![CDATA[<p>In my <a href="http://ecmendenhall.github.io/blog/2013/06/24/breadth-first-numbering-functional-queues/">last
+    <content type="html"><![CDATA[<p>In my <a href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-functional-queues/">last
 post</a>,
 I wrote a simple functional queue as a stepping stone towards a
 <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">breadth-first-numbering</a>
