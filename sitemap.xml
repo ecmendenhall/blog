@@ -127,12 +127,30 @@
         <lastmod>2013-06-24T13:45:40-05:00</lastmod>
     </url>
     <url>
+        <loc>
+            http://ecmendenhall.github.io/blog/blog/2013/07/14/clojure-namespaces-for-python-programmers/
+        </loc>
+        <lastmod>2013-07-15T09:05:10-05:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://ecmendenhall.github.io/blog/blog/2013/07/14/accessing-rails-from-virtualbox/
+        </loc>
+        <lastmod>2013-07-15T09:32:09-05:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://ecmendenhall.github.io/blog/blog/2013/07/15/prime-factorization-with-core-dot-logic/
+        </loc>
+        <lastmod>2013-07-15T11:46:47-05:00</lastmod>
+    </url>
+    <url>
         <loc>http://ecmendenhall.github.io/blog/blog/archives/</loc>
-        <lastmod>2013-06-24T13:55:56-05:00</lastmod>
+        <lastmod>2013-07-15T11:46:47-05:00</lastmod>
     </url>
     <url>
         <loc>http://ecmendenhall.github.io/blog/</loc>
-        <lastmod>2013-06-24T13:55:56-05:00</lastmod>
+        <lastmod>2013-07-15T11:46:47-05:00</lastmod>
     </url>
     <url>
         <loc>http://ecmendenhall.github.io/blog/robots.txt</loc>

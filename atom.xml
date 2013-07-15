@@ -4,7 +4,7 @@
   <title><![CDATA[Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-06-24T13:56:04-05:00</updated>
+  <updated>2013-07-15T11:47:02-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -12,6 +12,1289 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Prime factorization with core.logic]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/07/15/prime-factorization-with-core-dot-logic/"/>
+    <updated>2013-07-15T00:31:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/07/15/prime-factorization-with-core-dot-logic</id>
+    <content type="html"><![CDATA[<p>It&#8217;s time for my first <a href="http://blog.8thlight.com/micah-martin/2013/05/28/performing-code-katas.html">code
+kata</a>,
+and on Colin&#8217;s suggestion, I&#8217;m starting with a classic: <a href="http://butunclebob.com/ArticleS.UncleBob.ThePrimeFactorsKata">prime
+factorization</a>.
+The problem description is simple: write a function that takes an
+integer n and returns a list of its prime factors in ascending order.
+That leaves lots of room for creativity, and in my few months at 8th
+Light, I&#8217;ve seen several interesting solutions, including <a href="https://github.com/marosluuce/objective-c-PrimeFactors">Objective-C</a>
+and
+<a href="http://telladifferentstory.tumblr.com/post/49745640314/pattern-matching-re-visited-with-the-prime-factors-kata">Erlang</a>.
+I&#8217;ve been meaning to learn Clojure&#8217;s <code>core.logic</code> library for a while,
+so I decided to come up with a logic programming solution.</p>
+
+<p>If you haven&#8217;t yet checked out <code>core.logic</code>, there are a growing
+number of resources on the web. To get up to speed, I worked through David Nolen&#8217;s <a href="https://github.com/swannodette/logic-tutorial">logic tutorial</a>, the <a href="http://objectcommando.com/blog/2011/11/04/the-magical-island-of-kanren-core-logic-intro-part-1/">Magical Island of Kanren</a>, the
+<a href="https://github.com/clojure/core.logic/wiki/A-Core.logic-Primer">core.logic
+Primer</a>,
+and a few chapters of <a href="http://www.amazon.com/The-Reasoned-Schemer-Daniel-Friedman/dp/0262562146">The Reasoned
+Schemer</a>.
+Hopefully, following along with my test cases will explain the subset
+of logic functions in my solution.</p>
+
+<p>I&#8217;ll start with a basic <a href="https://github.com/slagyr/speclj">speclj</a>
+test setup:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">prime-factors.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>For the production code, I&#8217;ll start with <code>core.logic</code> and three functions from the <a href="https://github.com/clojure/core.logic/wiki/Features#clpfd">finite domain</a> namespace.</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">])</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic.fd</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">in</span> <span class="nv">interval</span> <span class="nv">eq</span><span class="p">]]))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On to the tests! The declarative aspect of logic programming feels
+well-suited to a mathy problem like this. Instead of describing <em>how</em> to
+factorize, I&#8217;ll write a few definitions and let the logic engine
+handle the rest. The strategy I have in mind is the same simple one I learned in
+8th grade algebra: start with a composite integer, and <a href="https://en.wikipedia.org/wiki/Prime_factorization#Prime_decomposition">decompose it</a>
+into a factor tree whose leaves are prime factors.</p>
+
+<p>To start, I&#8217;ll define &#8220;factor pairs&#8221;: a vector of two integers that
+multiply to another. So, <code>[2 3]</code>  is a factor pair of 6, <code>[1 23]</code> a
+factor pair of 23. Here&#8217;s the most general test I came up with:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">prime-factors.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">they</span> <span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="nf">it</span> <span class="o">~@</span><span class="nv">args</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Factor pairs of n&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;contain two elements&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">([</span><span class="nv">_0</span> <span class="nv">_1</span><span class="p">])</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There&#8217;s a lot of syntax right off the bat, but this test isn&#8217;t as
+confusing as it might look. So far, I&#8217;ve found it easiest to understand logic programming as
+describing a set of constraints on a solution. This test describes the
+first constraint: factor pairs are vectors of two elements.</p>
+
+<p>Here, <code>_0</code> and <code>_1</code> represent <em>reified</em>, <em>unbound</em> logic variables: symbolic
+representations of logic variables that can take on any value. (The
+numbers at the end indicate that they&#8217;re two different variables: <code>_0</code>
+and <code>_1</code> can take on different values). So this
+test simply describes the most general constraint: the <code>factor-pairs</code>
+function should take something as an argument and return a list of
+vectors of two things&#8211;any two things!.</p>
+
+<p>Here&#8217;s a function that does just that:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">])</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic.fd</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">in</span> <span class="nv">interval</span> <span class="nv">eq</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">factor-pairs</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">run*</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">fresh</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">== </span><span class="nv">pair</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>run*</code> function is the, uh, <em>core</em> of <code>core.logic</code>, used to set up
+problems for the logic engine to solve. It returns a list of all the
+solutions that match the constraints defined inside. The <code>fresh</code> form
+inside of <code>run*</code> is
+analogous to <code>let</code>: a way to declare local logic variables. The first
+two lines say &#8220;Find all
+the solutions where pair, factor1, and factor2 meet these
+constraints,&#8221; and the third describes the only constraint: &#8220;A pair is a
+vector of two elements, factor1 and factor2&#8221;.</p>
+
+<p>Note that I&#8217;m ignoring the <code>number</code> argument! At this point
+<code>(factor-pairs 81)</code>, <code>(factor-pairs 72)</code>, and <code>(factor-pairs 23)</code> all
+return the same result. For now, calling this function <code>factor-pairs</code>
+is a little misleading, since it returns the equivalent of all
+possible pairs of two things. But now that the tests pass, we can add
+another constraint:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">prime-factors.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">they</span> <span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="nf">it</span> <span class="o">~@</span><span class="nv">args</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">should-all</span> <span class="p">[</span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">every? </span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-interval?</span> <span class="p">[</span><span class="nv">low</span> <span class="nv">high</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">pair</span><span class="p">]</span> <span class="p">(</span><span class="nb">every? </span><span class="o">#</span><span class="p">(</span><span class="nb">and </span><span class="p">(</span><span class="nb">&gt;= </span><span class="nv">%</span> <span class="nv">low</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">%</span> <span class="nv">high</span><span class="p">))</span> <span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">two-elements?</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">= </span><span class="mi">2</span> <span class="p">(</span><span class="nb">count </span><span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Factor pairs of n&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;contain two elements&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="nv">two-elements?</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;are defined between 2 and n&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">in-interval?</span> <span class="mi">2</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here, I&#8217;ll describe the next constraint: factor pairs should only be
+defined between 2 and n. (Yes, a pair like <code>[1 23]</code> is technically a
+pair of factors, but it&#8217;s not very useful for my prime factorization purposes).</p>
+
+<p>I may be open to a little <a href="http://butunclebob.com/ArticleS.UncleBob.TheThreeRulesOfTdd">TDD legal trouble</a>
+with this test update, but I&#8217;ve added a couple helper functions to
+keep the tests as declarative as possible. <code>Should-all</code> asserts that a
+predicate matches for every element in a collection. <code>In-interval?</code>
+tests whether a pair is in the range <code>low</code> to <code>high</code>, inclusive.
+Hopefully, <code>Two-elements?</code> explains itself. Since <code>factor-pairs</code> will
+now return a list with many elements, I&#8217;ve generalized the original test.</p>
+
+<p>It only takes one line to add the extra constraint:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">])</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic.fd</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">in</span> <span class="nv">interval</span> <span class="nv">eq</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">factor-pairs</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">run*</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">fresh</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">in</span> <span class="nv">factor1</span> <span class="nv">factor2</span> <span class="p">(</span><span class="nf">interval</span> <span class="mi">2</span> <span class="nv">number</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">== </span><span class="nv">pair</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The new line declares that <code>factor1</code> and <code>factor2</code> must both be in the
+finite interval 2-<code>number</code>. <code>Factor-pairs</code> is still something of a
+misnomer: it now returns the Cartesian product of all numbers
+2-<code>number</code>. But it&#8217;s a step closer. I&#8217;ll add one more constraint:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">prime-factors.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">they</span> <span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="nf">it</span> <span class="o">~@</span><span class="nv">args</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">should-all</span> <span class="p">[</span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">every? </span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-interval?</span> <span class="p">[</span><span class="nv">low</span> <span class="nv">high</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">pair</span><span class="p">]</span> <span class="p">(</span><span class="nb">every? </span><span class="o">#</span><span class="p">(</span><span class="nb">and </span><span class="p">(</span><span class="nb">&gt;= </span><span class="nv">%</span> <span class="nv">low</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">%</span> <span class="nv">high</span><span class="p">))</span> <span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">two-elements?</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">= </span><span class="mi">2</span> <span class="p">(</span><span class="nb">count </span><span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">multiply-to?</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]]</span> <span class="p">(</span><span class="nb">= </span><span class="nv">n</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Factor pairs of n&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;contain two elements&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="nv">two-elements?</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;are defined between 2 and n&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">in-interval?</span> <span class="mi">2</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;equal n when multiplied&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">multiply-to?</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Factor pairs contain two elements between 2 and n that equal n when
+multiplied. That&#8217;s a complete definition of a factor pair, and adding
+the third constraint completes the function:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">])</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic.fd</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">in</span> <span class="nv">interval</span> <span class="nv">eq</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">factor-pairs</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">run*</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">fresh</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">in</span> <span class="nv">factor1</span> <span class="nv">factor2</span> <span class="p">(</span><span class="nf">interval</span> <span class="mi">2</span> <span class="nv">number</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">eq</span> <span class="p">(</span><span class="nb">= </span><span class="nv">number</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">)))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">== </span><span class="nv">pair</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here, <code>eq</code> converts an arithmetic expression into a constraint, as
+long as the logic variables are defined over a finite domain. So the
+final constraint simply says <code>number</code> must equal <code>factor1</code> times
+<code>factor2</code>. If you&#8217;re not convinced by the tests, try it in a REPL:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)</span>
+</span><span class='line'><span class="p">([</span><span class="mi">3</span> <span class="mi">27</span><span class="p">]</span> <span class="p">[</span><span class="mi">9</span> <span class="mi">9</span><span class="p">]</span> <span class="p">[</span><span class="mi">27</span> <span class="mi">3</span><span class="p">])</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">148</span><span class="p">)</span>
+</span><span class='line'><span class="p">([</span><span class="mi">2</span> <span class="mi">74</span><span class="p">]</span> <span class="p">[</span><span class="mi">4</span> <span class="mi">37</span><span class="p">]</span> <span class="p">[</span><span class="mi">37</span> <span class="mi">4</span><span class="p">]</span> <span class="p">[</span><span class="mi">74</span> <span class="mi">2</span><span class="p">])</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">23</span><span class="p">)</span>
+</span><span class='line'><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are some properties here that I&#8217;ll use to my advantage. First,
+by default, factor pairs are ordered by the first factor, ascending.
+Second, I&#8217;ve already created an implicit definition of primes: numbers
+that return an empty list of factor pairs. I&#8217;ll add it as a test for
+clarity:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">prime-factors.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">they</span> <span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="nf">it</span> <span class="o">~@</span><span class="nv">args</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">should-all</span> <span class="p">[</span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">every? </span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-interval?</span> <span class="p">[</span><span class="nv">low</span> <span class="nv">high</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">pair</span><span class="p">]</span> <span class="p">(</span><span class="nb">every? </span><span class="o">#</span><span class="p">(</span><span class="nb">and </span><span class="p">(</span><span class="nb">&gt;= </span><span class="nv">%</span> <span class="nv">low</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">%</span> <span class="nv">high</span><span class="p">))</span> <span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">two-elements?</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">= </span><span class="mi">2</span> <span class="p">(</span><span class="nb">count </span><span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">multiply-to?</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]]</span> <span class="p">(</span><span class="nb">= </span><span class="nv">n</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Factor pairs of n&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;contain two elements&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="nv">two-elements?</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;are defined between 2 and n&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">in-interval?</span> <span class="mi">2</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;equal n when multiplied&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">multiply-to?</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Prime numbers&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;have no factor pairs&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">()</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">23</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now I&#8217;ll move on to decomposition. If you&#8217;ve watched a prime factors
+kata before, you&#8217;ve probably seen a few standard tests: start by
+testing 1, then 2, then 3, and then composites. Here&#8217;s where something
+similar comes in:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">prime-factors.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">they</span> <span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="nf">it</span> <span class="o">~@</span><span class="nv">args</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">should-all</span> <span class="p">[</span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">every? </span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-interval?</span> <span class="p">[</span><span class="nv">low</span> <span class="nv">high</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">pair</span><span class="p">]</span> <span class="p">(</span><span class="nb">every? </span><span class="o">#</span><span class="p">(</span><span class="nb">and </span><span class="p">(</span><span class="nb">&gt;= </span><span class="nv">%</span> <span class="nv">low</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">%</span> <span class="nv">high</span><span class="p">))</span> <span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">two-elements?</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">= </span><span class="mi">2</span> <span class="p">(</span><span class="nb">count </span><span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">multiply-to?</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]]</span> <span class="p">(</span><span class="nb">= </span><span class="nv">n</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Factor pairs of n&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;contain two elements&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="nv">two-elements?</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;are defined between 2 and n&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">in-interval?</span> <span class="mi">2</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;equal n when multiplied&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">multiply-to?</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Prime numbers&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;have no factor pairs&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">()</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">23</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Decomposition&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes 1 into itself&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">1</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Of course, it&#8217;s easy to pass this one:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">])</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic.fd</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">in</span> <span class="nv">interval</span> <span class="nv">eq</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">factor-pairs</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">run*</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">fresh</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">in</span> <span class="nv">factor1</span> <span class="nv">factor2</span> <span class="p">(</span><span class="nf">interval</span> <span class="mi">2</span> <span class="nv">number</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">eq</span> <span class="p">(</span><span class="nb">= </span><span class="nv">number</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">)))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">== </span><span class="nv">pair</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">decompose</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&#8217;ll make it a little harder with the next bit of the definition.
+Primes should decompose into themselves:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">prime-factors.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">they</span> <span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="nf">it</span> <span class="o">~@</span><span class="nv">args</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">should-all</span> <span class="p">[</span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">every? </span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-interval?</span> <span class="p">[</span><span class="nv">low</span> <span class="nv">high</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">pair</span><span class="p">]</span> <span class="p">(</span><span class="nb">every? </span><span class="o">#</span><span class="p">(</span><span class="nb">and </span><span class="p">(</span><span class="nb">&gt;= </span><span class="nv">%</span> <span class="nv">low</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">%</span> <span class="nv">high</span><span class="p">))</span> <span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">two-elements?</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">= </span><span class="mi">2</span> <span class="p">(</span><span class="nb">count </span><span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">multiply-to?</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]]</span> <span class="p">(</span><span class="nb">= </span><span class="nv">n</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Factor pairs of n&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;contain two elements&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="nv">two-elements?</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;are defined between 2 and n&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">in-interval?</span> <span class="mi">2</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;equal n when multiplied&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">multiply-to?</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Prime numbers&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;have no factor pairs&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">()</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">23</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Decomposition&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes 1 into itself&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes primes into themselves&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">2</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">17</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">17</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">23</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">23</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&#8217;ll get back to passing with a small tweak. Instead of returning
+<code>'(1)</code>, <code>decompose</code> should check if a number has any
+factor pairs. If not, return the number.</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">])</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic.fd</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">in</span> <span class="nv">interval</span> <span class="nv">eq</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">factor-pairs</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">run*</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">fresh</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">in</span> <span class="nv">factor1</span> <span class="nv">factor2</span> <span class="p">(</span><span class="nf">interval</span> <span class="mi">2</span> <span class="nv">number</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">eq</span> <span class="p">(</span><span class="nb">= </span><span class="nv">number</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">)))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">== </span><span class="nv">pair</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">decompose</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">factorpair</span> <span class="p">(</span><span class="nb">first </span><span class="p">(</span><span class="nf">factor-pairs</span> <span class="nv">number</span><span class="p">))]</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nf">empty?</span> <span class="nv">factorpair</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="nv">number</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&#8217;s the easy part, but what about composites? Well, two times a
+prime should certainly decompose to 2 and the prime:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">prime-factors.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">they</span> <span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="nf">it</span> <span class="o">~@</span><span class="nv">args</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">should-all</span> <span class="p">[</span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">every? </span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-interval?</span> <span class="p">[</span><span class="nv">low</span> <span class="nv">high</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">pair</span><span class="p">]</span> <span class="p">(</span><span class="nb">every? </span><span class="o">#</span><span class="p">(</span><span class="nb">and </span><span class="p">(</span><span class="nb">&gt;= </span><span class="nv">%</span> <span class="nv">low</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">%</span> <span class="nv">high</span><span class="p">))</span> <span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">two-elements?</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">= </span><span class="mi">2</span> <span class="p">(</span><span class="nb">count </span><span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">multiply-to?</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]]</span> <span class="p">(</span><span class="nb">= </span><span class="nv">n</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Factor pairs of n&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;contain two elements&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="nv">two-elements?</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;are defined between 2 and n&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">in-interval?</span> <span class="mi">2</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;equal n when multiplied&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">multiply-to?</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Prime numbers&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;have no factor pairs&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">()</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">23</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Decomposition&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes 1 into itself&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes primes into themselves&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">2</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">17</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">17</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">23</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">23</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes 2 * a prime into 2 and itself&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">4</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>Decompose</code> already includes the base case at the bottom of of the
+prime factor tree. If I feed it a number that&#8217;s not prime, it should
+decompose its factors until it runs into a prime. Concatenating the
+results should return a nice list of prime factors:</p>
+
+<figure class='code'><figcaption><span>core.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">])</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.logic.fd</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">in</span> <span class="nv">interval</span> <span class="nv">eq</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">factor-pairs</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">run*</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>        <span class="p">(</span><span class="nf">fresh</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">in</span> <span class="nv">factor1</span> <span class="nv">factor2</span> <span class="p">(</span><span class="nf">interval</span> <span class="mi">2</span> <span class="nv">number</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nf">eq</span> <span class="p">(</span><span class="nb">= </span><span class="nv">number</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">)))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">== </span><span class="nv">pair</span> <span class="p">[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">decompose</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">factorpair</span> <span class="p">(</span><span class="nb">first </span><span class="p">(</span><span class="nf">factor-pairs</span> <span class="nv">number</span><span class="p">))]</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nf">empty?</span> <span class="nv">factorpair</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="nv">number</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">concat </span><span class="p">(</span><span class="nf">decompose</span> <span class="p">(</span><span class="nb">first </span><span class="nv">factorpair</span><span class="p">))</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">decompose</span> <span class="p">(</span><span class="nb">second </span><span class="nv">factorpair</span><span class="p">))))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And that&#8217;s it! Here&#8217;s a last set of test cases to confirm that it
+works:</p>
+
+<figure class='code'><figcaption><span>core_spec.clj </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">prime-factors.core-spec</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">speclj.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">[</span><span class="nv">prime-factors.core</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nv">they</span> <span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span> <span class="o">`</span><span class="p">(</span><span class="nf">it</span> <span class="o">~@</span><span class="nv">args</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">should-all</span> <span class="p">[</span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">should</span> <span class="p">(</span><span class="nb">every? </span><span class="nv">predicate</span> <span class="nv">collection</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">in-interval?</span> <span class="p">[</span><span class="nv">low</span> <span class="nv">high</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">pair</span><span class="p">]</span> <span class="p">(</span><span class="nb">every? </span><span class="o">#</span><span class="p">(</span><span class="nb">and </span><span class="p">(</span><span class="nb">&gt;= </span><span class="nv">%</span> <span class="nv">low</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="nv">%</span> <span class="nv">high</span><span class="p">))</span> <span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">two-elements?</span> <span class="p">[</span><span class="nv">pair</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">= </span><span class="mi">2</span> <span class="p">(</span><span class="nb">count </span><span class="nv">pair</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">multiply-to?</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">fn </span><span class="p">[[</span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">]]</span> <span class="p">(</span><span class="nb">= </span><span class="nv">n</span> <span class="p">(</span><span class="nb">* </span><span class="nv">factor1</span> <span class="nv">factor2</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Factor pairs of n&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;contain two elements&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="nv">two-elements?</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;are defined between 2 and n&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">in-interval?</span> <span class="mi">2</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;equal n when multiplied&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should-all</span> <span class="p">(</span><span class="nf">multiply-to?</span> <span class="mi">81</span><span class="p">)</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">81</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Prime numbers&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">they</span> <span class="s">&quot;have no factor pairs&quot;</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">()</span> <span class="p">(</span><span class="nf">factor-pairs</span> <span class="mi">23</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">describe</span> <span class="s">&quot;Decomposition&quot;</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes 1 into itself&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes primes into themselves&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">2</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">17</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">17</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">23</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">23</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes 2 * a prime into 2 and itself&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nf">it</span> <span class="s">&quot;decomposes a composite into its prime factorization&quot;</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="mi">2</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">8</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="mi">3</span> <span class="mi">5</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">30</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="mi">11</span> <span class="mi">11</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="mi">242</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nf">should=</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="mi">5</span> <span class="mi">11</span> <span class="mi">23</span><span class="p">)</span> <span class="p">(</span><span class="nf">decompose</span> <span class="p">(</span><span class="nb">* </span><span class="mi">23</span> <span class="mi">5</span> <span class="mi">2</span> <span class="mi">11</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This isn&#8217;t the fastest way to find prime factors, but it&#8217;s no worse
+than the typical trial division solution to the prime factors kata.
+Using <code>core.logic</code> to declare definitions and constraints on the
+solution feels uniquely concise, expressive, and clear, and the
+exercise helped me get a more concrete handle on logic programming.
+You can find the code from this post (and a few earlier iterations) <a href="https://gist.github.com/ecmendenhall/5970568">as
+a Gist here</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Accessing Rails from Virtualbox]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/07/14/accessing-rails-from-virtualbox/"/>
+    <updated>2013-07-14T23:49:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/07/14/accessing-rails-from-virtualbox</id>
+    <content type="html"><![CDATA[<p>My latest project involves adding a Flash fallback to replace an
+HTML5-based feature in a Rails application. It&#8217;s the first time I&#8217;ve
+tested in Internet Explorer over a virtual machine, and I spent a good
+deal of time configuring everything. Here&#8217;s a summary of the process
+for future VM novices.</p>
+
+<h3>Get VirtualBox</h3>
+
+<p>First, grab <a href="https://www.virtualbox.org/">VirtualBox</a>. It may be handy
+for more than testing: in addition to
+running Internet Explorer, you might want to try a new <a href="http://virtualboxes.org/images/">Linux
+distro</a> or do some <a href="http://raidersec.blogspot.com/2013/03/installing-kali-linux-in-virtualbox.html">pen
+testing</a>.</p>
+
+<h3>Install an IE virtual machine</h3>
+
+<p>Microsoft recently rolled out <a href="http://www.modern.ie/en-us/virtualization-tools#downloads">free virtual machine images</a> for IE
+testing that greatly simplify the setup process. Download and extract the versions you&#8217;re interested in.
+Some of these are distributed as full images, but most come as several <code>.rar</code> files and a
+self-extracting archive. To extract from the command line:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ chmod +x MacVirtualBox.part1.sfx
+</span><span class='line'>$ ./MacVirtualBox.part1.sfx</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This should create a new <code>.ova</code> file in the same directory. Open VirtualBox and import it (File > Import Appliance on OS X).</p>
+
+<p><img src="http://ecmendenhall.github.io/blog/images/vbox.png"></p>
+
+<h3>Configure network settings</h3>
+
+<p>Select the machine you&#8217;d like to connect from and choose Settings >
+Network. Make sure the network adapter is enabled and attached to NAT.
+(This should be the default setting).</p>
+
+<p><img src="http://ecmendenhall.github.io/blog/images/nat.png"></p>
+
+<p>You can access the host machine
+from inside the VM at 10.0.2.2&#8211;e.g., if you access your Rails dev server at
+localhost:3000, you can connect at 10.0.2.2:3000. Unfortunately,
+running my Rails dev server from the host machine resulted in
+occasional redirects to localhost. Fix this by editing the Windows
+hosts file.</p>
+
+<p>The Windows hosts file is available in
+<code>C:\windows\system32\drivers\etc\</code>. In XP, you&#8217;ll be able to edit it
+directly with Notepad. On a Vista VM, you&#8217;ll need admin priviliges.
+Find Notepad in the start menu, right click, and choose &#8220;Run as
+Administrator.&#8221; Then, edit the hosts file to direct localhost to
+10.0.2.2, the default VirtualBox address for the host machine.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>10.0.2.2 localhost</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Run your Rails dev server on the host machine, and connect to
+localhost:3000 as usual. Congratulations! You&#8217;re ready for the joy of
+Internet Explorer. For bonus points, configure Capybara to <a href="http://www.johng.co.uk/2010/10/13/run_capybara_and_cucumber_features_in_internet_explorer_on_remote_windows/">run in IE</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Clojure namespaces for Python programmers]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/07/14/clojure-namespaces-for-python-programmers/"/>
+    <updated>2013-07-14T22:28:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/07/14/clojure-namespaces-for-python-programmers</id>
+    <content type="html"><![CDATA[<p>My mentor <a href="https://twitter.com/trptcolin">Colin</a> wrote one of the most
+popular posts on the <a href="http://blog.8thlight.com/">8th Light blog</a>, on
+the somewhat complex process of <a href="http://blog.8thlight.com/colin-jones/2010/12/05/clojure-libs-and-namespaces-require-use-import-and-ns.html">requiring Clojure
+libs</a>.
+It&#8217;s not a stretch to give it some of the credit for my interest in
+Clojure: I came close to giving up in frustration the first time I
+tried to import a library in a Clojure REPL. It was <a href="http://xkcd.com/353/">so easy in
+Python</a>, and there I was, suddenly dealing with
+macros, keywords, quotes, and&#8211;heaven forfend!&#8211;all those parentheses.</p>
+
+<p>For all the details on namespaces, <code>require</code>, and the <code>ns</code> macro, see
+<a href="http://blog.8thlight.com/colin-jones/2010/12/05/clojure-libs-and-namespaces-require-use-import-and-ns.html">Colin&#8217;s
+post</a>,
+which is still the authoritative source. But if you&#8217;re a Python
+programmer looking for a quick reference, here&#8217;s the Python-Clojure
+Rosetta stone I went looking for the first time I deadpanned into my
+Clojure REPL.</p>
+
+<h2>Import a library</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">import</span> <span class="nn">library</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">library</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="nv">library</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">library/dostuff</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">library</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">library</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;library</span><span class="p">)</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">library/dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff!&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Import everything without qualification</h2>
+
+<p>(Note: This practice is usually as ill-advised in Clojure as it is in Python!)</p>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">dostuff</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">dostuff</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="o">&#39;</span><span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">])</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff!&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Import specific functions</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span><span class="p">,</span> <span class="n">returnthings</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="n">returnthings</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span> <span class="nv">returnthings</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nf">returnthings</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span><span class="p">,</span> <span class="n">returnthings</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="n">returnthings</span><span class="p">()</span>
+</span><span class='line'><span class="n">Out</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="p">{</span> <span class="s">&quot;foo&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&quot;bar&quot;</span><span class="p">:</span> <span class="mi">2</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="o">&#39;</span><span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span> <span class="nv">returnthings</span><span class="p">]])</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">returnthings</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span> <span class="ss">:foo</span> <span class="mi">1</span> <span class="ss">:bar</span> <span class="mi">2</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Import and rename a library</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">import</span> <span class="nn">library</span> <span class="kn">as</span> <span class="nn">lib</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">lib</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">library</span> <span class="ss">:as</span> <span class="nv">lib</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">lib/dostuff</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">library</span> <span class="kn">as</span> <span class="nn">lib</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">lib</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="o">&#39;</span><span class="p">[</span><span class="nv">library</span> <span class="ss">:as</span> <span class="nv">lib</span><span class="p">])</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">lib/dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Import and rename a function</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span> <span class="k">as</span> <span class="n">ds</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">ds</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span><span class="p">]</span> <span class="ss">:rename</span> <span class="p">{</span><span class="nv">dostuff</span> <span class="nv">ds</span><span class="p">}]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">ds</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span> <span class="k">as</span> <span class="n">ds</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">ds</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="o">&#39;</span><span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span><span class="p">]</span> <span class="ss">:rename</span> <span class="p">{</span><span class="nv">dostuff</span> <span class="nv">ds</span><span class="p">}])</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">ds</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>All together, now!</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">import</span> <span class="nn">onelibrary</span><span class="o">,</span> <span class="nn">anotherlibrary</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">onemorelibrary</span> <span class="kn">as</span> <span class="nn">oml</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">returnthings</span>
+</span><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span> <span class="k">as</span> <span class="n">ds</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">onelibrary</span>
+</span><span class='line'>             <span class="nv">anotherlibrary</span>
+</span><span class='line'>             <span class="p">[</span><span class="nv">onemorelibrary</span> <span class="ss">:as</span> <span class="nv">oml</span><span class="p">]</span>
+</span><span class='line'>             <span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span> <span class="nv">returnthings</span><span class="p">]</span>
+</span><span class='line'>                      <span class="ss">:rename</span> <span class="p">{</span><span class="nv">dostuff</span> <span class="nv">ds</span><span class="p">}]]))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Breadth-first numbering: A solution]]></title>
@@ -3088,474 +4371,6 @@ moves until the game ends. But once this test catches the empty queue
 exception, it tests against the expected output, which should show an
 error message. Exceptions have proved extremely handy so far—as long as I remember
 that they&#8217;re in my control flow toolbox, too.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Capturing console output with a deque]]></title>
-    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/19/capturing-console-output-with-a-deque/"/>
-    <updated>2013-05-19T14:43:00-05:00</updated>
-    <id>http://ecmendenhall.github.io/blog/blog/2013/05/19/capturing-console-output-with-a-deque</id>
-    <content type="html"><![CDATA[<p>Redirecting stdout to a new <code>PrintStream</code> is an <a href="http://ecmendenhall.github.io/blog/blog/2013/05/05/testing-console-output-with-junit-and-infinitest/">easy way</a>
-to test simple console output in Java. But as my Tic-Tac-Toe game has
-grown more complex, the tests I wrote using this pattern have started
-to stink. There&#8217;s a lot of duplicated code (create the stream,
-redirect, tear down with each test), each test uses a hand-constructed
-string filled with finicky newline characters, and tests are prone to
-break when unrelated view components change the way they print to the
-screen. Inspired by my <a href="http://ecmendenhall.github.io/blog/blog/2013/05/15/mocking-user-input-with-a-queue/">input
-queue</a>,
-I created an <code>OutputRecorder</code> class that extends <code>PrintStream</code> and
-captures output string by string for later playback:</p>
-
-<figure class='code'><figcaption><span>OutputRecorder.java </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-<span class='line-number'>58</span>
-<span class='line-number'>59</span>
-<span class='line-number'>60</span>
-<span class='line-number'>61</span>
-<span class='line-number'>62</span>
-<span class='line-number'>63</span>
-<span class='line-number'>64</span>
-<span class='line-number'>65</span>
-<span class='line-number'>66</span>
-<span class='line-number'>67</span>
-<span class='line-number'>68</span>
-<span class='line-number'>69</span>
-<span class='line-number'>70</span>
-<span class='line-number'>71</span>
-<span class='line-number'>72</span>
-<span class='line-number'>73</span>
-<span class='line-number'>74</span>
-<span class='line-number'>75</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">OutputRecorder</span> <span class="kd">extends</span> <span class="n">PrintStream</span> <span class="o">{</span>
-</span><span class='line'>    <span class="kd">private</span> <span class="n">Deque</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">outputStack</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'>      <span class="kd">public</span> <span class="nf">OutputRecorder</span><span class="o">(</span><span class="n">OutputStream</span> <span class="n">outputStream</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">b</span><span class="o">,</span>
-</span><span class='line'>      <span class="n">String</span> <span class="n">s</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">UnsupportedEncodingException</span> <span class="o">{</span>
-</span><span class='line'>          <span class="kd">super</span><span class="o">(</span><span class="n">outputStream</span><span class="o">,</span> <span class="n">b</span><span class="o">,</span> <span class="n">s</span><span class="o">);</span>
-</span><span class='line'>          <span class="n">outputStack</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedList</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;();</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="kd">private</span> <span class="kt">void</span> <span class="nf">catchOutput</span><span class="o">(</span><span class="n">String</span> <span class="n">output</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">outputStack</span><span class="o">.</span><span class="na">addFirst</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="kd">public</span> <span class="n">String</span> <span class="nf">popLastOutput</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">removeFirst</span><span class="o">();</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="kd">public</span> <span class="n">String</span> <span class="nf">popFirstOutput</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">removeLast</span><span class="o">();</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'>        <span class="kd">public</span> <span class="n">String</span> <span class="nf">peekLastOutput</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">peekFirst</span><span class="o">();</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="kd">public</span> <span class="n">String</span> <span class="nf">peekFirstOutput</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">peekLast</span><span class="o">();</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">discardLastNStrings</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
-</span><span class='line'>                <span class="n">popLastOutput</span><span class="o">();</span>
-</span><span class='line'>            <span class="o">}</span>
-</span><span class='line'>       <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>       <span class="kd">public</span> <span class="kt">void</span> <span class="nf">discardFirstNStrings</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
-</span><span class='line'>                <span class="n">popFirstOutput</span><span class="o">();</span>
-</span><span class='line'>            <span class="o">}</span>
-</span><span class='line'>       <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>       <span class="kd">public</span> <span class="kt">void</span> <span class="nf">replayAllForwards</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">popFirstOutput</span><span class="o">();</span>
-</span><span class='line'>            <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-</span><span class='line'>            <span class="k">while</span> <span class="o">(</span><span class="n">output</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Element&quot;</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">&quot;:&quot;</span><span class="o">);</span>
-</span><span class='line'>                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
-</span><span class='line'>                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>                <span class="n">output</span> <span class="o">=</span> <span class="n">popFirstOutput</span><span class="o">();</span>
-</span><span class='line'>            <span class="o">}</span>
-</span><span class='line'>       <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>       <span class="kd">public</span> <span class="kt">void</span> <span class="nf">replayAllBackwards</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">popLastOutput</span><span class="o">();</span>
-</span><span class='line'>            <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">outputStack</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
-</span><span class='line'>            <span class="k">while</span> <span class="o">(</span><span class="n">output</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Element&quot;</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">&quot;:&quot;</span><span class="o">);</span>
-</span><span class='line'>                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
-</span><span class='line'>                <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>                <span class="n">output</span> <span class="o">=</span> <span class="n">popLastOutput</span><span class="o">();</span>
-</span><span class='line'>            <span class="o">}</span>
-</span><span class='line'>       <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>       <span class="nd">@Override</span>
-</span><span class='line'>       <span class="kd">public</span> <span class="kt">void</span> <span class="nf">println</span><span class="o">(</span><span class="n">String</span> <span class="n">output</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">catchOutput</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
-</span><span class='line'>       <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>       <span class="nd">@Override</span>
-</span><span class='line'>       <span class="kd">public</span> <span class="kt">void</span> <span class="nf">print</span><span class="o">(</span><span class="n">String</span> <span class="n">output</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">catchOutput</span><span class="o">(</span><span class="n">output</span><span class="o">);</span>
-</span><span class='line'>       <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Since the recorder stores strings in a
-<a href="https://en.wikipedia.org/wiki/Deque">deque</a>,
-it&#8217;s easy to replay output in forward or reverse order. Now a test
-like this:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>
-</span><span class='line'><span class="nd">@Test</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">controllerShouldPassErrorMessageToViewOnInvalidMove</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">pushInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">pushInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">exit</span><span class="o">.</span><span class="na">expectSystemExitWithStatus</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputStream</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">playRound</span><span class="o">();</span>
-</span><span class='line'>    <span class="n">String</span> <span class="n">expected</span> <span class="o">=</span> <span class="n">yourMove</span> <span class="o">+</span> <span class="s">&quot;\n&quot;</span> <span class="o">+</span> <span class="n">xInCenter</span><span class="o">.</span><span class="na">toString</span><span class="o">()</span> <span class="o">+</span> <span class="s">&quot;\n&quot;</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">assertEquals</span><span class="o">(</span><span class="n">expected</span><span class="o">,</span>
-</span><span class='line'>    <span class="n">output</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">clearInput</span><span class="o">();</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Become a little friendlier&#8230;</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Test</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">controllerShouldPassErrorMessageToViewOnInvalidMove</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputRecorder</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">controller</span><span class="o">.</span><span class="na">playRound</span><span class="o">();</span>
-</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchElementException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>          <span class="n">outputRecorder</span><span class="o">.</span><span class="na">discardFirstNStrings</span><span class="o">(</span><span class="mi">4</span><span class="o">);</span>
-</span><span class='line'>          <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>          <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;Square is already full.&quot;</span><span class="o">,</span> <span class="n">output</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">clearInput</span><span class="o">();</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The utility might not be immediately obvious, but capturing output
-string by string has already put an end to tracking down small
-differences between expected and actual output that come from an extra
-space or misplaced newline.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Mocking User Input with a Queue]]></title>
-    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/15/mocking-user-input-with-a-queue/"/>
-    <updated>2013-05-15T14:53:00-05:00</updated>
-    <id>http://ecmendenhall.github.io/blog/blog/2013/05/15/mocking-user-input-with-a-queue</id>
-    <content type="html"><![CDATA[<p>Over the course of my Tic Tac Toe project, I&#8217;ve needed to test against
-user input several times. As a newcomer to <a href="http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern/">mock object
-patterns</a>,
-coming up with good solutions to these testing dilemmas has been one
-of my biggest challenges.</p>
-
-<p>There are plenty of <a href="http://stackoverflow.com/questions/3833840/mock-object-libraries-in-java">heavy-duty
-tools</a>
-for mocks and fakes in Java, but I&#8217;d like to stick with my own
-solutions as long as possible, since writing them myself has been
-enlightening.</p>
-
-<p>Here&#8217;s a solution I came up with today to simulate full Tic Tac Toe
-games with two human players: a mock View object that returns fake input
-from a queue. By pushing mock input onto the queue during test setup,
-I can configure games in advance and replay them later. Here&#8217;s the
-very simple mock View object:</p>
-
-<figure class='code'><figcaption><span>MockTerminalView.java </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kn">import</span> <span class="nn">java.util.NoSuchElementException</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">java.util.Queue</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">java.util.concurrent.LinkedBlockingQueue</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MockTerminalView</span> <span class="kd">extends</span> <span class="n">TerminalView</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">private</span> <span class="n">Queue</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">inputQ</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedBlockingQueue</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">enqueueInput</span><span class="o">(</span><span class="n">String</span> <span class="n">fakeInput</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">inputQ</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">fakeInput</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">clearInput</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">inputQ</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nd">@Override</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="n">String</span> <span class="nf">getInput</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>        <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">inputQ</span><span class="o">.</span><span class="na">remove</span><span class="o">();</span>
-</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchElementException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="s">&quot;&quot;</span><span class="o">;</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And here&#8217;s an example test that plays through an entire game and exits
-when Player 2 wins (comments added for some context):</p>
-
-<figure class='code'><figcaption><span>GameControllerTest.java </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Test</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">gameShouldEndOnWin</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">exit</span><span class="o">.</span><span class="na">expectSystemExit</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">// Select two human players</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;h&quot;</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;h&quot;</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">setUp</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;middle center&quot;</span><span class="o">);</span> <span class="c1">// Player 1&#39;s first move</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;top left&quot;</span><span class="o">);</span>      <span class="c1">// Player 2&#39;s first move</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;top right&quot;</span><span class="o">);</span>     <span class="c1">// Player 1 goes for the diagonal...</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;middle left&quot;</span><span class="o">);</span>   <span class="c1">// Player 2 goes for the column...</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;lower right&quot;</span><span class="o">);</span>   <span class="c1">// Player 1 chokes!</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;lower left&quot;</span><span class="o">);</span>    <span class="c1">// Player 2 wins! What an upset! </span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">startGame</span><span class="o">();</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>I&#8217;m sure I&#8217;ll discover the shortcomings of this approach sooner or
-later, but for now it&#8217;s a pretty good way to test events inside
-the main game loop.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[A mock object antipattern]]></title>
-    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern/"/>
-    <updated>2013-05-12T23:05:00-05:00</updated>
-    <id>http://ecmendenhall.github.io/blog/blog/2013/05/12/a-mock-object-antipattern</id>
-    <content type="html"><![CDATA[<p>For the most part, test-driven development has been a breeze so far.
-In addition to
-<a href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/">enforcing</a>
-good habits, watching red tests turn green provides an extremely satisfying
-dopamine kick every few minutes, all day. Testing simple objects and actions in my Tic Tac Toe game—things
-like the board, player behavior, and the Minimax algorithm—was
-straightforward. But testing the view and controller classes that glue
-them together required a little more thought.</p>
-
-<p>Writing tests required interrupting the game loop to check on the behavior of the view and
-controller objects. To start, I added optional flag arguments to many
-methods that would break the game loop so I could make assertions
-about game state. I quickly came to realize that this was a bad
-solution, and I cringed the next day when a chapter of <em>Clean Code</em>
-described boolean flags as one of the most rancid code smells around.</p>
-
-<p>I came across the concept of <a href="http://martinfowler.com/articles/mocksArentStubs.html">test
- doubles</a>
-and mock objects, and got the idea right away: create fake objects
- with the same methods as real ones, override their behavior, and use
- them as substitutes for their more complicated counterparts in unit tests.</p>
-
-<p>Or at least, I  <em>thought</em> I got the idea. With my tests passing and my game working, I felt pretty good about my
-project. But wiring up a code coverage tool showed that my view and
-controller classes were only half covered by my tests. What went
-wrong? As it turned out, I was testing my mocks! Here&#8217;s the pattern I was following:</p>
-
-<ul>
-<li>Create a subclass of the object you want to test.</li>
-<li>Override or stub out methods to return predetermined output.</li>
-<li>Write assertions against the behavior of the mock objects.</li>
-</ul>
-
-
-<p>This meant, of course, that I was never actually testing the real
-objects, but only the fake ones, as revealed by the code coverage data. Worse, all the tests
-that I thought showed my code was working were essentialy tautologies.
-This probably appears obvious to experienced TDD practitioners, but it
-was surprisingly easy to fall into this antipattern. For the record,
-here&#8217;s how you should really use a mock object:</p>
-
-<ul>
-<li>Create mocks of the objects that <em>interact with</em> the one you want to
-test.</li>
-<li>Override or stub out methods to return predetermined output.</li>
-<li>Write assertions against the behavior of the <em>real</em> object
-interacting with the test doubles.</li>
-</ul>
-
-
-<p>In retrospect, this makes perfect sense. But I&#8217;ll be going over all my
-tests with a careful eye tomorrow. Sometimes the green light isn&#8217;t
-what it seems.</p>
 ]]></content>
   </entry>
   

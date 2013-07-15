@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Internet Explorer | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/internet-explorer/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-07-15T11:47:02-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Accessing Rails from Virtualbox]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/07/14/accessing-rails-from-virtualbox/"/>
+    <updated>2013-07-14T23:49:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/07/14/accessing-rails-from-virtualbox</id>
+    <content type="html"><![CDATA[<p>My latest project involves adding a Flash fallback to replace an
+HTML5-based feature in a Rails application. It's the first time I've
+tested in Internet Explorer over a virtual machine, and I spent a good
+deal of time configuring everything. Here's a summary of the process
+for future VM novices.</p>
+
+<h3>Get VirtualBox</h3>
+
+<p>First, grab <a href="https://www.virtualbox.org/">VirtualBox</a>. It may be handy
+for more than testing: in addition to
+running Internet Explorer, you might want to try a new <a href="http://virtualboxes.org/images/">Linux
+distro</a> or do some <a href="http://raidersec.blogspot.com/2013/03/installing-kali-linux-in-virtualbox.html">pen
+testing</a>.</p>
+
+<h3>Install an IE virtual machine</h3>
+
+<p>Microsoft recently rolled out <a href="http://www.modern.ie/en-us/virtualization-tools#downloads">free virtual machine images</a> for IE
+testing that greatly simplify the setup process. Download and extract the versions you're interested in.
+Some of these are distributed as full images, but most come as several <code>.rar</code> files and a
+self-extracting archive. To extract from the command line:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ chmod +x MacVirtualBox.part1.sfx
+</span><span class='line'>$ ./MacVirtualBox.part1.sfx</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>This should create a new <code>.ova</code> file in the same directory. Open VirtualBox and import it (File > Import Appliance on OS X).</p>
+
+<p><img src="/images/vbox.png"></p>
+
+<h3>Configure network settings</h3>
+
+<p>Select the machine you'd like to connect from and choose Settings >
+Network. Make sure the network adapter is enabled and attached to NAT.
+(This should be the default setting).</p>
+
+<p><img src="/images/nat.png"></p>
+
+<p>You can access the host machine
+from inside the VM at 10.0.2.2--e.g., if you access your Rails dev server at
+localhost:3000, you can connect at 10.0.2.2:3000. Unfortunately,
+running my Rails dev server from the host machine resulted in
+occasional redirects to localhost. Fix this by editing the Windows
+hosts file.</p>
+
+<p>The Windows hosts file is available in
+<code>C:\windows\system32\drivers\etc\</code>. In XP, you'll be able to edit it
+directly with Notepad. On a Vista VM, you'll need admin priviliges.
+Find Notepad in the start menu, right click, and choose "Run as
+Administrator." Then, edit the hosts file to direct localhost to
+10.0.2.2, the default VirtualBox address for the host machine.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>10.0.2.2 localhost</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Run your Rails dev server on the host machine, and connect to
+localhost:3000 as usual. Congratulations! You're ready for the joy of
+Internet Explorer. For bonus points, configure Capybara to <a href="http://www.johng.co.uk/2010/10/13/run_capybara_and_cucumber_features_in_internet_explorer_on_remote_windows/">run in IE</a>.</p>
+]]></content>
+  </entry>
+  
+</feed>
