@@ -7,9 +7,7 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Jul 15th, 2013 Clojure, core.logic, logic programming Prime Factorization With core.logic It&#8217;s time for my first code
-kata,
-and on Colin&#8217 &hellip;">
+	<meta name="description" content="Jul 30th, 2013 Free software, Security Open Web Security Essentials Over the past two weeks, I&#8217;ve been working through The Web Application &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -88,6 +86,132 @@ and on Colin&#8217 &hellip;">
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-30T00:08:00-05:00" data-updated="true" itemprop="datePublished">Jul 30<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/free-software/'>Free software</a>, <a class='category' href='/blog/categories/security/'>Security</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/07/30/open-web-security-essentials/" itemprop="url">Open Web Security Essentials</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Over the past two weeks, I&#8217;ve been working through <a href="http://www.amazon.com/The-Web-Application-Hackers-Handbook/dp/1118026470">The Web Application
+Hacker&#8217;s
+Handbook</a>.
+Although it&#8217;s not part of the 8th Light core curriculum, it ought to
+be: it&#8217;s a comprehensive catalog of web security mistakes and a great
+introduction to thinking about vulnerabilities from an attacker&#8217;s perspective. The only gripe I have
+with the authors is their penchant for plugging expensive closed-source software
+and online training. Fortunately, I&#8217;ve found plenty of free
+alternatives. Here are a few of the essential tools I&#8217;ve found for
+developers interested in web security.</p>
+
+<h2>VirtualBox</h2>
+
+<p>Every tool in my pentesting kit depends on
+<a href="https://www.virtualbox.org/">VirtualBox</a>. Working in virtual machines
+keeps my security tools separate from my development environment, and
+allows me to practice attacking hideously vulnerable applications in
+quarantine. VirtualBox includes excellent network configuration
+options, including completely virtualized local networks that make it
+easy to keep things compartmentalized.</p>
+
+<h2>Kali Linux</h2>
+
+<p><a href="http://www.kali.org/">Kali Linux</a>, formerly BackTrack, is a
+specialized Debian distribution that includes hundreds of built in
+security tools. I can&#8217;t begin to imagine the time I might have spent
+with Homebrew installing and configuring everything included here. The tools included with Kali are many and powerful, and
+I&#8217;ve discovered a new fuzzer, proxy, or scanner to try for every topic
+in the book.</p>
+
+<h2>Zed Attack Proxy</h2>
+
+<p>The authors of WAHH frequently plug their own Burp Suite, a closed-source
+intercepting proxy that costs $300 per user per year to do anything
+useful. <a href="https://www.owasp.org/index.php/OWASP_Zed_Attack_Proxy_Project">Zed Attack
+Proxy</a>,
+developed by the <a href="https://www.owasp.org/index.php/Main_Page">Open Web Security
+Project</a>, is completely free, Apache
+licensed, and just as good an educational and testing tool.
+(It&#8217;s included in Kali, along with the free
+edition of Burp). Hacking tools are not always the most carefully
+crafted software, but ZAP is an extremely stable, very pleasant
+exception. <a href="https://www.owasp.org/index.php/WebScarab_Getting_Started">WebScarab</a>, also by OWASP, is another good free alternative.</p>
+
+<h2>SQLMap</h2>
+
+<p>I remember the joy of my first successful SQL injection like it was
+last Thursday. (It <em>was</em> last Thursday, but that&#8217;s beside the point).
+The thrill of breaking in with a well placed apostrophe and couple of
+dashes takes a while to wear off, but diminishing returns are likely to
+set in after 50 handcrafted variations on the same GET parameter.
+Fortunately, there&#8217;s
+<a href="https://github.com/sqlmapproject/sqlmap">SQLMap</a>, which almost makes
+it too easy, automating the entire process of finding and exploiting SQL injection vulnerabilities.</p>
+
+<p>All these tools are no fun without something to (safely, responsibly, legally)
+attack. Browsing through WAHH, I was excited to see lots of links to
+online interactive labs illustrating almost every concept. I was less
+excited to discover that they&#8217;re completely proprietary and cost
+$7/hour. Fortunately, there are plenty of open alternatives:</p>
+
+<h2>Metasploitable</h2>
+
+<p><a href="http://sourceforge.net/projects/metasploitable/files/Metasploitable2/">Metasploitable2</a>
+is an intentionally vulnerable virtual machine configured to run
+several vulnerable web applications on port 80 by default, including
+<a href="http://www.dvwa.co.uk/">Damn Vulnerable Web App</a> and
+<a href="https://www.owasp.org/index.php/OWASP_Mutillidae_2_Project">Mutillidae</a>.
+Before booting it up, please make sure your network settings are
+<a href="https://www.youtube.com/watch?v=e0vpBKRZPGc">configured
+correctly</a>: it should
+never ever be exposed to users on your network or the internet.</p>
+
+<h2>RailsGoat</h2>
+
+<p>I&#8217;m not reading WAHH to become a professional pentester. I&#8217;m doing it
+to learn how to develop safe web applications, and we write lots of
+them in Rails. <a href="https://github.com/OWASP/railsgoat">RailsGoat</a> (yet
+another OWASP project) is a vulnerable Rails application with built-in
+documentation and examples of the <a href="https://www.owasp.org/index.php/Top_10_2013-Top_10">top
+10</a> web
+vulnerabilities. Best of all, each one includes code samples, which
+are especially useful for a developer like me trying to avoid writing
+a goat of my own.</p>
+
+<h2>OWASP</h2>
+
+<p>Many of these resources come courtesy of OWASP, the <a href="https://www.owasp.org/index.php/Main_Page">Open Web
+Application Security
+Project</a>. In addition to
+developing lots of free tools, they&#8217;re an excellent resource for
+learning about web security.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -2827,98 +2951,6 @@ support code that aren&#8217;t written just to pass a test, or a test that
 looks comprehensive really trying to cover too much at once. This
 question is a great way to hunt them down and fix them: ask every line
 of code you write to justify its existence.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-16T23:37:00-05:00" data-updated="true" itemprop="datePublished">Jun 16<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/planning/'>planning</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/16/making-scope-explicit/" itemprop="url">Making Scope Explicit</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<blockquote><p>As a young software engineer, I learned three variables by which to
-manage projects: speed, quality, and price. The sponsor gets to fix
-two of these variables and the team gets to estimate the third. If the
-plan is unacceptable, the negotiating starts.
-This model doesn&#8217;t work well in practice. Time and costs are
-generally set outside the project. That leaves quality as the only
-variable you can manipulate. Lowering the quality of your work doesn&#8217;t
-eliminate work, it just shifts it later so delays are not clearly your
-responsibility. You can create the illusion of progress this way, but
-you pay in reduced satisfaction and damaged relationships.
-Satisfaction comes from doing quality work.
-The variable left out of this model is scope. If we make scope explicit, then we have a safe
-way to adapt, we have a safe way to negotiate, we have a limit to
-ridiculous and unnecessary demands.</p></blockquote>
-
-<p>—Kent Beck, <a href="http://www.amazon.com/Extreme-Programming-Explained-Embrace-Edition/dp/0321278658/ref=sr_1_1?ie=UTF8&amp;qid=1371444145&amp;sr=8-1&amp;keywords=extreme+programming">Extreme Programming
-Explained</a></p>
-
-<p>I spent all last week working on my <a href="https://github.com/ecmendenhall/schtitt">web
-server</a>. It&#8217;s a fun project
-so far, filled with the joy of taking something apart and looking
-inside to see how it works, but it&#8217;s also been a challenge: I had a
-long checklist of features to implement and only a week to get them
-all working.</p>
-
-<p>Even though I was still frantically coding on the train to work the
-day of my demo, I managed to check off all the boxes. Like the 100% test
-coverage my project reported, 100% box coverage felt great—like the
-satisfaction of crossing the last item off a long to-do list. But as
-any test-driven developer knows, even 100% test coverage can&#8217;t
-guarantee that a project will work. This week I learned that box coverage is the same: ticking
-off features is no guarantee of quality.</p>
-
-<p>Sure, my server met the requirements, but much of the code wasn&#8217;t
-pretty, and I knew it. And though I was proud of the progress I made and looking
-forward to showing off my work, the demo went
-off the rails early on, when the server hung and crashed trying to handle
-concurrent connections. (If you&#8217;re thinking of using <code>Thread.run()</code>,
-you probably want <code>Thread.start()</code>, by the way). In an instant, all
-the little details I&#8217;d put effort into—nice looking directory pages,
-support for extra headers and obscure content types, clean request
-parsing under the hood— were outweighed by one big defect.</p>
-
-<p>The attitude towards quality at 8th Light is clear: quality is
-non-negotiable, we will never ship software with known defects, and
-when an unknown one slips by, we&#8217;ll fix it for free. That leaves scope
-as the only free variable in the planning and development process.
-Although the scope of my web server project was already explicit, I
-didn&#8217;t do a good job negotiating. In retrospect, it&#8217;s clear that
-showing a clean, stable server that only handles GET requests is a
-greater accomplishment than one with extra bells and whistles that&#8217;s
-prone to random catastrophic failure. But it sure felt good to check
-  off all those boxes.</p>
-
-<p>I&#8217;ve learned two lessons over the last week: first, quality and stability matter most. Never sacrifice
-quality, and never ever tolerate unstable code. Second, renegotiating
-and giving feedback is part of making scope explicit. Trading off
-  quality for features is guaranteed to be a bad bargain.</p>
 
 		
 		

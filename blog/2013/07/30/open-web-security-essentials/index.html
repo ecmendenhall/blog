@@ -1,0 +1,260 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Open web security essentials - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Open Web Security Essentials Over the past two weeks, I&#8217;ve been working through The Web Application
+Hacker&#8217;s
+Handbook.
+Although it&#8217 &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/07/30/open-web-security-essentials/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Open Web Security Essentials</h1>
+	<div class="entry-content" itemprop="articleBody"><p>Over the past two weeks, I&#8217;ve been working through <a href="http://www.amazon.com/The-Web-Application-Hackers-Handbook/dp/1118026470">The Web Application
+Hacker&#8217;s
+Handbook</a>.
+Although it&#8217;s not part of the 8th Light core curriculum, it ought to
+be: it&#8217;s a comprehensive catalog of web security mistakes and a great
+introduction to thinking about vulnerabilities from an attacker&#8217;s perspective. The only gripe I have
+with the authors is their penchant for plugging expensive closed-source software
+and online training. Fortunately, I&#8217;ve found plenty of free
+alternatives. Here are a few of the essential tools I&#8217;ve found for
+developers interested in web security.</p>
+
+<h2>VirtualBox</h2>
+
+<p>Every tool in my pentesting kit depends on
+<a href="https://www.virtualbox.org/">VirtualBox</a>. Working in virtual machines
+keeps my security tools separate from my development environment, and
+allows me to practice attacking hideously vulnerable applications in
+quarantine. VirtualBox includes excellent network configuration
+options, including completely virtualized local networks that make it
+easy to keep things compartmentalized.</p>
+
+<h2>Kali Linux</h2>
+
+<p><a href="http://www.kali.org/">Kali Linux</a>, formerly BackTrack, is a
+specialized Debian distribution that includes hundreds of built in
+security tools. I can&#8217;t begin to imagine the time I might have spent
+with Homebrew installing and configuring everything included here. The tools included with Kali are many and powerful, and
+I&#8217;ve discovered a new fuzzer, proxy, or scanner to try for every topic
+in the book.</p>
+
+<h2>Zed Attack Proxy</h2>
+
+<p>The authors of WAHH frequently plug their own Burp Suite, a closed-source
+intercepting proxy that costs $300 per user per year to do anything
+useful. <a href="https://www.owasp.org/index.php/OWASP_Zed_Attack_Proxy_Project">Zed Attack
+Proxy</a>,
+developed by the <a href="https://www.owasp.org/index.php/Main_Page">Open Web Security
+Project</a>, is completely free, Apache
+licensed, and just as good an educational and testing tool.
+(It&#8217;s included in Kali, along with the free
+edition of Burp). Hacking tools are not always the most carefully
+crafted software, but ZAP is an extremely stable, very pleasant
+exception. <a href="https://www.owasp.org/index.php/WebScarab_Getting_Started">WebScarab</a>, also by OWASP, is another good free alternative.</p>
+
+<h2>SQLMap</h2>
+
+<p>I remember the joy of my first successful SQL injection like it was
+last Thursday. (It <em>was</em> last Thursday, but that&#8217;s beside the point).
+The thrill of breaking in with a well placed apostrophe and couple of
+dashes takes a while to wear off, but diminishing returns are likely to
+set in after 50 handcrafted variations on the same GET parameter.
+Fortunately, there&#8217;s
+<a href="https://github.com/sqlmapproject/sqlmap">SQLMap</a>, which almost makes
+it too easy, automating the entire process of finding and exploiting SQL injection vulnerabilities.</p>
+
+<p>All these tools are no fun without something to (safely, responsibly, legally)
+attack. Browsing through WAHH, I was excited to see lots of links to
+online interactive labs illustrating almost every concept. I was less
+excited to discover that they&#8217;re completely proprietary and cost
+$7/hour. Fortunately, there are plenty of open alternatives:</p>
+
+<h2>Metasploitable</h2>
+
+<p><a href="http://sourceforge.net/projects/metasploitable/files/Metasploitable2/">Metasploitable2</a>
+is an intentionally vulnerable virtual machine configured to run
+several vulnerable web applications on port 80 by default, including
+<a href="http://www.dvwa.co.uk/">Damn Vulnerable Web App</a> and
+<a href="https://www.owasp.org/index.php/OWASP_Mutillidae_2_Project">Mutillidae</a>.
+Before booting it up, please make sure your network settings are
+<a href="https://www.youtube.com/watch?v=e0vpBKRZPGc">configured
+correctly</a>: it should
+never ever be exposed to users on your network or the internet.</p>
+
+<h2>RailsGoat</h2>
+
+<p>I&#8217;m not reading WAHH to become a professional pentester. I&#8217;m doing it
+to learn how to develop safe web applications, and we write lots of
+them in Rails. <a href="https://github.com/OWASP/railsgoat">RailsGoat</a> (yet
+another OWASP project) is a vulnerable Rails application with built-in
+documentation and examples of the <a href="https://www.owasp.org/index.php/Top_10_2013-Top_10">top
+10</a> web
+vulnerabilities. Best of all, each one includes code samples, which
+are especially useful for a developer like me trying to avoid writing
+a goat of my own.</p>
+
+<h2>OWASP</h2>
+
+<p>Many of these resources come courtesy of OWASP, the <a href="https://www.owasp.org/index.php/Main_Page">Open Web
+Application Security
+Project</a>. In addition to
+developing lots of free tools, they&#8217;re an excellent resource for
+learning about web security.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/07/30/open-web-security-essentials/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/07/30/open-web-security-essentials/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

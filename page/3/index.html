@@ -7,8 +7,8 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="May 19th, 2013 Java, TDD, testing recipes Capturing Console Output With a Deque Redirecting stdout to a new PrintStream is an easy way
-to test &hellip;">
+	<meta name="description" content="May 19th, 2013 Java, TDD, testing recipes The Joy of Exceptions One more recipe for the TDD cookbook before I move on to more
+interesting things. &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +87,176 @@ to test &hellip;">
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-19T21:31:00-05:00" data-updated="true" itemprop="datePublished">May 19<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/java/'>Java</a>, <a class='category' href='/blog/categories/tdd/'>TDD</a>, <a class='category' href='/blog/categories/testing-recipes/'>testing recipes</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/19/the-joy-of-exceptions/" itemprop="url">The Joy of Exceptions</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>One more recipe for the TDD cookbook before I move on to more
+interesting things. You might have noticed a new <code>GameOverException</code>
+and a try-catch block in the final example of my last post.</p>
+
+<p>Before adding a game over exception, methods that checked for final
+game states directly called <code>System.exit()</code>. Testing this proved
+difficult, and I ended up importing a <a href="http://stefanbirkner.github.io/system-rules/">third-party library</a> of extra
+JUnit rules. This week, I refactored them to throw a custom exception:</p>
+
+<figure class='code'><figcaption><span>TerminalView.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TerminalView</span> <span class="kd">implements</span> <span class="n">View</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">endGame</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">throw</span> <span class="k">new</span> <span class="nf">GameOverException</span><span class="o">(</span><span class="s">&quot;Game over.&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This exception will bubble up until it&#8217;s caught in <code>Main</code>, which calls
+<code>System.exit()</code> on behalf of any method that throws a
+<code>GameOverException</code>.</p>
+
+<figure class='code'><figcaption><span>Main.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="n">View</span> <span class="n">view</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TerminalView</span><span class="o">();</span>
+</span><span class='line'>            <span class="n">GameController</span> <span class="n">controller</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GameController</span><span class="o">(</span><span class="n">view</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
+</span><span class='line'>            <span class="n">controller</span><span class="o">.</span><span class="na">setUp</span><span class="o">();</span>
+</span><span class='line'>            <span class="n">controller</span><span class="o">.</span><span class="na">startGame</span><span class="o">();</span>
+</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">GameOverException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is not only a <a href="http://stackoverflow.com/questions/6171265/best-way-to-exit-a-program-when-i-want-an-exception-to-be-thrown">better practice</a>,
+but also provides a much better way to test methods that might detect
+a completed game—just add a try/catch block to the tests!</p>
+
+<p>Exceptions have come in handy elsewhere in my tests, too. Once the
+controller starts a game, there&#8217;s nothing to break the back-and-forth
+game loop but a win, draw, or error. Figuring out how to test game
+states without getting stuck in an infinite loop or loading up entire
+games was a challenge. &#8220;If only there
+were some special syntax for breaking normal control flow in special
+situations,&#8221; I wondered to myself more times than I&#8217;d like to admit.
+Well, duh—use exceptions!  My mock view objects throw a <code>NoSuchElementException</code> when their input
+queue runs empty. Catching this exception breaks the normal game flow
+and allows me to access game state as soon as the fake input I&#8217;m
+interested in has been sent to the controller. Here&#8217;s an example:</p>
+
+<figure class='code'><figcaption><span>GameControllerTest.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Test</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">controllerShouldPassErrorMessageToViewOnInvalidInput</span><span class="o">()</span><span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;invalid phrase&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputRecorder</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">controller</span><span class="o">.</span><span class="na">playRound</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchElementException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">outputRecorder</span><span class="o">.</span><span class="na">discardFirstNStrings</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;That&#39;s not a valid board location.&quot;</span><span class="o">,</span> <span class="n">output</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">clearInput</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Normally, <code>Controller.playRound()</code> will continue querying players for
+moves until the game ends. But once this test catches the empty queue
+exception, it tests against the expected output, which should show an
+error message. Exceptions have proved extremely handy so far—as long as I remember
+that they&#8217;re in my control flow toolbox, too.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">

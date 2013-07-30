@@ -4,7 +4,7 @@
   <title><![CDATA[Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-07-15T11:47:02-05:00</updated>
+  <updated>2013-07-30T02:22:27-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -12,6 +12,106 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Open web security essentials]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/07/30/open-web-security-essentials/"/>
+    <updated>2013-07-30T00:08:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/07/30/open-web-security-essentials</id>
+    <content type="html"><![CDATA[<p>Over the past two weeks, I&#8217;ve been working through <a href="http://www.amazon.com/The-Web-Application-Hackers-Handbook/dp/1118026470">The Web Application
+Hacker&#8217;s
+Handbook</a>.
+Although it&#8217;s not part of the 8th Light core curriculum, it ought to
+be: it&#8217;s a comprehensive catalog of web security mistakes and a great
+introduction to thinking about vulnerabilities from an attacker&#8217;s perspective. The only gripe I have
+with the authors is their penchant for plugging expensive closed-source software
+and online training. Fortunately, I&#8217;ve found plenty of free
+alternatives. Here are a few of the essential tools I&#8217;ve found for
+developers interested in web security.</p>
+
+<h2>VirtualBox</h2>
+
+<p>Every tool in my pentesting kit depends on
+<a href="https://www.virtualbox.org/">VirtualBox</a>. Working in virtual machines
+keeps my security tools separate from my development environment, and
+allows me to practice attacking hideously vulnerable applications in
+quarantine. VirtualBox includes excellent network configuration
+options, including completely virtualized local networks that make it
+easy to keep things compartmentalized.</p>
+
+<h2>Kali Linux</h2>
+
+<p><a href="http://www.kali.org/">Kali Linux</a>, formerly BackTrack, is a
+specialized Debian distribution that includes hundreds of built in
+security tools. I can&#8217;t begin to imagine the time I might have spent
+with Homebrew installing and configuring everything included here. The tools included with Kali are many and powerful, and
+I&#8217;ve discovered a new fuzzer, proxy, or scanner to try for every topic
+in the book.</p>
+
+<h2>Zed Attack Proxy</h2>
+
+<p>The authors of WAHH frequently plug their own Burp Suite, a closed-source
+intercepting proxy that costs $300 per user per year to do anything
+useful. <a href="https://www.owasp.org/index.php/OWASP_Zed_Attack_Proxy_Project">Zed Attack
+Proxy</a>,
+developed by the <a href="https://www.owasp.org/index.php/Main_Page">Open Web Security
+Project</a>, is completely free, Apache
+licensed, and just as good an educational and testing tool.
+(It&#8217;s included in Kali, along with the free
+edition of Burp). Hacking tools are not always the most carefully
+crafted software, but ZAP is an extremely stable, very pleasant
+exception. <a href="https://www.owasp.org/index.php/WebScarab_Getting_Started">WebScarab</a>, also by OWASP, is another good free alternative.</p>
+
+<h2>SQLMap</h2>
+
+<p>I remember the joy of my first successful SQL injection like it was
+last Thursday. (It <em>was</em> last Thursday, but that&#8217;s beside the point).
+The thrill of breaking in with a well placed apostrophe and couple of
+dashes takes a while to wear off, but diminishing returns are likely to
+set in after 50 handcrafted variations on the same GET parameter.
+Fortunately, there&#8217;s
+<a href="https://github.com/sqlmapproject/sqlmap">SQLMap</a>, which almost makes
+it too easy, automating the entire process of finding and exploiting SQL injection vulnerabilities.</p>
+
+<p>All these tools are no fun without something to (safely, responsibly, legally)
+attack. Browsing through WAHH, I was excited to see lots of links to
+online interactive labs illustrating almost every concept. I was less
+excited to discover that they&#8217;re completely proprietary and cost
+$7/hour. Fortunately, there are plenty of open alternatives:</p>
+
+<h2>Metasploitable</h2>
+
+<p><a href="http://sourceforge.net/projects/metasploitable/files/Metasploitable2/">Metasploitable2</a>
+is an intentionally vulnerable virtual machine configured to run
+several vulnerable web applications on port 80 by default, including
+<a href="http://www.dvwa.co.uk/">Damn Vulnerable Web App</a> and
+<a href="https://www.owasp.org/index.php/OWASP_Mutillidae_2_Project">Mutillidae</a>.
+Before booting it up, please make sure your network settings are
+<a href="https://www.youtube.com/watch?v=e0vpBKRZPGc">configured
+correctly</a>: it should
+never ever be exposed to users on your network or the internet.</p>
+
+<h2>RailsGoat</h2>
+
+<p>I&#8217;m not reading WAHH to become a professional pentester. I&#8217;m doing it
+to learn how to develop safe web applications, and we write lots of
+them in Rails. <a href="https://github.com/OWASP/railsgoat">RailsGoat</a> (yet
+another OWASP project) is a vulnerable Rails application with built-in
+documentation and examples of the <a href="https://www.owasp.org/index.php/Top_10_2013-Top_10">top
+10</a> web
+vulnerabilities. Best of all, each one includes code samples, which
+are especially useful for a developer like me trying to avoid writing
+a goat of my own.</p>
+
+<h2>OWASP</h2>
+
+<p>Many of these resources come courtesy of OWASP, the <a href="https://www.owasp.org/index.php/Main_Page">Open Web
+Application Security
+Project</a>. In addition to
+developing lots of free tools, they&#8217;re an excellent resource for
+learning about web security.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Prime factorization with core.logic]]></title>
@@ -4227,150 +4327,6 @@ returning it.</p>
 <p>And watching the tree traverse itself. You can find my code from this
 post <a href="https://gist.github.com/ecmendenhall/5646594">here</a>. For more on closures in Lisp,
 check out the rest of <a href="http://lib.store.yahoo.net/lib/paulgraham/onlisp.pdf">Chapter 6</a>.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[The joy of exceptions]]></title>
-    <link href="http://ecmendenhall.github.io/blog/blog/2013/05/19/the-joy-of-exceptions/"/>
-    <updated>2013-05-19T21:31:00-05:00</updated>
-    <id>http://ecmendenhall.github.io/blog/blog/2013/05/19/the-joy-of-exceptions</id>
-    <content type="html"><![CDATA[<p>One more recipe for the TDD cookbook before I move on to more
-interesting things. You might have noticed a new <code>GameOverException</code>
-and a try-catch block in the final example of my last post.</p>
-
-<p>Before adding a game over exception, methods that checked for final
-game states directly called <code>System.exit()</code>. Testing this proved
-difficult, and I ended up importing a <a href="http://stefanbirkner.github.io/system-rules/">third-party library</a> of extra
-JUnit rules. This week, I refactored them to throw a custom exception:</p>
-
-<figure class='code'><figcaption><span>TerminalView.java </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TerminalView</span> <span class="kd">implements</span> <span class="n">View</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">endGame</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{</span>
-</span><span class='line'>        <span class="k">throw</span> <span class="k">new</span> <span class="nf">GameOverException</span><span class="o">(</span><span class="s">&quot;Game over.&quot;</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This exception will bubble up until it&#8217;s caught in <code>Main</code>, which calls
-<code>System.exit()</code> on behalf of any method that throws a
-<code>GameOverException</code>.</p>
-
-<figure class='code'><figcaption><span>Main.java </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="n">View</span> <span class="n">view</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TerminalView</span><span class="o">();</span>
-</span><span class='line'>            <span class="n">GameController</span> <span class="n">controller</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GameController</span><span class="o">(</span><span class="n">view</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
-</span><span class='line'>            <span class="n">controller</span><span class="o">.</span><span class="na">setUp</span><span class="o">();</span>
-</span><span class='line'>            <span class="n">controller</span><span class="o">.</span><span class="na">startGame</span><span class="o">();</span>
-</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">GameOverException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This is not only a <a href="http://stackoverflow.com/questions/6171265/best-way-to-exit-a-program-when-i-want-an-exception-to-be-thrown">better practice</a>,
-but also provides a much better way to test methods that might detect
-a completed game—just add a try/catch block to the tests!</p>
-
-<p>Exceptions have come in handy elsewhere in my tests, too. Once the
-controller starts a game, there&#8217;s nothing to break the back-and-forth
-game loop but a win, draw, or error. Figuring out how to test game
-states without getting stuck in an infinite loop or loading up entire
-games was a challenge. &#8220;If only there
-were some special syntax for breaking normal control flow in special
-situations,&#8221; I wondered to myself more times than I&#8217;d like to admit.
-Well, duh—use exceptions!  My mock view objects throw a <code>NoSuchElementException</code> when their input
-queue runs empty. Catching this exception breaks the normal game flow
-and allows me to access game state as soon as the fake input I&#8217;m
-interested in has been sent to the controller. Here&#8217;s an example:</p>
-
-<figure class='code'><figcaption><span>GameControllerTest.java </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Test</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">controllerShouldPassErrorMessageToViewOnInvalidInput</span><span class="o">()</span><span class="kd">throws</span> <span class="n">GameOverException</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">enqueueInput</span><span class="o">(</span><span class="s">&quot;invalid phrase&quot;</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">controller</span><span class="o">.</span><span class="na">newGame</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">outputRecorder</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">controller</span><span class="o">.</span><span class="na">playRound</span><span class="o">();</span>
-</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchElementException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="n">outputRecorder</span><span class="o">.</span><span class="na">discardFirstNStrings</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">String</span> <span class="n">output</span> <span class="o">=</span> <span class="n">outputRecorder</span><span class="o">.</span><span class="na">popFirstOutput</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;That&#39;s not a valid board location.&quot;</span><span class="o">,</span> <span class="n">output</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">view</span><span class="o">.</span><span class="na">clearInput</span><span class="o">();</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Normally, <code>Controller.playRound()</code> will continue querying players for
-moves until the game ends. But once this test catches the empty queue
-exception, it tests against the expected output, which should show an
-error message. Exceptions have proved extremely handy so far—as long as I remember
-that they&#8217;re in my control flow toolbox, too.</p>
 ]]></content>
   </entry>
   
