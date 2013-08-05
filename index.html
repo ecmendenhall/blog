@@ -7,7 +7,8 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Jul 30th, 2013 Free software, Security Open Web Security Essentials Over the past two weeks, I&#8217;ve been working through The Web Application &hellip;">
+	<meta name="description" content="Aug 4th, 2013 Gmail, OS X, Ruby, privacy DIY Gmail With Sup I&#8217;ve been a Gmail user for my entire adult life. Ever since I
+abandoned my old AOL &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -86,6 +87,171 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-04T15:20:00-05:00" data-updated="true" itemprop="datePublished">Aug 4<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/gmail/'>Gmail</a>, <a class='category' href='/blog/categories/os-x/'>OS X</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>, <a class='category' href='/blog/categories/privacy/'>privacy</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/08/04/diy-gmail-with-sup/" itemprop="url">DIY Gmail With Sup</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>I&#8217;ve been a Gmail user for my entire adult life. Ever since I
+abandoned my old AOL inbox on the family PC, Gmail has simply <em>been</em>
+email. I&#8217;ve never used folders, only labels. I&#8217;ve never deleted
+old messages to save space, but archived everything. I&#8217;ve always
+expected full-text search, aggressive spam filtering, and continuous
+access from any device.</p>
+
+<p>As I&#8217;ve archived year after year of new messages, I&#8217;ve become less
+comfortable storing my entire indexed email history on someone else&#8217;s
+servers, where they can be scanned and
+<a href="https://ssd.eff.org/3rdparties/govt/stronger-protection">searched</a> at
+will. And yet in practice , I&#8217;ve always traded off privacy against
+<a href="https://www.youtube.com/watch?v=dBtmzY5gcO8">convention</a> and
+<a href="https://www.schneier.com/blog/archives/2013/06/trading_privacy_1.html">convenience</a>.</p>
+
+<p>In part, this is because it&#8217;s long been a discontinuous decision: even a
+small amount of extra control or privacy required giving up all the
+modern conveniences of webmail at once. No desktop client came close to the features of Gmail, so I never made the switch. But now that
+I spend most of my time in a terminal, I&#8217;ve finally found a client
+that provides a pretty good compromise: <a href="http://supmua.org/">sup</a>.</p>
+
+<p>Sup is not something I&#8217;d set up for my Mom, but Rubyists and Unix
+geeks will feel right at home. It&#8217;s a
+<a href="https://en.wikipedia.org/wiki/Curses_(programming_library)">curses</a>
+based mail client written in Ruby with excellent full text search out
+of the box. In addition to offering archiving, labels, and search,
+it&#8217;s built on top of extensible tools like offlineimap, msmtp, and gpg, and
+scriptable in Ruby.</p>
+
+<p>The official docs are very good (and thus don&#8217;t need to be repeated),
+but these are the sections I found most helpful in order:</p>
+
+<ul>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Mac-OSX">OS X
+installation</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Mac-OSX">Gmail
+configuration</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Adding-sources">Storing messages in Maildirs</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Securely-Store-Password">Secure password
+storage</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/gpg">GPG integration</a></li>
+</ul>
+
+
+<p>For now, sup doesn&#8217;t do two-way IMAP syncing, so messages I archive
+stay on my machine. In my case this is a feature, not a bug: I now
+have a permanent searchable archive stored locally that won&#8217;t change
+if I delete messages from my Gmail account. I can keep the last few
+weeks of mail on the Gmail server, accessible from my phone and the web (and seriously, when
+was the last time you looked at an email more than a month old?), and
+everything else securely archived on my own drive.</p>
+
+<p>It would be a mistake to consider my sup setup much more private than
+plain Gmail. My messages still travel across the internet in cleartext and pile up
+in my correspondents&#8217; inboxes. (Sup integrates nicely with GPG for
+ad hoc encryption). They&#8217;re probably still stored in <a href="https://www.quora.com/Gmail/Does-gmail-delete-the-deleted-emails-forever">Google
+backups</a>
+and no doubt snarfed and <a href="http://www.wired.com/threatlevel/2012/03/ff_nsadatacenter/">sent off to
+Bluffdale</a>.
+I am probably not paranoid enough, but I believe Google&#8217;s claims that they really do erase deleted
+messages, and keeping my own archive raises the cost of compromising
+or reconstructing my entire history by a little bit, without
+sacrificing the features I&#8217;ve become so dependent upon.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-04T14:19:00-05:00" data-updated="true" itemprop="datePublished">Aug 4<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/clojure/'>Clojure</a>, <a class='category' href='/blog/categories/clojurescript/'>ClojureScript</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/08/04/specljs-leiningen-template/" itemprop="url">Specljs Leiningen Template</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>I&#8217;m very fond of <a href="http://speclj.com/">Speclj</a>, the simple, flexible Clojure spec runner we
+use at 8th Light. Speclj now has a ClojureScript
+<a href="https://clojars.org/specljs">counterpart</a>, but like many things
+ClojureScript, it requires some classpath juggling and configuration
+to get everything working nicely. To save my future self the hassle, I
+put together a basic project template with Speclj and Specljs tests
+and autorunners both preconfigured.</p>
+
+<p>If you&#8217;re using Leiningen 2, it&#8217;s as easy as:</p>
+
+<pre><code>$ lein new specljs &lt;your project name&gt;
+</code></pre>
+
+<p>Leiningen will download the template from Clojars automatically.</p>
+
+<p>To start the Speclj autorunner from inside the project directory:</p>
+
+<pre><code>$ lein spec -a
+</code></pre>
+
+<p>Specljs tests are configured to run whenever the ClojureScript
+compiles. To watch for changes, rebuild and run tests automatically,
+start the cljsbuild auto-compiler:</p>
+
+<pre><code>$ lein cljsbuild auto
+</code></pre>
+
+<p>To run specljs tests once:</p>
+
+<pre><code>$ lein cljsbuild test
+</code></pre>
+
+<p>If you&#8217;re using pre-2.0 Leiningen, you can find the template on
+<a href="https://clojars.org/specljs/lein-template">Clojars</a> and the source on <a href="https://github.com/ecmendenhall/specljs-template">GitHub</a>.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -2839,118 +3005,6 @@ it&#8217;s not very efficient. Reversing a list is the kind of O(n)
 operation we built our queue to avoid in the first place, but if many
 more items are inserted than removed, we&#8217;ll end up reversing and
 swapping a lot. We can do better—and I&#8217;ll explain how in my next post.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-19T21:23:00-05:00" data-updated="true" itemprop="datePublished">Jun 19<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/cascalog/'>Cascalog</a>, <a class='category' href='/blog/categories/clojure/'>Clojure</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/19/quieter-cascalog/" itemprop="url">Quieter Cascalog</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Tonight I attended a meetup on <a href="http://cascalog.org/">Cascalog</a>, a clojure DSL built on top of the <a href="https://en.wikipedia.org/wiki/Hadoop">Hadoop</a> map-reduce framework. (Slides <a href="https://docs.google.com/presentation/d/1DPD1v2sDwJ0G1LkvDwSzg9H4y26ce6j1l1zeu8t1FLo/edit?pli=1#slide=id.geccfa070_076">here</a> and code <a href="https://github.com/chairmanK/cascalog-workshop">here</a> if you&#8217;d like to check it out yourself).</p>
-
-<p>Running huge, complicated queries with a few lines of code was
-awesome, but my Hadoop installation made a lot of noise whenever I
-tried a query in the REPL using the <code>?&lt;-</code> query executor, printing
-lots of unwanted log info to
-stdout. (I was using Hadoop
-installed over homebrew
-instead of the
-<a href="https://github.com/chairmanK/cascalog-workshop">readme</a>
-recommendation).
-Fortunately, it&#8217;s easy to
-hush the logger a little by
-running queries inside
-<code>cascalog.io/with-log-level</code>.
-Here&#8217;s a quick two-line
-macro that wraps calls to
-<code>?&lt;-</code> in <code>with-log-level</code> to
-quiet down Hadoop:</p>
-
-<pre><code>  (require '[cascalog.io :refer [with-log-level]])
-  (defmacro ?&lt;-- [&amp; forms] `(with-log-level :fatal (?&lt;- ~@forms)))
-</code></pre>
-
-<p>For future reference, you can find a gist <a href="https://gist.github.com/ecmendenhall/5819322">here</a>.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-17T00:30:00-05:00" data-updated="true" itemprop="datePublished">Jun 17<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/tdd/'>TDD</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/17/why-does-that-exist/" itemprop="url">Why Does That Exist?</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>I was puzzled. Reading raw POST requests across a network socket
-returned headers, but never body content. When I mentioned it to Colin
-and showed him the method I suspected was misbehaving, he asked me a
-question: &#8220;Why does that exist? Which test brought that line of code
-into being?&#8221;</p>
-
-<p>In a perfect TDD world, this question always has a good answer. In my
-case, it didn&#8217;t: this was a complicated line that was
-twice removed from the test that &#8220;created&#8221; it. But the path forward
-was clear right away: write a test for this line, in isolation, the
-way I should have done from the start.</p>
-
-<p>Good test-driven development requires a lot of restraint and self-discipline, and lines
-like my faulty byte reader are guaranteed to sneak in if I break one
-of the laws of TDD—even if it&#8217;s only a couple lines of
-support code that aren&#8217;t written just to pass a test, or a test that
-looks comprehensive really trying to cover too much at once. This
-question is a great way to hunt them down and fix them: ask every line
-of code you write to justify its existence.</p>
 
 		
 		

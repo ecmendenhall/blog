@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Gmail | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/gmail/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-08-04T18:50:27-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[DIY Gmail with sup]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/08/04/diy-gmail-with-sup/"/>
+    <updated>2013-08-04T15:20:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/08/04/diy-gmail-with-sup</id>
+    <content type="html"><![CDATA[<p>I've been a Gmail user for my entire adult life. Ever since I
+abandoned my old AOL inbox on the family PC, Gmail has simply <em>been</em>
+email. I've never used folders, only labels. I've never deleted
+old messages to save space, but archived everything. I've always
+expected full-text search, aggressive spam filtering, and continuous
+access from any device.</p>
+
+<p>As I've archived year after year of new messages, I've become less
+comfortable storing my entire indexed email history on someone else's
+servers, where they can be scanned and
+<a href="https://ssd.eff.org/3rdparties/govt/stronger-protection">searched</a> at
+will. And yet in practice , I've always traded off privacy against
+<a href="https://www.youtube.com/watch?v=dBtmzY5gcO8">convention</a> and
+<a href="https://www.schneier.com/blog/archives/2013/06/trading_privacy_1.html">convenience</a>.</p>
+
+<p>In part, this is because it's long been a discontinuous decision: even a
+small amount of extra control or privacy required giving up all the
+modern conveniences of webmail at once. No desktop client came close to the features of Gmail, so I never made the switch. But now that
+I spend most of my time in a terminal, I've finally found a client
+that provides a pretty good compromise: <a href="http://supmua.org/">sup</a>.</p>
+
+<p>Sup is not something I'd set up for my Mom, but Rubyists and Unix
+geeks will feel right at home. It's a
+<a href="https://en.wikipedia.org/wiki/Curses_(programming_library)">curses</a>
+based mail client written in Ruby with excellent full text search out
+of the box. In addition to offering archiving, labels, and search,
+it's built on top of extensible tools like offlineimap, msmtp, and gpg, and
+scriptable in Ruby.</p>
+
+<p>The official docs are very good (and thus don't need to be repeated),
+but these are the sections I found most helpful in order:</p>
+
+<ul>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Mac-OSX">OS X
+installation</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Mac-OSX">Gmail
+configuration</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Adding-sources">Storing messages in Maildirs</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Securely-Store-Password">Secure password
+storage</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/gpg">GPG integration</a></li>
+</ul>
+
+
+<p>For now, sup doesn't do two-way IMAP syncing, so messages I archive
+stay on my machine. In my case this is a feature, not a bug: I now
+have a permanent searchable archive stored locally that won't change
+if I delete messages from my Gmail account. I can keep the last few
+weeks of mail on the Gmail server, accessible from my phone and the web (and seriously, when
+was the last time you looked at an email more than a month old?), and
+everything else securely archived on my own drive.</p>
+
+<p>It would be a mistake to consider my sup setup much more private than
+plain Gmail. My messages still travel across the internet in cleartext and pile up
+in my correspondents' inboxes. (Sup integrates nicely with GPG for
+ad hoc encryption). They're probably still stored in <a href="https://www.quora.com/Gmail/Does-gmail-delete-the-deleted-emails-forever">Google
+backups</a>
+and no doubt snarfed and <a href="http://www.wired.com/threatlevel/2012/03/ff_nsadatacenter/">sent off to
+Bluffdale</a>.
+I am probably not paranoid enough, but I believe Google's claims that they really do erase deleted
+messages, and keeping my own archive raises the cost of compromising
+or reconstructing my entire history by a little bit, without
+sacrificing the features I've become so dependent upon.</p>
+]]></content>
+  </entry>
+  
+</feed>

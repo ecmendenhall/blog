@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ClojureScript | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/clojurescript/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-08-04T18:50:27-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Specljs Leiningen template]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/08/04/specljs-leiningen-template/"/>
+    <updated>2013-08-04T14:19:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/08/04/specljs-leiningen-template</id>
+    <content type="html"><![CDATA[<p>I'm very fond of <a href="http://speclj.com/">Speclj</a>, the simple, flexible Clojure spec runner we
+use at 8th Light. Speclj now has a ClojureScript
+<a href="https://clojars.org/specljs">counterpart</a>, but like many things
+ClojureScript, it requires some classpath juggling and configuration
+to get everything working nicely. To save my future self the hassle, I
+put together a basic project template with Speclj and Specljs tests
+and autorunners both preconfigured.</p>
+
+<p>If you're using Leiningen 2, it's as easy as:</p>
+
+<pre><code>$ lein new specljs &lt;your project name&gt;
+</code></pre>
+
+<p>Leiningen will download the template from Clojars automatically.</p>
+
+<p>To start the Speclj autorunner from inside the project directory:</p>
+
+<pre><code>$ lein spec -a
+</code></pre>
+
+<p>Specljs tests are configured to run whenever the ClojureScript
+compiles. To watch for changes, rebuild and run tests automatically,
+start the cljsbuild auto-compiler:</p>
+
+<pre><code>$ lein cljsbuild auto
+</code></pre>
+
+<p>To run specljs tests once:</p>
+
+<pre><code>$ lein cljsbuild test
+</code></pre>
+
+<p>If you're using pre-2.0 Leiningen, you can find the template on
+<a href="https://clojars.org/specljs/lein-template">Clojars</a> and the source on <a href="https://github.com/ecmendenhall/specljs-template">GitHub</a>.</p>
+]]></content>
+  </entry>
+  
+</feed>

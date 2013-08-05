@@ -1,0 +1,229 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>DIY Gmail with sup - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="DIY Gmail With Sup I&#8217;ve been a Gmail user for my entire adult life. Ever since I
+abandoned my old AOL inbox on the family PC, Gmail has simply &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/08/04/diy-gmail-with-sup/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">DIY Gmail With Sup</h1>
+	<div class="entry-content" itemprop="articleBody"><p>I&#8217;ve been a Gmail user for my entire adult life. Ever since I
+abandoned my old AOL inbox on the family PC, Gmail has simply <em>been</em>
+email. I&#8217;ve never used folders, only labels. I&#8217;ve never deleted
+old messages to save space, but archived everything. I&#8217;ve always
+expected full-text search, aggressive spam filtering, and continuous
+access from any device.</p>
+
+<p>As I&#8217;ve archived year after year of new messages, I&#8217;ve become less
+comfortable storing my entire indexed email history on someone else&#8217;s
+servers, where they can be scanned and
+<a href="https://ssd.eff.org/3rdparties/govt/stronger-protection">searched</a> at
+will. And yet in practice , I&#8217;ve always traded off privacy against
+<a href="https://www.youtube.com/watch?v=dBtmzY5gcO8">convention</a> and
+<a href="https://www.schneier.com/blog/archives/2013/06/trading_privacy_1.html">convenience</a>.</p>
+
+<p>In part, this is because it&#8217;s long been a discontinuous decision: even a
+small amount of extra control or privacy required giving up all the
+modern conveniences of webmail at once. No desktop client came close to the features of Gmail, so I never made the switch. But now that
+I spend most of my time in a terminal, I&#8217;ve finally found a client
+that provides a pretty good compromise: <a href="http://supmua.org/">sup</a>.</p>
+
+<p>Sup is not something I&#8217;d set up for my Mom, but Rubyists and Unix
+geeks will feel right at home. It&#8217;s a
+<a href="https://en.wikipedia.org/wiki/Curses_(programming_library)">curses</a>
+based mail client written in Ruby with excellent full text search out
+of the box. In addition to offering archiving, labels, and search,
+it&#8217;s built on top of extensible tools like offlineimap, msmtp, and gpg, and
+scriptable in Ruby.</p>
+
+<p>The official docs are very good (and thus don&#8217;t need to be repeated),
+but these are the sections I found most helpful in order:</p>
+
+<ul>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Mac-OSX">OS X
+installation</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Mac-OSX">Gmail
+configuration</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Adding-sources">Storing messages in Maildirs</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/Securely-Store-Password">Secure password
+storage</a></li>
+<li><a href="https://github.com/sup-heliotrope/sup/wiki/gpg">GPG integration</a></li>
+</ul>
+
+
+<p>For now, sup doesn&#8217;t do two-way IMAP syncing, so messages I archive
+stay on my machine. In my case this is a feature, not a bug: I now
+have a permanent searchable archive stored locally that won&#8217;t change
+if I delete messages from my Gmail account. I can keep the last few
+weeks of mail on the Gmail server, accessible from my phone and the web (and seriously, when
+was the last time you looked at an email more than a month old?), and
+everything else securely archived on my own drive.</p>
+
+<p>It would be a mistake to consider my sup setup much more private than
+plain Gmail. My messages still travel across the internet in cleartext and pile up
+in my correspondents&#8217; inboxes. (Sup integrates nicely with GPG for
+ad hoc encryption). They&#8217;re probably still stored in <a href="https://www.quora.com/Gmail/Does-gmail-delete-the-deleted-emails-forever">Google
+backups</a>
+and no doubt snarfed and <a href="http://www.wired.com/threatlevel/2012/03/ff_nsadatacenter/">sent off to
+Bluffdale</a>.
+I am probably not paranoid enough, but I believe Google&#8217;s claims that they really do erase deleted
+messages, and keeping my own archive raises the cost of compromising
+or reconstructing my entire history by a little bit, without
+sacrificing the features I&#8217;ve become so dependent upon.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/08/04/diy-gmail-with-sup/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/08/04/diy-gmail-with-sup/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>
