@@ -7,8 +7,7 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Aug 4th, 2013 Gmail, OS X, Ruby, privacy DIY Gmail With Sup I&#8217;ve been a Gmail user for my entire adult life. Ever since I
-abandoned my old AOL &hellip;">
+	<meta name="description" content="Aug 14th, 2013 agile, efficiency, productivity Seen and Unseen Value The idea at the heart of agile development is really very simple: many &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +86,73 @@ abandoned my old AOL &hellip;">
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-14T08:10:00-05:00" data-updated="true" itemprop="datePublished">Aug 14<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/agile/'>agile</a>, <a class='category' href='/blog/categories/efficiency/'>efficiency</a>, <a class='category' href='/blog/categories/productivity/'>productivity</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/08/14/seen-and-unseen-value/" itemprop="url">Seen and Unseen Value</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>The idea at the heart of agile development is really very simple: many
+incremental, functional improvements create more value than one big,
+centralized push. At 8th Light, we demo completed features to our
+clients at the end of each weekly iteration. It&#8217;s a chance to show
+clients that we&#8217;re making progress and creating tangible value.
+Perhaps more important, it shortens the feedback loop between feature
+ideas and implementation.</p>
+
+<p>A good user story creates &#8220;business value.&#8221; But note the &#8220;business.&#8221;
+There are many story-like tasks that create lots of value for
+developers. Refactoring crufty code into something more stable and
+extensible always extends its lifespan. Speeding up the test
+suite might mean writing twice as fast. A new design pattern or
+library behind the scenes can eliminate scores of future headaches.
+And yet none of these improvements are visible, and none really create
+business value. They all have second-order effects on business value,
+usually on scales longer than one week, but the immediate effects are invisible.</p>
+
+<p>It&#8217;s easy to spend a whole week on pseudostories with nothing visible
+to show. (I&#8217;ve certainly done it!) And it&#8217;s easy to feel resentful
+when lots of work looks like nothing new at all. But consider a
+client&#8217;s perspective and invisible efficiencies start to look pretty
+lame: imagine a carpenter showing off her rad new nailgun (<em>twice</em> as
+fast as a hammer!) instead of the house she&#8217;s supposed to be building.</p>
+
+<p>Unseen improvements are hugely helpful, but they don&#8217;t count if they
+aren&#8217;t visible. That doesn&#8217;t mean they can&#8217;t be made to count.
+It can require creativity, but it&#8217;s possible to make unseen
+improvements more obvious&#8211;show, don&#8217;t tell, as the writer&#8217;s adage
+goes. Show how using a repository makes it easy to swap in new data sources.
+Show the new views that reuse carefully extracted components. Show a
+new feature that Clojurescript made possible. Setting visible goals
+along the way makes unseen value clear.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -2713,298 +2779,6 @@ look up their previously computed values. It&#8217;s an easy fix:</p>
 
 <p>Now that we&#8217;ve written lazy lists, we can use them to build an
 efficient functional queue for the breadth-first numbering problem.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-24T00:14:00-05:00" data-updated="true" itemprop="datePublished">Jun 24<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/breadth-first-numbering/'>Breadth-first numbering</a>, <a class='category' href='/blog/categories/functional-programming/'>Functional programming</a>, <a class='category' href='/blog/categories/lisp/'>Lisp</a>, <a class='category' href='/blog/categories/racket/'>Racket</a>, <a class='category' href='/blog/categories/scheme/'>Scheme</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/24/breadth-first-numbering-functional-queues/" itemprop="url">Breadth-first Numbering: Functional Queues</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>I spent some time this weekend (okay fine, most of Saturday and
-Sunday afternoon) on an exercise <a href="https://twitter.com/Twernmilt">Michael
-Baker</a> shared on our &#8220;geeks&#8221; mailing
-list. The problem is a <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">functional
-pearl</a>
-from Chris Okasaki: given a binary tree, reproduce a structurally
-identical tree with its nodes numbered in breadth-first order.</p>
-
-<p>For example, numbering this tree:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>_       a
-</span><span class='line'>       / \
-</span><span class='line'>      /   \
-</span><span class='line'>    b       d
-</span><span class='line'>   / \     / \
-</span><span class='line'>  .   c   .   .
-</span><span class='line'>     / \
-</span><span class='line'>    .   .</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Should yield this tree:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>_       1
-</span><span class='line'>       / \
-</span><span class='line'>      /   \
-</span><span class='line'>    2       3
-</span><span class='line'>   / \     / \
-</span><span class='line'>  .   4   .   .
-</span><span class='line'>     / \
-</span><span class='line'>    .   .</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If you&#8217;ve ever solved a search problem, this might sound stupid easy.
-But getting the details of a functional solution right can be a challenge. As Okasaki
-puts it in <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">the paper</a>:</p>
-
-<blockquote><p>…I presented the problem to many other
-functional programmers and was continually amazed at the
-baroque solutions I received in reply. With only a single
-exception, everyone who came near a workable answer went
-in a very different direction from my solution right from the
-very beginning of the design process. I gradually realized
-that I was witnessing some sort of mass mental block, a
-communal blind spot, that was steering programmers away
-from what seemed to be a very natural solution.</p></blockquote>
-
-<p>Before you read my baroque solution, you might want to try for
-yourself. I&#8217;ll wait.</p>
-
-<p>Although I love Clojure, using built-in <a href="http://stackoverflow.com/questions/2493996/hidden-features-of-clojure">queues</a>
-and <a href="http://clojure.org/lazy">lazy seqs</a> felt like cheating. So I chose
-to use <a href="http://racket-lang.org/">Racket</a> with
-<a href="http://docs.racket-lang.org/rackunit/api.html#%28part._.Checks%29">Rackunit</a>,
-and tried to use as many primitives as possible.</p>
-
-<p>Breadth-first traversal is easy with a queue, but an efficient
-functional queue can be tricky. Consing an element to the front of a
-Scheme list is cheap, but appending is expensive—it requires &#8220;cdring
-down&#8221; over all the elements. One solution (cribbed from <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.47.8825">Okasaki
-himself</a>)
-is to represent a queue as a pair of lists. The list on the left is
-the head of the queue, so elements can be popped of in O(1) time. The
-right side represents the rest of the elements <em>in reverse</em>, so
-elements can be pushed on to the end in constant time. Here are the first
-steps towards an implementation: an empty queue with left and right selectors.</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">simple-q</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">empty-queue</span> <span class="o">&#39;</span><span class="p">(()()))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="nv">empty-queue</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">())</span>
-</span><span class='line'>              <span class="s">&quot;An empty queue is a list containing two empty lists.&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">right-side</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">queue</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span>
-</span><span class='line'>              <span class="s">&quot;The right side of a queue is the second list.&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">left-side</span> <span class="p">(</span><span class="k">lambda </span> <span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">car </span><span class="nv">queue</span><span class="p">)))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-</span><span class='line'>              <span class="s">&quot;The left side of a queue is the first list.&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Inserting an item conses it on to the right-side list:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">insert</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span> <span class="nv">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="nv">item</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">insert</span> <span class="mi">7</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">7</span> <span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">))</span>
-</span><span class='line'>              <span class="s">&quot;Inserting an element adds it to the beginning of the</span>
-</span><span class='line'><span class="s">              right side list.&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>To dequeue an item, &#8220;remove&#8221; it from the left side with <code>car</code>, and
-return a new queue, with the <code>cdr</code> of the left side list:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">remove</span>
-</span><span class='line'> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
-</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
-</span><span class='line'>              <span class="s">&quot;Removing an element returns a pair: the removed</span>
-</span><span class='line'><span class="s">               element and the new queue.&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>When the left side is out of elements, reverse the right side list,
-and swap it with the left. Here&#8217;s the buildup to <code>swap-and-reverse-car</code>:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">swap</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">swap</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
-</span><span class='line'>              <span class="s">&quot;The right side and left side can be swapped.&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">reverse</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))</span>
-</span><span class='line'>        <span class="nv">items</span>
-</span><span class='line'>        <span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">))))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">simple-q</span><span class="p">))</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span>
-</span><span class='line'>              <span class="s">&quot;A list&#39;s elements can be reversed.&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">reverse-car</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">))</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">reverse-car</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">2</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span> <span class="mi">4</span><span class="p">))</span>
-</span><span class='line'>              <span class="s">&quot;The first item in a list can be reversed.&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">swap-and-reverse-car</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nf">reverse-car</span> <span class="p">(</span><span class="nf">swap</span> <span class="nv">queue</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">swap-and-reverse-car</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span> <span class="p">())</span>
-</span><span class='line'>              <span class="s">&quot;Swap and reverse-car can be composed to swap sides,</span>
-</span><span class='line'><span class="s">              then reverse the left.&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now we can write a dequeue function that really works:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">remove</span>
-</span><span class='line'>   <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
-</span><span class='line'>     <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
-</span><span class='line'>         <span class="p">(</span><span class="nf">remove</span> <span class="p">(</span><span class="nf">swap-and-reverse-car</span> <span class="nv">queue</span><span class="p">))</span>
-</span><span class='line'>         <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
-</span><span class='line'>               <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">4</span> <span class="p">((</span><span class="mi">5</span> <span class="mi">6</span><span class="p">)</span> <span class="p">()))</span>
-</span><span class='line'>              <span class="s">&quot;To remove an element when the left side is empty, swap</span>
-</span><span class='line'><span class="s">              and reverse, then try again.&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
-</span><span class='line'>              <span class="s">&quot;Removing an element returns a pair: the removed element</span>
-</span><span class='line'><span class="s">              and the new queue.&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>That&#8217;s all it takes to build a simple functional queue. Unfortunately,
-it&#8217;s not very efficient. Reversing a list is the kind of O(n)
-operation we built our queue to avoid in the first place, but if many
-more items are inserted than removed, we&#8217;ll end up reversing and
-swapping a lot. We can do better—and I&#8217;ll explain how in my next post.</p>
 
 		
 		

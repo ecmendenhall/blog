@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: efficiency | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/efficiency/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-08-14T09:26:42-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Seen and unseen value]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/08/14/seen-and-unseen-value/"/>
+    <updated>2013-08-14T08:10:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/08/14/seen-and-unseen-value</id>
+    <content type="html"><![CDATA[<p>The idea at the heart of agile development is really very simple: many
+incremental, functional improvements create more value than one big,
+centralized push. At 8th Light, we demo completed features to our
+clients at the end of each weekly iteration. It's a chance to show
+clients that we're making progress and creating tangible value.
+Perhaps more important, it shortens the feedback loop between feature
+ideas and implementation.</p>
+
+<p>A good user story creates "business value." But note the "business."
+There are many story-like tasks that create lots of value for
+developers. Refactoring crufty code into something more stable and
+extensible always extends its lifespan. Speeding up the test
+suite might mean writing twice as fast. A new design pattern or
+library behind the scenes can eliminate scores of future headaches.
+And yet none of these improvements are visible, and none really create
+business value. They all have second-order effects on business value,
+usually on scales longer than one week, but the immediate effects are invisible.</p>
+
+<p>It's easy to spend a whole week on pseudostories with nothing visible
+to show. (I've certainly done it!) And it's easy to feel resentful
+when lots of work looks like nothing new at all. But consider a
+client's perspective and invisible efficiencies start to look pretty
+lame: imagine a carpenter showing off her rad new nailgun (<em>twice</em> as
+fast as a hammer!) instead of the house she's supposed to be building.</p>
+
+<p>Unseen improvements are hugely helpful, but they don't count if they
+aren't visible. That doesn't mean they can't be made to count.
+It can require creativity, but it's possible to make unseen
+improvements more obvious--show, don't tell, as the writer's adage
+goes. Show how using a repository makes it easy to swap in new data sources.
+Show the new views that reuse carefully extracted components. Show a
+new feature that Clojurescript made possible. Setting visible goals
+along the way makes unseen value clear.</p>
+]]></content>
+  </entry>
+  
+</feed>

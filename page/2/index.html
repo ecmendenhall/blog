@@ -7,7 +7,7 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Jun 19th, 2013 Cascalog, Clojure Quieter Cascalog Tonight I attended a meetup on Cascalog, a clojure DSL built on top of the Hadoop map-reduce &hellip;">
+	<meta name="description" content="Jun 24th, 2013 Breadth-first numbering, Functional programming, Lisp, Racket, Scheme Breadth-first Numbering: Functional Queues I spent some time &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -86,6 +86,298 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-24T00:14:00-05:00" data-updated="true" itemprop="datePublished">Jun 24<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/breadth-first-numbering/'>Breadth-first numbering</a>, <a class='category' href='/blog/categories/functional-programming/'>Functional programming</a>, <a class='category' href='/blog/categories/lisp/'>Lisp</a>, <a class='category' href='/blog/categories/racket/'>Racket</a>, <a class='category' href='/blog/categories/scheme/'>Scheme</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/24/breadth-first-numbering-functional-queues/" itemprop="url">Breadth-first Numbering: Functional Queues</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>I spent some time this weekend (okay fine, most of Saturday and
+Sunday afternoon) on an exercise <a href="https://twitter.com/Twernmilt">Michael
+Baker</a> shared on our &#8220;geeks&#8221; mailing
+list. The problem is a <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">functional
+pearl</a>
+from Chris Okasaki: given a binary tree, reproduce a structurally
+identical tree with its nodes numbered in breadth-first order.</p>
+
+<p>For example, numbering this tree:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>_       a
+</span><span class='line'>       / \
+</span><span class='line'>      /   \
+</span><span class='line'>    b       d
+</span><span class='line'>   / \     / \
+</span><span class='line'>  .   c   .   .
+</span><span class='line'>     / \
+</span><span class='line'>    .   .</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Should yield this tree:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>_       1
+</span><span class='line'>       / \
+</span><span class='line'>      /   \
+</span><span class='line'>    2       3
+</span><span class='line'>   / \     / \
+</span><span class='line'>  .   4   .   .
+</span><span class='line'>     / \
+</span><span class='line'>    .   .</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you&#8217;ve ever solved a search problem, this might sound stupid easy.
+But getting the details of a functional solution right can be a challenge. As Okasaki
+puts it in <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">the paper</a>:</p>
+
+<blockquote><p>…I presented the problem to many other
+functional programmers and was continually amazed at the
+baroque solutions I received in reply. With only a single
+exception, everyone who came near a workable answer went
+in a very different direction from my solution right from the
+very beginning of the design process. I gradually realized
+that I was witnessing some sort of mass mental block, a
+communal blind spot, that was steering programmers away
+from what seemed to be a very natural solution.</p></blockquote>
+
+<p>Before you read my baroque solution, you might want to try for
+yourself. I&#8217;ll wait.</p>
+
+<p>Although I love Clojure, using built-in <a href="http://stackoverflow.com/questions/2493996/hidden-features-of-clojure">queues</a>
+and <a href="http://clojure.org/lazy">lazy seqs</a> felt like cheating. So I chose
+to use <a href="http://racket-lang.org/">Racket</a> with
+<a href="http://docs.racket-lang.org/rackunit/api.html#%28part._.Checks%29">Rackunit</a>,
+and tried to use as many primitives as possible.</p>
+
+<p>Breadth-first traversal is easy with a queue, but an efficient
+functional queue can be tricky. Consing an element to the front of a
+Scheme list is cheap, but appending is expensive—it requires &#8220;cdring
+down&#8221; over all the elements. One solution (cribbed from <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.47.8825">Okasaki
+himself</a>)
+is to represent a queue as a pair of lists. The list on the left is
+the head of the queue, so elements can be popped of in O(1) time. The
+right side represents the rest of the elements <em>in reverse</em>, so
+elements can be pushed on to the end in constant time. Here are the first
+steps towards an implementation: an empty queue with left and right selectors.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">simple-q</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">empty-queue</span> <span class="o">&#39;</span><span class="p">(()()))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="nv">empty-queue</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">())</span>
+</span><span class='line'>              <span class="s">&quot;An empty queue is a list containing two empty lists.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">right-side</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;The right side of a queue is the second list.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">left-side</span> <span class="p">(</span><span class="k">lambda </span> <span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">car </span><span class="nv">queue</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;The left side of a queue is the first list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Inserting an item conses it on to the right-side list:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">insert</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span> <span class="nv">queue</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="nv">item</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">insert</span> <span class="mi">7</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">7</span> <span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;Inserting an element adds it to the beginning of the</span>
+</span><span class='line'><span class="s">              right side list.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To dequeue an item, &#8220;remove&#8221; it from the left side with <code>car</code>, and
+return a new queue, with the <code>cdr</code> of the left side list:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">remove</span>
+</span><span class='line'> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>              <span class="s">&quot;Removing an element returns a pair: the removed</span>
+</span><span class='line'><span class="s">               element and the new queue.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When the left side is out of elements, reverse the right side list,
+and swap it with the left. Here&#8217;s the buildup to <code>swap-and-reverse-car</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">swap</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">)</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">swap</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;The right side and left side can be swapped.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">reverse</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))</span>
+</span><span class='line'>        <span class="nv">items</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">simple-q</span><span class="p">))</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class='line'>              <span class="s">&quot;A list&#39;s elements can be reversed.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">reverse-car</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">reverse </span><span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">))</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">reverse-car</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">2</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span> <span class="mi">4</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;The first item in a list can be reversed.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">swap-and-reverse-car</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span> <span class="p">(</span><span class="nf">reverse-car</span> <span class="p">(</span><span class="nf">swap</span> <span class="nv">queue</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">swap-and-reverse-car</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">((</span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span> <span class="p">())</span>
+</span><span class='line'>              <span class="s">&quot;Swap and reverse-car can be composed to swap sides,</span>
+</span><span class='line'><span class="s">              then reverse the left.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we can write a dequeue function that really works:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">remove</span>
+</span><span class='line'>   <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>         <span class="p">(</span><span class="nf">remove</span> <span class="p">(</span><span class="nf">swap-and-reverse-car</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>         <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="o">&#39;</span><span class="p">(()</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">4</span> <span class="p">((</span><span class="mi">5</span> <span class="mi">6</span><span class="p">)</span> <span class="p">()))</span>
+</span><span class='line'>              <span class="s">&quot;To remove an element when the left side is empty, swap</span>
+</span><span class='line'><span class="s">              and reverse, then try again.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">remove</span> <span class="nv">simple-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)))</span>
+</span><span class='line'>              <span class="s">&quot;Removing an element returns a pair: the removed element</span>
+</span><span class='line'><span class="s">              and the new queue.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&#8217;s all it takes to build a simple functional queue. Unfortunately,
+it&#8217;s not very efficient. Reversing a list is the kind of O(n)
+operation we built our queue to avoid in the first place, but if many
+more items are inserted than removed, we&#8217;ll end up reversing and
+swapping a lot. We can do better—and I&#8217;ll explain how in my next post.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1377,302 +1669,6 @@ used by all my tests, I wasn&#8217;t using inheritance to create universal setup
 
 
 <p>This looks like a simple refactor, but my tests are now much cleaner. More important, if I need to make a change to the <code>OutputRecorder</code> class, it will propagate through all tests.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-28T01:06:00-05:00" data-updated="true" itemprop="datePublished">May 28<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/java/'>Java</a>, <a class='category' href='/blog/categories/today-in-yak-shaving/'>Today in Yak Shaving</a>, <a class='category' href='/blog/categories/travis-ci/'>Travis CI</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/28/two-travis-ci-solutions/" itemprop="url">Two Travis CI Solutions: Ivy Dependencies and Headless Testing</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>One of last week&#8217;s projects was setting up <a href="https://travis-ci.org/">Travis
-CI</a>, a hosted <a href="http://martinfowler.com/articles/continuousIntegration.html">continuous
-integration</a>
-service that&#8217;s free for open source projects. Even if you haven&#8217;t
-heard about Travis (as I hadn&#8217;t), you&#8217;ve probably already seen the
-service on Github—it&#8217;s responsible for the green and red build status
-icons at the top of many project READMEs.</p>
-
-<p>After every push to a remote repo, Travis builds your project, runs
-the test suite, and sends off a notification with the results. Once
-it&#8217;s configured, it&#8217;s a great way to ensure that even if your project is
-unfinished, the published code will work correctly for anyone who
-pulls the repo.</p>
-
-<p>The official <a href="http://about.travis-ci.org/">Travis docs</a> are close to
-comprehensive, but I ran into a few catches getting everything set up (and have an inbox full of
-failed build notifications to prove it). Hopefully these solutions
-will rescue someone else from a frustrating afternoon.</p>
-
-<h1>Resolving Ivy dependencies</h1>
-
-<p>My Tic Tac Toe project uses <a href="https://ant.apache.org/ivy/">Ivy</a> to
-manage build dependencies, and my ant build script includes a <a href="https://ant.apache.org/ivy/history/latest-milestone/install.html">standard
-snippet</a> that downloads Ivy if it&#8217;s not available locally:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">&quot;ivy.install.version&quot;</span> <span class="na">value=</span><span class="s">&quot;2.1.0-rc2&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;condition</span> <span class="na">property=</span><span class="s">&quot;ivy.home&quot;</span> <span class="na">value=</span><span class="s">&quot;${env.IVY_HOME}&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;isset</span> <span class="na">property=</span><span class="s">&quot;env.IVY_HOME&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;/condition&gt;</span>
-</span><span class='line'><span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">&quot;ivy.home&quot;</span> <span class="na">value=</span><span class="s">&quot;${user.home}/.ant&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'><span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">&quot;ivy.jar.dir&quot;</span> <span class="na">value=</span><span class="s">&quot;${ivy.home}/lib&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'><span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">&quot;ivy.jar.file&quot;</span> <span class="na">value=</span><span class="s">&quot;${ivy.jar.dir}/ivy.jar&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;target</span> <span class="na">name=</span><span class="s">&quot;download-ivy&quot;</span> <span class="na">unless=</span><span class="s">&quot;offline&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nt">&lt;mkdir</span> <span class="na">dir=</span><span class="s">&quot;${ivy.jar.dir}&quot;</span><span class="nt">/&gt;</span>
-</span><span class='line'>  <span class="c">&lt;!-- download Ivy from web site so that it can be used even without --</span>
-</span><span class='line'><span class="c">    -- any special installation --&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;get</span> <span class="na">src=</span><span class="s">&quot;http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar&quot;</span>
-</span><span class='line'>       <span class="na">dest=</span><span class="s">&quot;${ivy.jar.file}&quot;</span>
-</span><span class='line'>       <span class="na">usetimestamp=</span><span class="s">&quot;true&quot;</span><span class="nt">/&gt;</span>
-</span><span class='line'><span class="nt">&lt;/target&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;target</span> <span class="na">name=</span><span class="s">&quot;init-ivy&quot;</span>
-</span><span class='line'>        <span class="na">depends=</span><span class="s">&quot;download-ivy&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'><span class="c">&lt;!-- try to load ivy here from ivy home, in case the user has not --</span>
-</span><span class='line'><span class="c">  -- already dropped it into ant&#39;s lib dir (note that the latter copy --</span>
-</span><span class='line'><span class="c">  -- will always take precedence). We will not fail as long as local --</span>
-</span><span class='line'><span class="c">  -- lib dir exists (it may be empty) and ivy is in at least one of --</span>
-</span><span class='line'><span class="c">  -- ant&#39;s lib dir or the local lib dir. --&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;path</span> <span class="na">id=</span><span class="s">&quot;ivy.lib.path&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;fileset</span> <span class="na">dir=</span><span class="s">&quot;${ivy.jar.dir}&quot;</span>
-</span><span class='line'>             <span class="na">includes=</span><span class="s">&quot;*.jar&quot;</span><span class="nt">/&gt;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nt">&lt;/path&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;taskdef</span> <span class="na">resource=</span><span class="s">&quot;org/apache/ivy/ant/antlib.xml&quot;</span>
-</span><span class='line'>           <span class="na">uri=</span><span class="s">&quot;antlib:org.apache.ivy.ant&quot;</span>
-</span><span class='line'>           <span class="na">classpathref=</span><span class="s">&quot;ivy.lib.path&quot;</span><span class="nt">/&gt;</span>
-</span><span class='line'><span class="nt">&lt;/target&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If your build and test targets are set to depend on the <code>init-ivy</code>
-task, the script will ensure that Ivy resolves itself and the
-project&#8217;s other dependencies correctly. Telling Travis how to build
-and test a project is as simple as writing a few lines of YAML. For
-example:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">language</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">java</span>
-</span><span class='line'><span class="l-Scalar-Plain">install</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ant resolve</span>
-</span><span class='line'><span class="l-Scalar-Plain">jdk</span><span class="p-Indicator">:</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">oraclejdk7</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">openjdk7</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">openjdk6</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This tells Travis the project language (which comes with its own
-<a href="http://about.travis-ci.org/docs/user/languages/">default settings</a>),
-points to <code>ant resolve</code> as the command necessary to resolve
-dependencies, and describes the target Java versions to test against.
-But my builds failed with the following mysterious error:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>$ ant resolve
-</span><span class='line'>Buildfile: /home/travis/build/ecmendenhall/Java-TTT/build.xml
-</span><span class='line'>
-</span><span class='line'>  [mkdir] Created dir: /home/travis/build/ecmendenhall/Java-TTT/lib
-</span><span class='line'>
-</span><span class='line'>check-ivy:
-</span><span class='line'>  [echo] Checking for Ivy .jar in local directories.
-</span><span class='line'>
-</span><span class='line'>bootstrap-ivy:
-</span><span class='line'>  [echo] Bootstrapping Ivy installation.
-</span><span class='line'>  [mkdir] Created dir: /home/travis/.ant/lib
-</span><span class='line'>  [get] Getting: http://search.maven.org/remotecontent?filepath=org/apache/ivy/ivy/2.3.0/ivy-2.3.0.jar
-</span><span class='line'>  [get] To: /home/travis/.ant/lib/ivy.jar
-</span><span class='line'>
-</span><span class='line'>resolve:
-</span><span class='line'>  [echo] Resolving project dependencies.
-</span><span class='line'>
-</span><span class='line'>BUILD FAILED
-</span><span class='line'>/home/travis/build/ecmendenhall/Java-TTT/build.xml:52: Problem: failed
-</span><span class='line'>to create task or type antlib:org.apache.ivy.ant:retrieve
-</span><span class='line'>Cause: The name is undefined.
-</span><span class='line'>Action: Check the spelling.
-</span><span class='line'>Action: Check that any custom tasks/types have been declared.
-</span><span class='line'>Action: Check that any &lt;presetdef>/&lt;macrodef> declarations have taken
-</span><span class='line'>        place.
-</span><span class='line'>
-</span><span class='line'>        No types or tasks have been defined in this namespace yet
-</span><span class='line'>        This appears to be an antlib declaration.
-</span><span class='line'>        Action: Check that the implementing library exists in one of:
-</span><span class='line'>            -/usr/share/ant/lib
-</span><span class='line'>            -/home/travis/.ant/lib
-</span><span class='line'>            -a directory added on the command line with the -lib argument</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Even though ant was correctly downloading an ivy jarfile, the build
-script failed to find it. The answers to my <a href="http://stackoverflow.com/questions/16673978/travis-ci-cant-find-ivy-jarfile">Stack Overflow question</a>
-explained that this was related to the order in which jars are
-loaded to the Java classpath. The easiest solution is to run ant
-twice, once to download ivy, and again to build and test the
-project.</p>
-
-<p>Once the source of this error was cleared up, the solution was simple.
-Adding a <code>before_install</code> script to my Travis build ensured that ivy
-would be downloaded before trying to build the project. This meant
-adding just one line to my <code>.travis.yml</code>:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">language</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">java</span>
-</span><span class='line'><span class="l-Scalar-Plain">before_install</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ant init-ivy</span>
-</span><span class='line'><span class="l-Scalar-Plain">install</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ant resolve</span>
-</span><span class='line'><span class="l-Scalar-Plain">jdk</span><span class="p-Indicator">:</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">oraclejdk7</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">openjdk7</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">openjdk6</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>There are a number of other options to run scripts at different times
-in the Travis lifecycle. Check out the rest of the docs
-<a href="http://about.travis-ci.org/docs/user/build-configuration/#Build-Lifecycle">here</a>.</p>
-
-<h1>Headless testing with xfvb</h1>
-
-<p>My Travis builds worked nicely until I started adding a Swing view to
-my Tic Tac Toe project. Although the tests would run and pass locally,
-Travis threw a <code>java.awt.HeadlessException</code> as soon as it tried to run
-the test suite. The <a href="http://about.travis-ci.org/docs/user/gui-and-headless-browsers/">Travis docs</a> explain using a tool called xvfb (X
-Virtual Framebuffer) to simulate a windowing system and run headless
-tests, but warn that &#8220;you need to tell your testing tool process&#8221;
-exactly how to use it.</p>
-
-<p>Exactly how to do this wasn&#8217;t clear, but after fiddling with JVM startup arguments and
-trying to shell out from inside ant, I discovered that the solution
-was dead simple: just add the recommended arguments to <code>.travis.yml</code>,
-and ant and JUnit will take care of the rest. Here&#8217;s my final
-<code>.travis.yml</code>, including the solutions to both problems.</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">language</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">java</span>
-</span><span class='line'><span class="l-Scalar-Plain">before_install</span><span class="p-Indicator">:</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">ant init-ivy</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="s">&quot;export</span><span class="nv"> </span><span class="s">DISPLAY=:99.0&quot;</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="s">&quot;sh</span><span class="nv"> </span><span class="s">-e</span><span class="nv"> </span><span class="s">/etc/init.d/xvfb</span><span class="nv"> </span><span class="s">start&quot;</span>
-</span><span class='line'><span class="l-Scalar-Plain">install</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ant resolve</span>
-</span><span class='line'><span class="l-Scalar-Plain">jdk</span><span class="p-Indicator">:</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">oraclejdk7</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">openjdk7</span>
-</span><span class='line'>  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">openjdk6</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
 
 		
 		
