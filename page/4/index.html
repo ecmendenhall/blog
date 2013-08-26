@@ -7,7 +7,7 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="May 3rd, 2013 git Building Better Git Habits Like many young whippersnapper kids these days, I started using GitHub before I really understood git. &hellip;">
+	<meta name="description" content="May 5th, 2013 Infinitest, JUnit, Java, Today In Yak Shaving Testing Console Output With JUnit and Infinitest I saved the view components of my Tic- &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -86,6 +86,153 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-05T20:54:00-05:00" data-updated="true" itemprop="datePublished">May 5<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/infinitest/'>Infinitest</a>, <a class='category' href='/blog/categories/junit/'>JUnit</a>, <a class='category' href='/blog/categories/java/'>Java</a>, <a class='category' href='/blog/categories/today-in-yak-shaving/'>Today In Yak Shaving</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/05/testing-console-output-with-junit-and-infinitest/" itemprop="url">Testing Console Output With JUnit and Infinitest</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>I saved the view components of my Tic-Tac-Toe game for last. The
+functionality I need to implement for a command line application is
+pretty simple: the view should be able to print game boards and
+messages to the terminal, prompt for user input and pass it off to a
+controller, and not much more. But doing this the TDD way was harder
+than I expected. Here are the solutions I found to two testing problems.</p>
+
+<h2>Testing text output</h2>
+
+<p>Printing a board should be a one-liner, especially since I added a
+<code>toString()</code> method to my <code>Board</code> objects. <code>System.out.println(Board)</code>
+ought to work just fine. But wait—the tests come first.</p>
+
+<p>Writing tests against printed terminal output isn&#8217;t tough, but it does
+require some setup. <code>System.setOut()</code> redirects Java&#8217;s default output
+to a byte stream of <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/System.html#setOut(Java.io.PrintStream)">your choice</a>.
+First, save the default <code>System.out</code> (It&#8217;s a <code>PrintStream</code>), so you can switch back to stdout later.
+Then, initialize a <code>ByteArrayOutputStream</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>    <span class="nd">@RunWith</span><span class="o">(</span><span class="n">JUnit4</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">class</span> <span class="nc">TerminalViewTest</span> <span class="kd">extends</span> <span class="n">TicTacToeTest</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kd">private</span> <span class="kd">final</span> <span class="n">PrintStream</span> <span class="n">stdout</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">;</span>
+</span><span class='line'>        <span class="kd">private</span> <span class="kd">final</span> <span class="n">ByteArrayOutputStream</span> <span class="n">output</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ByteArrayOutputStream</span><span class="o">();</span>
+</span><span class='line'>        <span class="kd">private</span> <span class="n">TerminalView</span> <span class="n">terminalview</span><span class="o">;</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Add a <code>setUp()</code> method with the JUnit <code>@Before</code> annotation—the usual
+pattern to run some code before your tests. Pass <code>System.setOut()</code> a
+UTF-8 <code>PrintStream</code> object constructed with the byte array (You <em>are</em>
+using <a href="http://www.utf8everywhere.org/">UTF-8 everywhere</a>, right?):</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>        <span class="nd">@Before</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setUp</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">UnsupportedEncodingException</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">terminalview</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TerminalView</span><span class="o">();</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="k">new</span> <span class="n">PrintStream</span><span class="o">(</span><span class="n">output</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="s">&quot;UTF-8&quot;</span><span class="o">));</span>
+</span><span class='line'>        <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then test against <code>output</code>. If the terminal output is as expected, it
+should match the result of the printed object&#8217;s <code>toString()</code> method:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>        <span class="nd">@Test</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">terminalViewShouldPrintBoards</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">terminalview</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="n">nowins</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">assertEquals</span><span class="o">(</span><span class="n">nowins</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="n">output</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Finally, make sure you clean up and redirect output back to stdout, so later print statements don&#8217;t go missing:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>        <span class="nd">@After</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">cleanUp</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">setOut</span><span class="o">(</span><span class="n">stdout</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now you&#8217;re ready to write that one-liner. You can find the whole test
+class as a gist <a href="https://gist.github.com/ecmendenhall/5523091">here</a>.</p>
+
+<h2>Testing Unicode output with Infinitest</h2>
+
+<p>With my test in place, I wrote a quick print method and waited for the
+green flash. And waited. And waited&#8230; I&#8217;ve been using
+<a href="http://infinitest.github.io/">Infinitest</a>, an excellent continuous testing
+plugin for IntelliJ and Eclipse, but it threw an assertion error, even
+though the tests passed when run directly from IntelliJ.</p>
+
+<p>The problem? I wasn&#8217;t using <a href="http://www.joelonsoftware.com/articles/Unicode.html">Unicode</a>
+everywhere! (Don&#8217;t say I didn&#8217;t warn you.) My boards print with Unicode <a href="http://unicode-table.com/en/#box-drawing">box
+drawing</a> characters that
+threw off Infinitest. IntelliJ runs in a UTF-8 environment by default,
+but character encoding must be passed as an option to the Infinitest
+JVM. Fortunately, this is another one-line
+<a href="http://infinitest.github.io/doc/user_guide.html">solution</a>:
+add a text file named <code>infinitest.args</code> in your project&#8217;s root directory with one argument per
+line. In this case, just:</p>
+
+<pre><code>-D file.encoding=UTF-8
+</code></pre>
+
+<p>With tests back in the green, I was ready to start testing user
+input—but that&#8217;s a yak shave for another day.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">

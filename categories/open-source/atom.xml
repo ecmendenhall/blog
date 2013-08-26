@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: open source | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/open-source/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-08-25T22:30:36-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[It's called software for a reason]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/08/25/its-called-software-for-a-reason/"/>
+    <updated>2013-08-25T22:25:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/08/25/its-called-software-for-a-reason</id>
+    <content type="html"><![CDATA[<p>Although my Github projects have always included <a href="http://vimeo.com/71984135">open source
+licenses</a>, I haven't made many
+contributions to projects people actually use -- at least until this week, when I submitted my first real <a href="https://help.github.com/articles/using-pull-requests">pull requests</a>. After learning a little Java from my Tic-Tac-Toe and server project, I managed to close an issue I opened six months ago on <a href="http://clojurememcached.info/">Spyglass</a>. And I've spent most of this weekend hacking in Ruby on <a href="http://exercism.io/">Exercism.io</a>, a code koan site that focuses on expressive, readable code.</p>
+
+<p>Not long ago, most software seemed static and untouchable: I treated the libraries and tools I used as artifacts of "real programmers" imbued with a <a href="http://www.marxists.org/reference/subject/philosophy/works/ge/benjamin.htm">special aura</a>. Slowly, over the last few months, that category has dissolved. Most of the code I touch is no doubt still written by people smarter than me, but suddenly it seems malleable and open for extension.</p>
+
+<p>This, I think, is an underrated benefit of test-driven code. Even when
+I still feel like I'm faking it, I have tests that tell the truth: the
+code works as intended. But for learning to test, I don't think I'd
+have developed the confidence to jump into an established project and
+commit without fear. Writing docs and working from open issues are a
+good start, but to really contribute, the first step is writing tests.</p>
+]]></content>
+  </entry>
+  
+</feed>
