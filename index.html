@@ -7,8 +7,8 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Aug 25th, 2013 TDD, open source It&#8217;s Called Software for a Reason Although my Github projects have always included open source
-licenses, I &hellip;">
+	<meta name="description" content="Sep 2nd, 2013 Clojure, clean code Clean Clojure: Meaningful Names I came to 8th Light for a chance to write Clojure, and in the last few
+weeks, the &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +87,215 @@ licenses, I &hellip;">
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-02T22:35:00-05:00" data-updated="true" itemprop="datePublished">Sep 2<span>nd</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/clojure/'>Clojure</a>, <a class='category' href='/blog/categories/clean-code/'>clean code</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/09/02/clean-clojure-meaningful-names/" itemprop="url">Clean Clojure: Meaningful Names</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>I came to 8th Light for a chance to write Clojure, and in the last few
+weeks, the lofty dream of slinging s-expressions during my day job
+has finally come true. (Apprentices are compensated at a flat rate of
+$0.002 per parenthesis). After spending three months learning rules
+and practices for writing clean object-oriented code, I&#8217;m now
+<a href="https://leanpub.com/fp-oo">mapping them to functional programming</a>.
+Over the next few posts, I&#8217;ll try translating some of the guidelines
+for clean code to Clojure. Like <a href="https://chronicle.com/article/50-Years-of-Stupid-Grammar/25497">any style guide</a>, there will be room
+for opinion, so don&#8217;t hesitate to leave comments or offer suggestions.</p>
+
+<p><a href="https://chronicle.com/article/50-Years-of-Stupid-Grammar/25497"><em>Clean Code</em></a> is worth the cover price for Chapter 2 alone. Its
+advice is simple: use meaningful, clear names that reveal intent.
+This rule probably seems obvious, but the value is in its side
+effects. Taking the time to scrutinize every name requires
+the sort of mindfulness and thought that produces clean code. In
+addition to Uncle Bob&#8217;s general guidelines for good names, here are a
+few Clojure-specific rules on naming.</p>
+
+<h2>Verbs rule</h2>
+
+<p>Clojure&#8217;s categorical imperative: act in the <a href="http://steve-yegge.blogspot.com/2006/03/execution-in-kingdom-of-nouns.html">Kingdom of
+Verbs</a>.
+Functions do things, and their names should describe the things they
+do. This is usually an easy rule to follow, but functions that build
+or return data structures can be tricky. <code>Make-user-map</code> is better
+than <code>user-data</code>. <code>Render-footer</code> is better than <code>footer</code> alone.</p>
+
+<h2>But nouns are useful</h2>
+
+<p>Verbs are great, but they&#8217;re even greater when they have objects. A name like
+<code>remove-temporary-files</code> is much clearer than <code>clean-up</code>.</p>
+
+<p>Nouns are also useful inside functions. I find my tolerance for
+repetition far lower in Clojure than in other languages: if I use an expression more
+than once, I&#8217;ll almost always put it in a <code>let</code> binding and give it a
+name. Inside functions that compose multiple transformations on some
+data structure, extracting intermediate steps into values in a <code>let</code>
+binding can be very helpful.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-french-wombat-pairs</span> <span class="p">[</span><span class="nv">crazy-nested-map</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">interesting-pairs</span>  <span class="p">(</span><span class="nf">extract-interesting-pairs</span> <span class="nv">crazy-nested-map</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">pairs-with-wombats</span> <span class="p">(</span><span class="nb">map </span><span class="nv">add-wombat</span> <span class="nv">interesting-pairs</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">in-french</span>          <span class="p">(</span><span class="nb">map </span><span class="nv">to-french</span> <span class="nv">pairs-with-wombats</span><span class="p">)]</span>
+</span><span class='line'>    <span class="nv">in-french</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Good nouns are also helpful when destructuring
+values, which is awesomely useful but sometimes hard to read. Prefer
+putting them in <code>let</code> bindings to cramming them in the argument list,
+except for very simple cases.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">print-summary</span> <span class="p">[</span><span class="nv">statistics</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[{</span><span class="nv">raw-data</span> <span class="ss">:data</span> <span class="p">{</span><span class="ss">:keys</span> <span class="p">[</span><span class="nv">mean</span> <span class="nv">variance</span> <span class="nv">r-squared</span><span class="p">]}</span> <span class="ss">:summary</span><span class="p">}]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">println </span><span class="s">&quot;Mean: &quot;</span> <span class="nv">mean</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">println </span><span class="s">&quot;Variance: &quot;</span> <span class="nv">variance</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">println </span><span class="s">&quot;R-Squared: &quot;</span> <span class="nv">r-squared</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">println </span><span class="s">&quot;Sample size: &quot;</span> <span class="p">(</span><span class="nb">count </span><span class="nv">raw-data</span><span class="p">)))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">arctic-circle?</span> <span class="p">[[</span><span class="nv">latitude</span> <span class="nv">_</span><span class="p">]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">&gt; </span><span class="nv">latitude</span> <span class="mi">65</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>And okay fine, also adjectives</h2>
+
+<p>The one first-class exception to verbs everywhere is adjectives for
+predicates (functions that return <code>true</code> or <code>false</code>, like <code>odd?</code> and
+<code>seq?</code>). These should always end in question marks and always return
+either <code>true</code> or <code>false</code>.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">all-wombats?</span> <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">every? </span><span class="p">(</span><span class="nf">wombat?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Use the best name&#8230;</h2>
+
+<p>Clojure has a large set of core functions, and sometimes the clearest
+name for a function will collide with one of them. Use it anyways!
+This is why namespaces are useful. Similarly, don&#8217;t worry if the best
+name is a long one&#8211;it&#8217;s easy to rebind it to a new name when required.</p>
+
+<h2>&#8230;But don&#8217;t mislead</h2>
+
+<p>That said, make sure it really is the best name. Long names often
+indicate functions that can be split: <code>invert-and-multiply</code> and
+<code>find-and-replace</code> should probably be split in two. (Hint: <code>and</code> is a
+great clue). If a function&#8217;s name collides with a core function or
+incorporates a common name, it should act the same way: if <code>table-map</code>
+doesn&#8217;t apply a function to every cell in a table, it has the wrong name.</p>
+
+<h2>Use idiomatic vocabulary</h2>
+
+<p><a href="http://clojuredocs.org/">Clojuredocs examples</a> and Clojure&#8217;s own
+<a href="http://dev.clojure.org/display/community/Library+Coding+Standards">library coding
+standards</a>
+are good resources for picking up common Clojure idioms and
+vocabulary. Here are a few naming conventions.</p>
+
+<p>In macros, <code>expr</code> is usually used for a single expression and <code>body</code>
+for a longer form.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nb">when </span><span class="p">[</span><span class="nv">expr</span> <span class="o">&amp;</span> <span class="nv">body</span><span class="p">]</span>
+</span><span class='line'>  <span class="o">`</span><span class="p">(</span><span class="k">if </span><span class="o">~</span><span class="nv">expr</span> <span class="p">(</span><span class="k">do </span><span class="o">~@</span><span class="nv">body</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>&#8220;Collection&#8221; is often shortened to <code>coll</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">remove-wombats</span> <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">filter </span><span class="nv">wombat?</span> <span class="nv">coll</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Bundling up extra arguments is almost always done with <code>&amp; more</code>.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">shout-all-args</span> <span class="p">[</span><span class="o">&amp;</span> <span class="nv">more</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">doseq </span><span class="p">[</span><span class="nv">arg</span> <span class="nv">more</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">println </span><span class="p">(</span><span class="nb">str </span><span class="p">(</span><span class="nf">upcase</span> <span class="nv">arg</span><span class="p">)</span> <span class="s">&quot;!&quot;</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Like in middle school math, <code>n</code> is usually an integer, <code>x</code> and <code>y</code> are
+default numerical inputs, and <code>f</code>, <code>g</code>, and <code>h</code> are often functions.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">local-max?</span> <span class="p">[</span><span class="nv">f</span> <span class="p">[</span><span class="nv">x</span> <span class="nv">y</span><span class="p">]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">f</span><span class="o">&#39;</span>  <span class="p">(</span><span class="nf">derivative</span> <span class="nv">f</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">f</span><span class="o">&#39;&#39;</span> <span class="p">(</span><span class="nf">derivative</span> <span class="p">(</span><span class="nf">derivative</span> <span class="nv">f</span><span class="p">))]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">and </span><span class="p">(</span><span class="nb">&lt; </span><span class="mi">0</span> <span class="p">(</span><span class="nf">f</span><span class="o">&#39;&#39;</span> <span class="nv">x</span><span class="p">))</span> <span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="p">(</span><span class="nf">f</span><span class="o">&#39;</span> <span class="nv">x</span><span class="p">))))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Dynamic vars wear <code>*earmuffs*</code>. Try not to use them.</p>
+
+<p>Simple format transformations often use an arrow, e.g.: <code>cljs-&gt;clj</code>,
+<code>html-&gt;hiccup</code>, <code>hex-&gt;bytes</code>.</p>
+
+<h2>Make side effects explicit</h2>
+
+<p>Clojure does a great job separating <a href="http://www.infoq.com/presentations/Value-Identity-State-Rich-Hickey">value, state, and
+  identity</a>.
+  Clojure programmers should, too. If a function changes state or has
+  side effects, its name should reflect it. Functions that mutate
+  state like <code>swap!</code> and <code>reset!</code> end with a bang. Side effects hiding
+  elsewhere should also be explicit: if <code>format-page</code> saves a file to
+  disk, it should be <code>format-and-save-page</code> (or even better, two
+  separate functions).</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -2149,371 +2358,6 @@ functional queue, even if the implementation is a little long. You can
 find an edited version of my solution
 <a href="https://gist.github.com/ecmendenhall/5847792">here</a>, and all the code
 from these posts as a Gist <a href="https://gist.github.com/ecmendenhall/5847793">here</a>.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-24T00:22:00-05:00" data-updated="true" itemprop="datePublished">Jun 24<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/breadth-first-numbering/'>Breadth-first numbering</a>, <a class='category' href='/blog/categories/functional-programming/'>Functional programming</a>, <a class='category' href='/blog/categories/lisp/'>Lisp</a>, <a class='category' href='/blog/categories/racket/'>Racket</a>, <a class='category' href='/blog/categories/scheme/'>Scheme</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/24/breadth-first-numbering-a-lazy-functional-queue/" itemprop="url">Breadth-first Numbering: A Lazy Functional Queue</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>On the way to a <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">breadth-first
-numbering</a>
-solution, I&#8217;ve built a simple functional queue and <a href="http://ecmendenhall.github.io/blog/blog/2013/06/24/breadth-first-numbering-lazy-lists/">created lazy
-lists</a>
-from Scheme primitives (and a couple handy macros). In this post,
-I&#8217;ll bring the pieces together to create an improved queue. (And yes,
-I promise I&#8217;ll actually start numbering trees sometime soon).</p>
-
-<p>Our simple queue consisted of two lists: one for the head of the
-queue, and a reversed one for the tail:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="o">&#39;</span><span class="p">((</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">5</span> <span class="mi">4</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Our improved queue makes two changes: lazy lists and incremental
-reversal. It will look like this:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="o">&#39;</span><span class="p">(((</span><span class="mi">1</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">me/bfs/queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">((</span><span class="mi">5</span> <span class="o">.</span> <span class="o">#</span><span class="nv">&lt;procedure:</span><span class="o">...</span><span class="nv">me/bfs/queue</span><span class="o">.</span><span class="nv">scm:106:6&gt;</span><span class="p">)</span> <span class="o">.</span> <span class="mi">2</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This looks a little complicated, but just like the simple queue, it&#8217;s also a list of a head and
-reversed tail, with each side storing the length of the associated
-list. This equivalent is a little simpler:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="o">&#39;</span><span class="p">((</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">5</span> <span class="mi">4</span><span class="p">))</span> <span class="o">.</span> <span class="mi">2</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>To start implementing the improvements, we need to update the
-selectors to get the lists and lengths from both sides:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">empty-q</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cons </span><span class="o">&#39;</span><span class="p">()</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="o">&#39;</span><span class="p">()</span> <span class="mi">0</span><span class="p">)))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">five-items</span> <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span><span class="p">))</span> <span class="mi">3</span><span class="p">)))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lhs-len</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">lhs-len</span> <span class="nv">five-items</span><span class="p">)</span> <span class="mi">2</span>
-</span><span class='line'>              <span class="s">&quot;Our lazy queue stores the length of the lists on each side.&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rhs-len</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">rhs-len</span> <span class="nv">five-items</span><span class="p">)</span> <span class="mi">3</span>
-</span><span class='line'>              <span class="s">&quot;Our lazy queue stores the length of the lists on each side.&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">lhs-list</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">five-items</span><span class="p">))</span> <span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rhs-list</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">five-items</span><span class="p">))</span> <span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">llist</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now we can write an updated insert function:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">ins</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span> <span class="nv">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)</span>
-</span><span class='line'>          <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">lcons</span> <span class="nv">item</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">queue</span><span class="p">))</span>
-</span><span class='line'>                <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="p">(</span><span class="nf">rhs-len</span> <span class="nv">queue</span><span class="p">))))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">three-items</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">))))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">six-items</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">6</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">5</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">))))))))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">three-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">3</span> <span class="mi">2</span> <span class="mi">1</span><span class="p">))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">six-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span>
-</span><span class='line'>                    <span class="s">&quot;Ins adds elements to the right side.&quot;</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Remove is a little more complicated. In the simple queue, we simply
-swapped and reversed the right side. We want our improved queue to
-avoid reversing long right side lists. The solution is <em>incremental
-reversal</em>: rebalance the queue every time an element is removed.</p>
-
-<p>In <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.47.8825">Okasaki&#8217;s implementation</a>,
-this is done with functions called <code>make-queue</code> and <code>rotate</code>. Below
-are my Scheme translations.</p>
-
-<p><code>Rotate</code> reverses the right side list and concatenates it to the left.
- It&#8217;s similar to the simple queue implementation, but it uses lazy
- list operators and it&#8217;s designed to work incrementally:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rotate</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">left</span> <span class="nv">right</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">define </span><span class="nv">rotate-recur</span>
-</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">left</span> <span class="nv">right</span> <span class="nv">accumulator</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">left</span><span class="p">)</span>
-</span><span class='line'>            <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">lcar</span> <span class="nv">right</span><span class="p">)</span> <span class="nv">accumulator</span><span class="p">)</span>
-</span><span class='line'>            <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">lcar</span> <span class="nv">left</span><span class="p">)</span> <span class="p">(</span><span class="nf">rotate-recur</span> <span class="p">(</span><span class="nf">lcdr</span> <span class="nv">left</span><span class="p">)</span>
-</span><span class='line'>                                             <span class="p">(</span><span class="nf">lcdr</span> <span class="nv">right</span><span class="p">)</span>
-</span><span class='line'>                                             <span class="p">(</span><span class="nf">lcons</span> <span class="p">(</span><span class="nf">lcar</span> <span class="nv">right</span><span class="p">)</span> <span class="nv">accumulator</span><span class="p">))))))</span>
-</span><span class='line'>        <span class="p">(</span><span class="nf">rotate-recur</span> <span class="nv">left</span> <span class="nv">right</span> <span class="o">&#39;</span><span class="p">())))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">rotated</span> <span class="p">(</span><span class="nf">rotate</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">five-items</span><span class="p">)</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">five-items</span><span class="p">))))</span>
-</span><span class='line'>     <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">5</span> <span class="nv">rotated</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">5</span> <span class="mi">4</span> <span class="mi">3</span><span class="p">)</span>
-</span><span class='line'>                    <span class="s">&quot;Rotate reverses the right side list and concatenates it to the left.&quot;</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>Make-queue</code> implements the incremental reversal logic. Now, we no
-longer wait until the head list is empty to swap and reverse. Instead,
-we rotate the queue as soon as the tail list contains one more element
-than the head. This keeps the queue balanced, and ensures that we
-won&#8217;t run into an expensive reversal:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">make-queue</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">left</span> <span class="nv">right</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt;= </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">right</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">left</span><span class="p">))</span>
-</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="nv">left</span> <span class="nv">right</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">rotate</span> <span class="p">(</span><span class="nb">car </span><span class="nv">left</span><span class="p">)</span>
-</span><span class='line'>                            <span class="p">(</span><span class="nb">car </span><span class="nv">right</span><span class="p">))</span>
-</span><span class='line'>                    <span class="p">(</span><span class="nb">+ </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">left</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">right</span><span class="p">)))</span>
-</span><span class='line'>              <span class="p">(</span><span class="nb">cons </span><span class="o">&#39;</span><span class="p">()</span> <span class="mi">0</span><span class="p">)))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">rebalanced</span> <span class="p">(</span><span class="nf">make-queue</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">five-items</span><span class="p">)</span>
-</span><span class='line'>                              <span class="p">(</span><span class="nf">right-side</span> <span class="nv">five-items</span><span class="p">))))</span>
-</span><span class='line'> <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">5</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">rebalanced</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">5</span> <span class="mi">4</span> <span class="mi">3</span><span class="p">))</span>
-</span><span class='line'> <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">rebalanced</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">()</span>
-</span><span class='line'>               <span class="s">&quot;Make-queue rebalances the queue when the right side is longer than the left.&quot;</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>To maintain a balanced queue, we&#8217;ll want to call <code>make-queue</code> on
-insertion and removal. Here&#8217;s an improved insert, and a new remove:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">ins</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span> <span class="nv">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">make-queue</span> <span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)</span>
-</span><span class='line'>                <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">lcons</span> <span class="nv">item</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">queue</span><span class="p">))</span>
-</span><span class='line'>                      <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="p">(</span><span class="nf">rhs-len</span> <span class="nv">queue</span><span class="p">))))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">three-items</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">))))</span>
-</span><span class='line'>      <span class="p">(</span><span class="nf">six-items</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">6</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">5</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">))))))))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">three-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">six-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">six-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">6</span> <span class="mi">5</span> <span class="mi">4</span><span class="p">)</span>
-</span><span class='line'>                <span class="s">&quot;Ins adds elements to the right side and </span>
-</span><span class='line'><span class="s">                 rebalances if it&#39;s longer than the left.&quot;</span><span class="p">))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rem</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">queue</span><span class="p">))</span> <span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">rhs-list</span> <span class="nv">queue</span><span class="p">)))</span>
-</span><span class='line'>        <span class="o">&#39;</span><span class="p">()</span>
-</span><span class='line'>        <span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">lcar</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">queue</span><span class="p">))</span>
-</span><span class='line'>              <span class="p">(</span><span class="nf">make-queue</span> <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nf">lcdr</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">left-side</span> <span class="nv">queue</span><span class="p">)))</span>
-</span><span class='line'>                                      <span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nf">lhs-len</span> <span class="nv">queue</span><span class="p">)</span> <span class="mi">1</span><span class="p">))</span>
-</span><span class='line'>                          <span class="p">(</span><span class="nf">right-side</span> <span class="nv">queue</span><span class="p">))))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">removed</span> <span class="p">(</span><span class="nf">rem</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">3</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">ins</span> <span class="mi">1</span> <span class="nv">empty-q</span><span class="p">)))))))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="nv">removed</span><span class="p">)</span> <span class="mi">1</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="p">(</span><span class="nb">cadr </span><span class="nv">removed</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">1</span> <span class="p">(</span><span class="nf">rhs-list</span> <span class="p">(</span><span class="nb">cadr </span><span class="nv">removed</span><span class="p">)))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
-</span><span class='line'>                <span class="s">&quot;Rem returns a pair: the element removed</span>
-</span><span class='line'><span class="s">                 from the queue and the new queue.&quot;</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Finally, let&#8217;s add a couple convenience functions to insert and remove
-multiple items:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">ins-items</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">items</span> <span class="nv">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">items</span><span class="p">)</span>
-</span><span class='line'>        <span class="nv">queue</span>
-</span><span class='line'>        <span class="p">(</span><span class="nf">ins-items</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">items</span><span class="p">)</span> <span class="p">(</span><span class="nf">ins</span> <span class="p">(</span><span class="nb">car </span><span class="nv">items</span><span class="p">)</span> <span class="nv">queue</span><span class="p">)))))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">seven-items</span> <span class="p">(</span><span class="nf">ins-items</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span><span class="p">)</span> <span class="nv">empty-q</span><span class="p">)))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">take-n</span> <span class="mi">7</span> <span class="p">(</span><span class="nf">lhs-list</span> <span class="nv">seven-items</span><span class="p">))</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span><span class="p">)</span>
-</span><span class='line'>                <span class="s">&quot;Ins-items adds multiple items to the queue.&quot;</span><span class="p">))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">rem-n</span>
-</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">n</span> <span class="nv">queue</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">define </span><span class="nv">rem-n-iter</span>
-</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">n</span> <span class="nv">queue</span> <span class="nv">items</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="nv">n</span><span class="p">)</span>
-</span><span class='line'>            <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">reverse </span><span class="nv">items</span><span class="p">)</span> <span class="nv">queue</span><span class="p">)</span>
-</span><span class='line'>            <span class="p">(</span><span class="nf">rem-n-iter</span> <span class="p">(</span><span class="nb">- </span><span class="nv">n</span> <span class="mi">1</span><span class="p">)</span>
-</span><span class='line'>                        <span class="p">(</span><span class="nb">car </span> <span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">)))</span>
-</span><span class='line'>                        <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">))</span> <span class="nv">items</span><span class="p">)))))</span>
-</span><span class='line'>    <span class="p">(</span><span class="nf">rem-n-iter</span> <span class="nv">n</span> <span class="nv">queue</span> <span class="o">&#39;</span><span class="p">())))</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">remove-four</span> <span class="p">(</span><span class="nf">rem-n</span> <span class="mi">4</span> <span class="p">(</span><span class="nf">ins-items</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span><span class="p">)</span> <span class="nv">empty-q</span><span class="p">))))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">car </span><span class="nv">remove-four</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">))</span>
-</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nb">+ </span><span class="p">(</span><span class="nf">lhs-len</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">remove-four</span><span class="p">))</span>
-</span><span class='line'>                   <span class="p">(</span><span class="nf">rhs-len</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">remove-four</span><span class="p">)))</span> <span class="mi">3</span>
-</span><span class='line'>                <span class="s">&quot;Rem-n returns a list of removed items and the new queue.&quot;</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Next time, we&#8217;ll finally bring everything together to solve the
-breadth-first numbering problem.</p>
 
 		
 		

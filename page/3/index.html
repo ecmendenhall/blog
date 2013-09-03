@@ -7,7 +7,7 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Jun 2nd, 2013 Java, refactoring Refactoring Examples: Duplicated Code I&#8217;ve spent the last couple weeks working through Martin Fowler&#8217;s &hellip;">
+	<meta name="description" content="Jun 3rd, 2013 Java, refactoring Refactoring Examples: Refused-ish Bequest Before finishing up the first version of my terminal view game, I moved &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -86,6 +86,511 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-03T01:04:00-05:00" data-updated="true" itemprop="datePublished">Jun 3<span>rd</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/java/'>Java</a>, <a class='category' href='/blog/categories/refactoring/'>refactoring</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/03/refactoring-examples-refused-ish-bequest/" itemprop="url">Refactoring Examples: Refused-ish Bequest</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Before finishing up the first version of my terminal view game, I moved strings like the welcome message and player prompts to a <a href="http://docs.oracle.com/javase/tutorial/essential/environment/properties.html">properties file</a>. This requires reading and storing the strings before using them in the view, but has two big advantages. First, tests no longer break when I edit a string (at least, as long as my tests are using the same properties). Second, if I wanted to translate my program into another language, it&#8217;s as easy as swapping out the properties file.</p>
+
+<p>Unfortunately, loading strings got ugly fast. Here&#8217;s an example from the <code>GameController</code> class:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">GameController</span> <span class="kd">implements</span> <span class="n">Controller</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">welcome</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">divider</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">yourMove</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">yourMoveThreeSquares</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">playAgain</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">gameOverDraw</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">gameOverWin</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">xWins</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">oWins</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">choosePlayerOne</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">choosePlayerTwo</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">boardSize</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">public</span> <span class="n">GameController</span><span class="o">(</span><span class="n">View</span> <span class="n">gameView</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">loadViewStrings</span><span class="o">();</span>
+</span><span class='line'><span class="err">        </span><span class="n">view</span> <span class="o">=</span> <span class="n">gameView</span><span class="o">;</span>
+</span><span class='line'><span class="err">        </span><span class="n">board</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GameBoard</span><span class="o">();</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="kt">void</span> <span class="n">loadViewStrings</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">Properties</span> <span class="n">viewStrings</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Properties</span><span class="o">();</span>
+</span><span class='line'><span class="err">        </span><span class="k">try</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">viewStrings</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="n">getClass</span><span class="o">().</span><span class="na">getResourceAsStream</span><span class="o">(</span><span class="s">&quot;/viewstrings.properties&quot;</span><span class="o">));</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">welcome</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;welcome&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">divider</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;divider&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">yourMove</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;yourmove&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">yourMoveThreeSquares</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;yourmovethreesquares&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">playAgain</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;playagain&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">gameOverDraw</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;gameoverdraw&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">gameOverWin</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;gameoverwin&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">xWins</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;xwins&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">oWins</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;owins&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">choosePlayerOne</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;chooseplayerone&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">choosePlayerTwo</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;chooseplayertwo&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">boardSize</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;boardsize&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'><span class="err"> </span><span class="o">}</span>
+</span><span class='line'><span class="err"> </span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p> 
+ It gets worse. When I started writing my Swing view, I needed to ignore certain strings, like those that prompt for keyboard input. A good idea: avoid creating a brand new SwingController class, but somehow filter out unneeded strings. A bad idea: do it by checking and ignoring certain strings from the controller. This is logic that really shouldn&#8217;t be in the view, implemented in a very fragile way. In fact, it undoes all the abstraction of the properties file—as soon as a string changes, <code>displayMessage()</code> will probably break. Plus, there&#8217;s plenty of duplicated code.</p>
+
+<p> </p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="err"> </span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SwingView</span> <span class="kd">extends</span> <span class="n">JFrame</span> <span class="kd">implements</span> <span class="n">View</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">divider</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">playAgain</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">choosePlayerOne</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">choosePlayerTwo</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">String</span> <span class="n">boardSize</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">Set</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">ignoreThese</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;();</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">public</span> <span class="n">SwingView</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">loadViewStrings</span><span class="o">();</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="kt">void</span> <span class="n">loadViewStrings</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">Properties</span> <span class="n">viewStrings</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Properties</span><span class="o">();</span>
+</span><span class='line'><span class="err">        </span><span class="k">try</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">viewStrings</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="n">getClass</span><span class="o">().</span><span class="na">getResourceAsStream</span><span class="o">(</span><span class="s">&quot;/viewstrings.properties&quot;</span><span class="o">));</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">divider</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;divider&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">playAgain</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;playagain&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">choosePlayerOne</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;chooseplayerone&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">choosePlayerTwo</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;chooseplayertwo&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">boardSize</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;boardsize&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">ignoreThese</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">divider</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">ignoreThese</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">playAgain</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">ignoreThese</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">choosePlayerOne</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">ignoreThese</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">choosePlayerTwo</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">ignoreThese</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">boardSize</span><span class="o">);</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">public</span> <span class="kt">void</span> <span class="n">displayMessage</span><span class="o">(</span><span class="n">String</span> <span class="n">message</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="k">if</span> <span class="o">(</span><span class="n">message</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="s">&quot;move&quot;</span><span class="o">))</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="kt">int</span> <span class="n">endStart</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="na">indexOf</span><span class="o">(</span><span class="s">&quot;player&quot;</span><span class="o">)</span> <span class="o">+</span> <span class="mi">6</span><span class="o">;</span>
+</span><span class='line'><span class="err">            </span><span class="n">String</span> <span class="n">ending</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="n">endStart</span><span class="o">);</span>
+</span><span class='line'><span class="err">            </span><span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Your move, player&quot;</span> <span class="o">+</span> <span class="n">ending</span><span class="o">;</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">ignoreThese</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="n">message</span><span class="o">))</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="k">return</span><span class="o">;</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span>
+</span><span class='line'><span class="err">        </span><span class="n">JLabel</span> <span class="n">messageLabel</span> <span class="o">=</span> <span class="n">messagePanel</span><span class="o">.</span><span class="na">getLabel</span><span class="o">();</span>
+</span><span class='line'><span class="err">        </span><span class="n">messageLabel</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">message</span><span class="o">);</span>
+</span><span class='line'><span class="err"> </span>  <span class="o">}</span><span class="err">   </span>
+</span><span class='line'><span class="err"> </span><span class="o">}</span>
+</span><span class='line'><span class="err"> </span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p> 
+ This is similar, though not identical to Fowler&#8217;s &#8220;Refused bequest,&#8221; where a subclass inherits lots of methods and then ignores them. Here&#8217; I&#8217;m loading lots of strings, then ignoring them.
+ 
+ Refused bequest is fixed with a refactor called &#8220;Replace inheritance with delegation:&#8221; put the superclass in a field on the old subclass, remove the inheritance, and simply delegate to the superclass methods when needed. Here, I haven&#8217;t even shared code through inheritance, but by good old copy-and-paste (so it&#8217;s also part of the duplicated code stink parade).
+ 
+ The cleanup strategy here is similar too: create a separate class to handle loading properties, and use it in place of the duplicated methods. I&#8217;ll start by creating a <code>StringLoader</code> class that includes the duplicated fields and methods:
+ 
+ </p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="err"> </span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">StringLoader</span> <span class="o">{</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">welcome</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">divider</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">yourMove</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">yourMoveThreeSquares</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">playAgain</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">gameOverDraw</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">gameOverWin</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">xWins</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">oWins</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">choosePlayerOne</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">choosePlayerTwo</span><span class="o">;</span>
+</span><span class='line'><span class="err">    </span><span class="n">String</span> <span class="n">boardSize</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">public</span> <span class="n">StringLoader</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kt">void</span> <span class="n">loadViewStrings</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">Properties</span> <span class="n">viewStrings</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Properties</span><span class="o">();</span>
+</span><span class='line'><span class="err">        </span><span class="k">try</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">viewStrings</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="kc">null</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getResourceAsStream</span><span class="o">(</span><span class="s">&quot;/viewstrings.properties&quot;</span><span class="o">));</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">welcome</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;welcome&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">divider</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;divider&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">yourMove</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;yourmove&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">yourMoveThreeSquares</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;yourmovethreesquares&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">playAgain</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;playagain&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">gameOverDraw</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;gameoverdraw&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">gameOverWin</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;gameoverwin&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">xWins</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;xwins&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">oWins</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;owins&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">choosePlayerOne</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;chooseplayerone&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">choosePlayerTwo</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;chooseplayertwo&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">boardSize</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;boardsize&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Instead of all these fields, storing strings in a map is much cleaner:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">StringLoader</span> <span class="o">{</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">viewStrings</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;();</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">public</span> <span class="n">StringLoader</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kt">void</span> <span class="n">loadViewStrings</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">Properties</span> <span class="n">viewStrings</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Properties</span><span class="o">();</span>
+</span><span class='line'><span class="err">        </span><span class="k">try</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">viewStrings</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="n">getClass</span><span class="o">().</span><span class="na">getResourceAsStream</span><span class="o">(</span><span class="s">&quot;/viewstrings.properties&quot;</span><span class="o">));</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">welcome</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;welcome&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">divider</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;divider&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">yourMove</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;yourmove&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">yourMoveThreeSquares</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;yourmovethreesquares&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">playAgain</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;playagain&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">gameOverDraw</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;gameoverdraw&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">gameOverWin</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;gameoverwin&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">xWins</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;xwins&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">oWins</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;owins&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">choosePlayerOne</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;chooseplayerone&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">choosePlayerTwo</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;chooseplayertwo&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">boardSize</span> <span class="o">=</span> <span class="n">viewStrings</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;boardsize&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The repeated calls to <code>viewStrings.getProperty()</code> are still pretty ugly and very difficult to read. One solution is to extract a <code>load()</code> method, then iterate over an array of the property names:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">StringLoader</span> <span class="o">{</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">viewStrings</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;();</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">Properties</span> <span class="n">viewStringProperties</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Properties</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">public</span> <span class="n">StringLoader</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">loadViewStrings</span><span class="o">();</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="kt">void</span> <span class="n">load</span><span class="o">(</span><span class="n">String</span> <span class="n">propertyName</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="n">String</span> <span class="n">propertyString</span> <span class="o">=</span> <span class="n">viewStringProperties</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="n">propertyName</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="n">viewStrings</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">propertyName</span><span class="o">,</span> <span class="n">propertyString</span><span class="o">)</span>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="kt">void</span> <span class="n">loadViewStrings</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'><span class="err">        </span><span class="k">try</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">viewStringProperties</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="n">getClass</span><span class="o">().</span><span class="na">getResourceAsStream</span><span class="o">(</span><span class="s">&quot;/viewstrings.properties&quot;</span><span class="o">));</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">exception</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">exception</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="n">String</span><span class="o">[]</span> <span class="n">properties</span> <span class="o">=</span> <span class="o">{</span> <span class="s">&quot;welcome&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;divider&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;yourmove&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;yourmovethreesquares&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;playagain&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;gameoverdraw&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;gameoverwin&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;xwins&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;owins&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;chooseplayerone&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;chooseplayertwo&quot;</span><span class="o">,</span>
+</span><span class='line'><span class="err">                                </span><span class="s">&quot;boardsize&quot;</span><span class="o">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">        </span><span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">property</span> <span class="o">:</span> <span class="n">properties</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">            </span><span class="n">load</span><span class="o">(</span><span class="n">property</span><span class="o">);</span>
+</span><span class='line'><span class="err">        </span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="err">    </span><span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Finally, let&#8217;s replace the hardcoded filepath by passing a path to the view constructor (and on to the <code>loadViewStrings()</code> method:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="nf">StringLoader</span><span class="o">(</span><span class="n">String</span> <span class="n">filepath</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'><span class="err">      </span><span class="n">loadViewStrings</span><span class="o">(</span><span class="n">filepath</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, reading in strings from the properties file looks like this, instead of the forty-line monster we started with:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">GameController</span> <span class="kd">implements</span> <span class="n">Controller</span> <span class="o">{</span>
+</span><span class='line'><span class="err">    </span><span class="kd">private</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">viewStrings</span> <span class="o">=</span>
+</span><span class='line'><span class="err">    </span>  <span class="k">new</span> <span class="n">StringLoader</span><span class="o">().</span><span class="na">getViewStrings</span><span class="o">(</span><span class="s">&quot;/viewstrings.properties&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To use a string, I can just get it from the map:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">viewStrings</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;welcome&quot;</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This requires trading off a little clarity, but on balance it&#8217;s much cleaner. Best of all, now I can use properties as they were intended. Preventing my view from displaying certain strings just requires creating a new properties file and removing the content from the unneeded messages—another win for decoupling and abstraction.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -2472,155 +2977,6 @@ Incanter plot:</p>
 <p><img src="/blog/images/pi-100000.png"></p>
 
 <p>A gist with all the code from this post is <a href="https://gist.github.com/ecmendenhall/5565604">available here</a>.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-10T00:21:00-05:00" data-updated="true" itemprop="datePublished">May 10<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/lisp/'>Lisp</a>, <a class='category' href='/blog/categories/tdd/'>TDD</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/10/enforcing-bottom-up-design/" itemprop="url">Enforcing Bottom-up Design</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<blockquote><p>&#8220;Experienced Lisp programmers divide up their programs differently.
-As well as top-down design, they follow a principle which could be
-called bottom-up design–changing the language to suit the problem.
-In Lisp, you don&#8217;t just write your program down toward the language,
-you also build the language up toward your program. As you&#8217;re writing
-a program you may think &#8216;I wish Lisp had such-and-such an operator.&#8217;
-So you go and write it. Afterward you realize that using the new
-operator would simplify the design of another part of the program, and
-so on. Language and program evolve together. Like the border between
-two warring states, the boundary between language and program is drawn
-and redrawn, until eventually it comes to rest along the mountains and
-rivers, the natural frontiers of your problem. In the end your program
-will look as if the language had been designed for it. And when
-language and program fit one another well, you end up with code which
-is clear, small, and efficient.&#8221;</p></blockquote>
-
-<p>–<a href="http://www.paulgraham.com/progbot.html">Paul Graham</a>, from the
-introduction to <a href="http://www.paulgraham.com/onlisptext.html"><em>On Lisp</em></a></p>
-
-<p>Lisp programmers have a reputation (earned or otherwise) for considering their language of
-  choice <a href="http://xkcd.com/224/">uniquely powerful</a>, capable of
-  extending the <a href="https://tractatus-online.appspot.com/Tractatus/Ajaxs/tlpA.html#56">limits of the
-  world</a>
-  with its special
-  <a href="http://stackoverflow.com/questions/267862/what-makes-lisp-macros-so-special">expressiveness</a>.
-  I find writing Lisp a joy, and for a long time I bought into the
-  mythos. It still <em>feels</em> unique. But I&#8217;ve come to learn that good bottom-up design is possible in any language.</p>
-
-<p>  For the past two weeks, I&#8217;ve been working in Java, a
-  language many programmers consider
-  <a href="http://www.paulgraham.com/avg.html">Blub</a> incarnate. (You don&#8217;t have to take <a href="http://hammerprinciple.com/therighttool/items/java/clojure">my word for
-  it</a>).
-  But even without clever macros and first-class functions, following
-  the rules of <a href="http://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530">test-driven
-  development</a>
-  and the principles of <a href="http://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882">clean
-  code</a>
-  feels a lot like the process of natural, iterative evolution Paul
-  Graham describes.</p>
-
-<p>  A good language can encourage bottom-up, evolutionary design, and
-  this is one of Lisp&#8217;s great strengths. But
-  writing good tests—and writing them first—can go a step further and
-  actually enforce it.</p>
-
-<p> Writing tests first requires describing abstractions before
- they exist—writing the program you want to read from the very start. Using meaningful names transforms the language you have
- into the one you want. Revising after every passing test makes
- simplifying design second nature. And building up a program test by
- tiny test is an evolutionary process that generates clean, efficient
- code, whether you&#8217;re writing Common Lisp or COBOL.</p>
-
-<p>Here&#8217;s a function that returns a given game board&#8217;s winner from my
-  first crack at Tic Tac Toe in Clojure:</p>
-
-<figure class='code'><figcaption><span>tictactoe.core/get-win </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">get-win</span>
-</span><span class='line'>  <span class="s">&quot;Takes a 3x3 game board. Returns a vector</span>
-</span><span class='line'><span class="s">  [winner start middle  end] of the winning player,</span>
-</span><span class='line'><span class="s">  and (row, col) grid coordinates of the three-in-a-row elements.&quot;</span>
-</span><span class='line'>  <span class="p">[</span><span class="nv">board</span><span class="p">]</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">wins</span>           <span class="p">(</span><span class="nf">check-for-wins</span> <span class="nv">board</span><span class="p">)</span>
-</span><span class='line'>          <span class="nv">winner</span>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="p">(</span><span class="nb">first </span><span class="p">(</span><span class="nb">remove nil? </span><span class="nv">wins</span><span class="p">)))</span> <span class="mi">1</span> <span class="mi">0</span><span class="p">)</span>
-</span><span class='line'>          <span class="p">[</span><span class="nv">row</span> <span class="nv">col</span> <span class="nv">diag</span><span class="p">]</span> <span class="p">(</span><span class="nf">unflatten</span> <span class="nv">wins</span><span class="p">)]</span>
-</span><span class='line'>      <span class="p">(</span><span class="nb">cond </span><span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">row</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">0</span><span class="p">]</span>
-</span><span class='line'>                                          <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">1</span><span class="p">]</span>
-</span><span class='line'>                                          <span class="p">[(</span><span class="nf">get-row-win</span> <span class="nv">row</span><span class="p">)</span> <span class="mi">2</span><span class="p">]]</span>
-</span><span class='line'>            <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">col</span><span class="p">)</span>  <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
-</span><span class='line'>                                          <span class="p">[</span><span class="mi">1</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]</span>
-</span><span class='line'>                                          <span class="p">[</span><span class="mi">2</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">col</span><span class="p">)]]</span>
-</span><span class='line'>            <span class="p">(</span><span class="nf">not-empty-row?</span> <span class="nv">diag</span><span class="p">)</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="p">(</span><span class="nf">get-row-win</span> <span class="nv">diag</span><span class="p">))</span>
-</span><span class='line'>                                    <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">2</span><span class="p">]]</span>
-</span><span class='line'>                                    <span class="p">[</span><span class="nv">winner</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">2</span><span class="p">]</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">0</span><span class="p">]]))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And here&#8217;s the equivalent I wrote in Java:</p>
-
-<figure class='code'><figcaption><span>Board.winnerIs( ) </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">winnerIs</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>      <span class="k">if</span> <span class="o">(</span><span class="n">hasWin</span><span class="o">())</span> <span class="o">{</span>
-</span><span class='line'>          <span class="k">return</span> <span class="nf">getWinningRow</span><span class="o">().</span><span class="na">winner</span><span class="o">();</span>
-</span><span class='line'>      <span class="o">}</span>
-</span><span class='line'>      <span class="k">return</span> <span class="n">_</span><span class="o">;</span>
-</span><span class='line'>  <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Which excerpt reads more like a domain-specific language? Which
-  would you rather read a year from now? I don&#8217;t doubt that I could
-  clean up the Clojure into something just as simple and readable. But
-merely using an elegant language is no guarantee of elegant design.</p>
 
 		
 		

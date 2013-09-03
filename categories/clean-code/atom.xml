@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: clean code | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/clean-code/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-09-03T11:57:33-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Clean Clojure: Meaningful names]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/09/02/clean-clojure-meaningful-names/"/>
+    <updated>2013-09-02T22:35:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/09/02/clean-clojure-meaningful-names</id>
+    <content type="html"><![CDATA[<p>I came to 8th Light for a chance to write Clojure, and in the last few
+weeks, the lofty dream of slinging s-expressions during my day job
+has finally come true. (Apprentices are compensated at a flat rate of
+$0.002 per parenthesis). After spending three months learning rules
+and practices for writing clean object-oriented code, I'm now
+<a href="https://leanpub.com/fp-oo">mapping them to functional programming</a>.
+Over the next few posts, I'll try translating some of the guidelines
+for clean code to Clojure. Like <a href="https://chronicle.com/article/50-Years-of-Stupid-Grammar/25497">any style guide</a>, there will be room
+for opinion, so don't hesitate to leave comments or offer suggestions.</p>
+
+<p><a href="https://chronicle.com/article/50-Years-of-Stupid-Grammar/25497"><em>Clean Code</em></a> is worth the cover price for Chapter 2 alone. Its
+advice is simple: use meaningful, clear names that reveal intent.
+This rule probably seems obvious, but the value is in its side
+effects. Taking the time to scrutinize every name requires
+the sort of mindfulness and thought that produces clean code. In
+addition to Uncle Bob's general guidelines for good names, here are a
+few Clojure-specific rules on naming.</p>
+
+<h2>Verbs rule</h2>
+
+<p>Clojure's categorical imperative: act in the <a href="http://steve-yegge.blogspot.com/2006/03/execution-in-kingdom-of-nouns.html">Kingdom of
+Verbs</a>.
+Functions do things, and their names should describe the things they
+do. This is usually an easy rule to follow, but functions that build
+or return data structures can be tricky. <code>Make-user-map</code> is better
+than <code>user-data</code>. <code>Render-footer</code> is better than <code>footer</code> alone.</p>
+
+<h2>But nouns are useful</h2>
+
+<p>Verbs are great, but they're even greater when they have objects. A name like
+<code>remove-temporary-files</code> is much clearer than <code>clean-up</code>.</p>
+
+<p>Nouns are also useful inside functions. I find my tolerance for
+repetition far lower in Clojure than in other languages: if I use an expression more
+than once, I'll almost always put it in a <code>let</code> binding and give it a
+name. Inside functions that compose multiple transformations on some
+data structure, extracting intermediate steps into values in a <code>let</code>
+binding can be very helpful.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">make-french-wombat-pairs</span> <span class="p">[</span><span class="nv">crazy-nested-map</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">interesting-pairs</span>  <span class="p">(</span><span class="nf">extract-interesting-pairs</span> <span class="nv">crazy-nested-map</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span>    <span class="nv">pairs-with-wombats</span> <span class="p">(</span><span class="nb">map </span><span class="nv">add-wombat</span> <span class="nv">interesting-pairs</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">in-french</span>          <span class="p">(</span><span class="nb">map </span><span class="nv">to-french</span> <span class="nv">pairs-with-wombats</span><span class="p">)]</span>
+</span><span class='line'><span class="nv">in-french</span><span class="p">))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Good nouns are also helpful when destructuring
+values, which is awesomely useful but sometimes hard to read. Prefer
+putting them in <code>let</code> bindings to cramming them in the argument list,
+except for very simple cases.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">print-summary</span> <span class="p">[</span><span class="nv">statistics</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[{</span><span class="nv">raw-data</span> <span class="ss">:data</span> <span class="p">{</span><span class="ss">:keys</span> <span class="p">[</span><span class="nv">mean</span> <span class="nv">variance</span> <span class="nv">r-squared</span><span class="p">]}</span> <span class="ss">:summary</span><span class="p">}]</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span><span class="p">(</span><span class="nb">println </span><span class="s">&quot;Mean: &quot;</span> <span class="nv">mean</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nb">println </span><span class="s">&quot;Variance: &quot;</span> <span class="nv">variance</span>
+</span><span class='line'><span class="p">(</span><span class="nb">println </span><span class="s">&quot;R-Squared: &quot;</span> <span class="nv">r-squared</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nb">println </span><span class="s">&quot;Sample size: &quot;</span> <span class="p">(</span><span class="nb">count </span><span class="nv">raw-data</span><span class="p">)))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="kd">defn </span><span class="nv">arctic-circle?</span> <span class="p">[[</span><span class="nv">latitude</span> <span class="nv">_</span><span class="p">]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">&gt; </span><span class="nv">latitude</span> <span class="mi">65</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h2>And okay fine, also adjectives</h2>
+
+<p>The one first-class exception to verbs everywhere is adjectives for
+predicates (functions that return <code>true</code> or <code>false</code>, like <code>odd?</code> and
+<code>seq?</code>). These should always end in question marks and always return
+either <code>true</code> or <code>false</code>.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">all-wombats?</span> <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">every? </span><span class="p">(</span><span class="nf">wombat?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h2>Use the best name...</h2>
+
+<p>Clojure has a large set of core functions, and sometimes the clearest
+name for a function will collide with one of them. Use it anyways!
+This is why namespaces are useful. Similarly, don't worry if the best
+name is a long one--it's easy to rebind it to a new name when required.</p>
+
+<h2>...But don't mislead</h2>
+
+<p>That said, make sure it really is the best name. Long names often
+indicate functions that can be split: <code>invert-and-multiply</code> and
+<code>find-and-replace</code> should probably be split in two. (Hint: <code>and</code> is a
+great clue). If a function's name collides with a core function or
+incorporates a common name, it should act the same way: if <code>table-map</code>
+doesn't apply a function to every cell in a table, it has the wrong name.</p>
+
+<h2>Use idiomatic vocabulary</h2>
+
+<p><a href="http://clojuredocs.org/">Clojuredocs examples</a> and Clojure's own
+<a href="http://dev.clojure.org/display/community/Library+Coding+Standards">library coding
+standards</a>
+are good resources for picking up common Clojure idioms and
+vocabulary. Here are a few naming conventions.</p>
+
+<p>In macros, <code>expr</code> is usually used for a single expression and <code>body</code>
+for a longer form.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defmacro </span><span class="nb">when </span><span class="p">[</span><span class="nv">expr</span> <span class="o">&amp;</span><span class="nv">amp</span><span class="c1">; body]</span>
+</span><span class='line'>  <span class="o">`</span><span class="p">(</span><span class="k">if </span><span class="o">~</span><span class="nv">expr</span> <span class="p">(</span><span class="k">do </span><span class="o">~@</span><span class="nv">body</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>"Collection" is often shortened to <code>coll</code>:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">remove-wombats</span> <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">filter </span><span class="nv">wombat?</span> <span class="nv">coll</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Bundling up extra arguments is almost always done with <code>&amp; more</code>.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">shout-all-args</span> <span class="p">[</span><span class="o">&amp;</span><span class="nv">amp</span><span class="c1">; more]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">doseq </span><span class="p">[</span><span class="nv">arg</span> <span class="nv">more</span><span class="p">]</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span><span class="p">(</span><span class="nb">println </span><span class="p">(</span><span class="nb">str </span><span class="p">(</span><span class="nf">upcase</span> <span class="nv">arg</span><span class="p">)</span> <span class="s">&quot;!&quot;</span><span class="p">))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Like in middle school math, <code>n</code> is usually an integer, <code>x</code> and <code>y</code> are
+default numerical inputs, and <code>f</code>, <code>g</code>, and <code>h</code> are often functions.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">local-max?</span> <span class="p">[</span><span class="nv">f</span> <span class="p">[</span><span class="nv">x</span> <span class="nv">y</span><span class="p">]]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">f</span><span class="o">&#39;</span>  <span class="p">(</span><span class="nf">derivative</span> <span class="nv">f</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;pre&gt;&lt;code&gt;</span>    <span class="nv">f</span><span class="o">&#39;&#39;</span> <span class="p">(</span><span class="nf">derivative</span> <span class="p">(</span><span class="nf">derivative</span> <span class="nv">f</span><span class="p">))]</span>
+</span><span class='line'><span class="p">(</span><span class="nb">and </span><span class="p">(</span><span class="o">&amp;</span><span class="nv">lt</span><span class="c1">; 0 (f&#39;&#39; x)) (= 0 (f&#39; x))))))</span>
+</span><span class='line'><span class="nv">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Dynamic vars wear <code>*earmuffs*</code>. Try not to use them.</p>
+
+<p>Simple format transformations often use an arrow, e.g.: <code>cljs-&gt;clj</code>,
+<code>html-&gt;hiccup</code>, <code>hex-&gt;bytes</code>.</p>
+
+<h2>Make side effects explicit</h2>
+
+<p>Clojure does a great job separating <a href="http://www.infoq.com/presentations/Value-Identity-State-Rich-Hickey">value, state, and
+  identity</a>.
+  Clojure programmers should, too. If a function changes state or has
+  side effects, its name should reflect it. Functions that mutate
+  state like <code>swap!</code> and <code>reset!</code> end with a bang. Side effects hiding
+  elsewhere should also be explicit: if <code>format-page</code> saves a file to
+  disk, it should be <code>format-and-save-page</code> (or even better, two
+  separate functions).</p>
+]]></content>
+  </entry>
+  
+</feed>
