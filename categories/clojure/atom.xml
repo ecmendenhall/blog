@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Clojure | Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/categories/clojure/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-09-03T11:57:33-05:00</updated>
+  <updated>2013-09-04T11:06:06-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -137,7 +137,7 @@ doesn't apply a function to every cell in a table, it has the wrong name.</p>
 
 <h2>Use idiomatic vocabulary</h2>
 
-<p><a href="http://clojuredocs.org/">Clojuredocs examples</a> and Clojure's own
+<p>The <a href="https://github.com/bbatsov/clojure-style-guide">Clojure style guide</a>, <a href="http://clojuredocs.org/">Clojuredocs examples</a> and Clojure's own
 <a href="http://dev.clojure.org/display/community/Library+Coding+Standards">library coding
 standards</a>
 are good resources for picking up common Clojure idioms and
@@ -214,6 +214,8 @@ default numerical inputs, and <code>f</code>, <code>g</code>, and <code>h</code>
   elsewhere should also be explicit: if <code>format-page</code> saves a file to
   disk, it should be <code>format-and-save-page</code> (or even better, two
   separate functions).</p>
+
+<p><strong>UPDATE</strong>: See also the <a href="https://github.com/bbatsov/clojure-style-guide">Clojure Style Guide</a>, a concise, comprehensive community-driven document with many more guidelines on clean Clojure.</p>
 ]]></content>
   </entry>
   
