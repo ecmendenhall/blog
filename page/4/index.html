@@ -7,9 +7,8 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="May 12th, 2013 Clojure, Incanter Estimating Pi With Incanter and Monte Carlo Methods Of all the things John von
-Neumann
-invented (including the &hellip;">
+	<meta name="description" content="May 12th, 2013 Mock Objects, TDD A Mock Object Antipattern For the most part, test-driven development has been a breeze so far.
+In addition to &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -88,6 +87,93 @@ invented (including the &hellip;">
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-12T23:05:00-05:00" data-updated="true" itemprop="datePublished">May 12<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/mock-objects/'>Mock Objects</a>, <a class='category' href='/blog/categories/tdd/'>TDD</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/05/12/a-mock-object-antipattern/" itemprop="url">A Mock Object Antipattern</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>For the most part, test-driven development has been a breeze so far.
+In addition to
+<a href="http://ecmendenhall.github.io/blog/blog/2013/05/10/enforcing-bottom-up-design/">enforcing</a>
+good habits, watching red tests turn green provides an extremely satisfying
+dopamine kick every few minutes, all day. Testing simple objects and actions in my Tic Tac Toe game—things
+like the board, player behavior, and the Minimax algorithm—was
+straightforward. But testing the view and controller classes that glue
+them together required a little more thought.</p>
+
+<p>Writing tests required interrupting the game loop to check on the behavior of the view and
+controller objects. To start, I added optional flag arguments to many
+methods that would break the game loop so I could make assertions
+about game state. I quickly came to realize that this was a bad
+solution, and I cringed the next day when a chapter of <em>Clean Code</em>
+described boolean flags as one of the most rancid code smells around.</p>
+
+<p>I came across the concept of <a href="http://martinfowler.com/articles/mocksArentStubs.html">test
+ doubles</a>
+and mock objects, and got the idea right away: create fake objects
+ with the same methods as real ones, override their behavior, and use
+ them as substitutes for their more complicated counterparts in unit tests.</p>
+
+<p>Or at least, I  <em>thought</em> I got the idea. With my tests passing and my game working, I felt pretty good about my
+project. But wiring up a code coverage tool showed that my view and
+controller classes were only half covered by my tests. What went
+wrong? As it turned out, I was testing my mocks! Here&#8217;s the pattern I was following:</p>
+
+<ul>
+<li>Create a subclass of the object you want to test.</li>
+<li>Override or stub out methods to return predetermined output.</li>
+<li>Write assertions against the behavior of the mock objects.</li>
+</ul>
+
+
+<p>This meant, of course, that I was never actually testing the real
+objects, but only the fake ones, as revealed by the code coverage data. Worse, all the tests
+that I thought showed my code was working were essentialy tautologies.
+This probably appears obvious to experienced TDD practitioners, but it
+was surprisingly easy to fall into this antipattern. For the record,
+here&#8217;s how you should really use a mock object:</p>
+
+<ul>
+<li>Create mocks of the objects that <em>interact with</em> the one you want to
+test.</li>
+<li>Override or stub out methods to return predetermined output.</li>
+<li>Write assertions against the behavior of the <em>real</em> object
+interacting with the test doubles.</li>
+</ul>
+
+
+<p>In retrospect, this makes perfect sense. But I&#8217;ll be going over all my
+tests with a careful eye tomorrow. Sometimes the green light isn&#8217;t
+what it seems.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">

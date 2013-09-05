@@ -7,7 +7,8 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Jun 24th, 2013 Breadth-first numbering, Functional programming, Lisp, Racket, Scheme Breadth-first Numbering: A Solution Now that we&#8217;ve built &hellip;">
+	<meta name="description" content="Jul 14th, 2013 Clojure, Python Clojure Namespaces for Python Programmers My mentor Colin wrote one of the most
+popular posts on the 8th Light blog, &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -86,6 +87,390 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-14T22:28:00-05:00" data-updated="true" itemprop="datePublished">Jul 14<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/clojure/'>Clojure</a>, <a class='category' href='/blog/categories/python/'>Python</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/07/14/clojure-namespaces-for-python-programmers/" itemprop="url">Clojure Namespaces for Python Programmers</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>My mentor <a href="https://twitter.com/trptcolin">Colin</a> wrote one of the most
+popular posts on the <a href="http://blog.8thlight.com/">8th Light blog</a>, on
+the somewhat complex process of <a href="http://blog.8thlight.com/colin-jones/2010/12/05/clojure-libs-and-namespaces-require-use-import-and-ns.html">requiring Clojure
+libs</a>.
+It&#8217;s not a stretch to give it some of the credit for my interest in
+Clojure: I came close to giving up in frustration the first time I
+tried to import a library in a Clojure REPL. It was <a href="http://xkcd.com/353/">so easy in
+Python</a>, and there I was, suddenly dealing with
+macros, keywords, quotes, and&#8211;heaven forfend!&#8211;all those parentheses.</p>
+
+<p>For all the details on namespaces, <code>require</code>, and the <code>ns</code> macro, see
+<a href="http://blog.8thlight.com/colin-jones/2010/12/05/clojure-libs-and-namespaces-require-use-import-and-ns.html">Colin&#8217;s
+post</a>,
+which is still the authoritative source. But if you&#8217;re a Python
+programmer looking for a quick reference, here&#8217;s the Python-Clojure
+Rosetta stone I went looking for the first time I deadpanned into my
+Clojure REPL.</p>
+
+<h2>Import a library</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">import</span> <span class="nn">library</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">library</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="nv">library</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">library/dostuff</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">library</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">library</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;library</span><span class="p">)</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">library/dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff!&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Import everything without qualification</h2>
+
+<p>(Note: This practice is usually as ill-advised in Clojure as it is in Python!)</p>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">dostuff</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">dostuff</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="o">&#39;</span><span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="ss">:all</span><span class="p">])</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff!&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Import specific functions</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span><span class="p">,</span> <span class="n">returnthings</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="n">returnthings</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span> <span class="nv">returnthings</span><span class="p">]]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nf">returnthings</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span><span class="p">,</span> <span class="n">returnthings</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="n">returnthings</span><span class="p">()</span>
+</span><span class='line'><span class="n">Out</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="p">{</span> <span class="s">&quot;foo&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&quot;bar&quot;</span><span class="p">:</span> <span class="mi">2</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="o">&#39;</span><span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span> <span class="nv">returnthings</span><span class="p">]])</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">returnthings</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span> <span class="ss">:foo</span> <span class="mi">1</span> <span class="ss">:bar</span> <span class="mi">2</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Import and rename a library</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">import</span> <span class="nn">library</span> <span class="kn">as</span> <span class="nn">lib</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">lib</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">library</span> <span class="ss">:as</span> <span class="nv">lib</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">lib/dostuff</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">library</span> <span class="kn">as</span> <span class="nn">lib</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span>  <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">lib</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="o">&#39;</span><span class="p">[</span><span class="nv">library</span> <span class="ss">:as</span> <span class="nv">lib</span><span class="p">])</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">lib/dostuff</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Import and rename a function</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span> <span class="k">as</span> <span class="n">ds</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">ds</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span><span class="p">]</span> <span class="ss">:rename</span> <span class="p">{</span><span class="nv">dostuff</span> <span class="nv">ds</span><span class="p">}]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">ds</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>REPL </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span> <span class="k">as</span> <span class="n">ds</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">ds</span><span class="p">()</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">require</span> <span class="o">&#39;</span><span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span><span class="p">]</span> <span class="ss">:rename</span> <span class="p">{</span><span class="nv">dostuff</span> <span class="nv">ds</span><span class="p">}])</span>
+</span><span class='line'><span class="nv">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">user=&gt;</span> <span class="p">(</span><span class="nf">ds</span><span class="p">)</span>
+</span><span class='line'><span class="s">&quot;did stuff&quot;</span>
+</span><span class='line'><span class="nv">nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>All together, now!</h2>
+
+<figure class='code'><figcaption><span>File </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">import</span> <span class="nn">onelibrary</span><span class="o">,</span> <span class="nn">anotherlibrary</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">onemorelibrary</span> <span class="kn">as</span> <span class="nn">oml</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">returnthings</span>
+</span><span class='line'><span class="kn">from</span> <span class="nn">library</span> <span class="kn">import</span> <span class="n">dostuff</span> <span class="k">as</span> <span class="n">ds</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">yourproject.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">onelibrary</span>
+</span><span class='line'>             <span class="nv">anotherlibrary</span>
+</span><span class='line'>             <span class="p">[</span><span class="nv">onemorelibrary</span> <span class="ss">:as</span> <span class="nv">oml</span><span class="p">]</span>
+</span><span class='line'>             <span class="p">[</span><span class="nv">library</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">dostuff</span> <span class="nv">returnthings</span><span class="p">]</span>
+</span><span class='line'>                      <span class="ss">:rename</span> <span class="p">{</span><span class="nv">dostuff</span> <span class="nv">ds</span><span class="p">}]]))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1681,45 +2066,6 @@ this bit of language, which comes with some of the best and dearest
 <p>Of course, as soon as I had a few lines of code down, the ideas
   started to flow (I started by parsing headers, by the way), and
   within an hour I had a feature-complete <a href="https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol">HTCPCP server</a> (HTTP is still a work in progress). Another reminder that programming is craft, and writing code really is a creative act.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-10T00:20:00-05:00" data-updated="true" itemprop="datePublished">Jun 10<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/python/'>Python</a>, <a class='category' href='/blog/categories/simulation/'>simulation</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/10/the-n-taps-problem/" itemprop="url">The N-Taps Problem</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>This week, I was introduced to Hopleaf, a craft beer bar in Chicago with 60 rotating taps. One of my favorite bars in Tucson, 1702, was similar. But every time I visited, I would face a dilemma: I usually only visit twice a month, and drink 3±1 beers each time. As a reformed economist, I insist on optimizing every decision I make, and with each beer I order, I face a trade-off between tasting a new beer of uncertain quality or choosing my favorite so far. If I want to maximize expected utility for each month&#8217;s visits, what is my best strategy? How many beers should I spend exploring for better ones, and how many should I spend enjoying my favorite?</p>
-
-<p>Richard Feynman posed <a href="http://www.feynmanlectures.info/exercises/Feynmans_restaurant_problem.html">this problem</a> in the context of finding the best dish at a new restaurant. (But beers are way more interesting). The <a href="http://www.feynmanlectures.info/solutions/restaurant_problem_sol_1.html">solution</a> makes sense (and come on, it&#8217;s Richard Feynman), but I wanted to check his work with a simulation.</p>
-
-<p>You can find the results (and the rest of this post) in <a href="http://nbviewer.ipython.org/5229689">this iPython notebook</a>. There&#8217;s much more there, including an interesting result!</p>
 
 		
 		

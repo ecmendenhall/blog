@@ -4,7 +4,7 @@
   <title><![CDATA[Connor Mendenhall]]></title>
   <link href="http://ecmendenhall.github.io/blog/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
-  <updated>2013-09-05T02:46:26-05:00</updated>
+  <updated>2013-09-05T16:13:05-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
   <author>
     <name><![CDATA[Connor Mendenhall]]></name>
@@ -12,6 +12,676 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Clean Clojure: Small functions]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/09/05/clean-clojure-functions/"/>
+    <updated>2013-09-05T10:22:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/09/05/clean-clojure-functions</id>
+    <content type="html"><![CDATA[<p><em>This is part 2 in <a href="http://ecmendenhall.github.io/blog/categories/clean-clojure/">a series</a> on clean Clojure. Previously: <a href="http://ecmendenhall.github.io/blog/blog/2013/09/02/clean-clojure-meaningful-names/">meaningful names</a>.</em></p>
+
+<p>In <em>Clean Code</em>, Uncle Bob proposes two rules for good functions: &#8220;The first rule of
+functions is that they should be small. The second rule of functions
+is that they should be <em>smaller than that</em>.&#8221; Useful rules, but Clojure
+requires one more: <em>they&#8217;re still not small enough</em>.</p>
+
+<p>Functional
+languages and immutable data make reasoning easy by making functions
+simpler. Functions take input, transform it, and return new output. Data passes
+through functions, flowing rather than mutating. Complicated functions
+<a href="http://www.infoq.com/presentations/Simple-Made-Easy">make simple
+hard</a>, and they
+can be dangerously easy to write.</p>
+
+<p>Hyperbole aside, there really are two simple rules for functions: they
+should be small, and do one thing. In his <a href="http://vimeo.com/13702091">presentation on
+functions</a>, Uncle Bob describes a simple
+algorithm for cleaning up crufty functions:</p>
+
+<ol>
+<li>Pick a function.</li>
+<li>Extract functions until it does one thing.</li>
+<li>Recur on extracted functions.</li>
+</ol>
+
+
+<p>Instead of a contrived wombat example, I&#8217;ll use one of my own
+disgusting old 4Clojure solutions as an example of atrocious code. (But cut me some slack! I was
+young and naive.)</p>
+
+<p>Here&#8217;s the problem:</p>
+
+<blockquote><p>&#8220;Write a function which takes a collection of integers as an argument.
+ Return the count of how many elements are smaller than the sum of
+ their squared component digits. For example: 10 is larger than 1
+ squared plus 0 squared; whereas 15 is smaller than 1 squared plus 5
+ squared.&#8221;</p></blockquote>
+
+<p>And here&#8217;s my answer (hide the children):</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">elements</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">lt-sqd-components</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>          <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">digits</span>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>                <span class="nv">squares</span> <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">)</span>
+</span><span class='line'>                <span class="nv">sqsum</span>   <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">)]</span>
+</span><span class='line'>            <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="nv">sqsum</span><span class="p">)</span>
+</span><span class='line'>              <span class="nv">true</span>
+</span><span class='line'>              <span class="nv">false</span><span class="p">)))]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter true? </span><span class="p">(</span><span class="nb">map </span><span class="nv">lt-sqd-components</span> <span class="nv">elements</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Like nested blocks in other languages, code that sprawls rightward
+indicates a problem&mdash;and it can happen fast in Clojure.
+To start, we&#8217;ll extract <code>lt-sqd-components</code> from the <code>let</code> binding.
+(This is a common, awful 4Clojure hack for defining a named function
+inside an anonymous one, though the discerning 4Clojurist uses <a href="http://clojuredocs.org/clojure_core/clojure.core/letfn"><code>letfn</code></a>).</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">lt-sqd-components</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>       <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">digits</span>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>             <span class="nv">squares</span> <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">)</span>
+</span><span class='line'>             <span class="nv">sqsum</span>   <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">)]</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="nv">sqsum</span><span class="p">)</span>
+</span><span class='line'>              <span class="nv">true</span>
+</span><span class='line'>              <span class="nv">false</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">elements</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter true? </span><span class="p">(</span><span class="nb">map </span><span class="nv">lt-sqd-components</span> <span class="nv">elements</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The original function is almost readable, but we can do better. It
+looks like I didn&#8217;t understand <code>filter</code> when I wrote this: the extra
+<code>map</code> is redundant since <code>lt-sqd-components</code> is already a predicate function that
+returns <code>true</code> or <code>false</code>.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">lt-sqd-components</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>       <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">digits</span>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>             <span class="nv">squares</span> <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">)</span>
+</span><span class='line'>             <span class="nv">sqsum</span>   <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">)]</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="nv">sqsum</span><span class="p">)</span>
+</span><span class='line'>              <span class="nv">true</span>
+</span><span class='line'>              <span class="nv">false</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">elements</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components</span> <span class="nv">elements</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This does one thing, so let&#8217;s clean it up and move on. It needs a
+name, and the function we&#8217;re filtering against needs a question mark.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">lt-sqd-components?</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>       <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">digits</span>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>             <span class="nv">squares</span> <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">)</span>
+</span><span class='line'>             <span class="nv">sqsum</span>   <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">)]</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="nv">sqsum</span><span class="p">)</span>
+</span><span class='line'>              <span class="nv">true</span>
+</span><span class='line'>              <span class="nv">false</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And now the recursive step. Let&#8217;s look at the terribly-named
+<code>lt-sqd-components</code>. Each line in its <code>let</code> binding does something
+ different. One splits a number into a sequence of its digits:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">lt-sqd-components</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>       <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">digits</span>  <span class="p">(</span><span class="nf">split-digits</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>             <span class="nv">squares</span> <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">)</span>
+</span><span class='line'>             <span class="nv">sqsum</span>   <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">)]</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="nv">sqsum</span><span class="p">)</span>
+</span><span class='line'>              <span class="nv">true</span>
+</span><span class='line'>              <span class="nv">false</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>One squares every element in a sequence:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square-all</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">lt-sqd-components?</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>       <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">digits</span>  <span class="p">(</span><span class="nf">split-digits</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>             <span class="nv">squares</span> <span class="p">(</span><span class="nf">square-all</span> <span class="nv">digits</span><span class="p">)</span>
+</span><span class='line'>             <span class="nv">sqsum</span>   <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">)]</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="nv">sqsum</span><span class="p">)</span>
+</span><span class='line'>              <span class="nv">true</span>
+</span><span class='line'>              <span class="nv">false</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And one takes the sum of the collection.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square-all</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squares</span> <span class="p">[</span><span class="nv">squares</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">lt-sqd-components?</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>       <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">digits</span>  <span class="p">(</span><span class="nf">split-digits</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>             <span class="nv">squares</span> <span class="p">(</span><span class="nf">square-all</span> <span class="nv">digits</span><span class="p">)</span>
+</span><span class='line'>             <span class="nv">sqsum</span>   <span class="p">(</span><span class="nf">sum-of-squares</span> <span class="nv">squares</span><span class="p">)]</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="nv">sqsum</span><span class="p">)</span>
+</span><span class='line'>              <span class="nv">true</span>
+</span><span class='line'>              <span class="nv">false</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>One more function to extract: the <code>let</code> binding should be its own
+function. One might argue that this function does one thing&mdash;all it
+does is check whether a number is less than the sum of its squared components!
+But it&#8217;s operating on several different levels of abstraction: digits,
+a sequence of digits, and their sum. A helpful guideline is limiting
+functions to one level of abstraction. In this case, the function
+should only know about the sum.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square-all</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squares</span> <span class="p">[</span><span class="nv">squares</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squared-components</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">digits</span>  <span class="p">(</span><span class="nf">split-digits</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">squares</span> <span class="p">(</span><span class="nf">square-all</span> <span class="nv">digits</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">sqsum</span>   <span class="p">(</span><span class="nf">sum-of-squares</span> <span class="nv">squares</span><span class="p">)]</span>
+</span><span class='line'>    <span class="nv">sqsum</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">lt-sqd-components?</span>
+</span><span class='line'>     <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>         <span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="p">(</span><span class="nf">sum-of-squared-components</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Despite its dumb name, <code>lt-sqd-components?</code> is doing one thing. Let&#8217;s
+clean it up. I prefer &#8220;digits&#8221; to &#8220;components&#8221;, and it should use <code>defn</code>.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square-all</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squares</span> <span class="p">[</span><span class="nv">squares</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squared-digits</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">digits</span>  <span class="p">(</span><span class="nf">split-digits</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">squares</span> <span class="p">(</span><span class="nf">square-all</span> <span class="nv">digits</span><span class="p">)</span>
+</span><span class='line'>        <span class="nv">sqsum</span>   <span class="p">(</span><span class="nf">sum-of-squares</span> <span class="nv">squares</span><span class="p">)]</span>
+</span><span class='line'>    <span class="nv">sqsum</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">less-than-sum-of-digits-squared?</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="p">(</span><span class="nf">sum-of-squared-digits</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">less-than-sum-of-digits-squared?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On to <code>sum-of-squared-digits</code>. We can transform the <code>let</code> binding into a function using the
+<a href="http://clojuredocs.org/clojure_core/clojure.core/-%3E">threading macro</a> (as suggested <a href="http://ecmendenhall.github.io/blog/blog/2013/09/02/clean-clojure-meaningful-names/#comment-1029797833">in the comments</a> on my last post).</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square-all</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squares</span> <span class="p">[</span><span class="nv">squares</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">reduce + </span><span class="nv">squares</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squared-components</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">-&gt; </span><span class="nv">n</span>
+</span><span class='line'>      <span class="nv">split-digits</span>
+</span><span class='line'>      <span class="nv">square-all</span>
+</span><span class='line'>      <span class="nv">sum-of-squares</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">less-than-sum-of-digits-squared?</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="p">(</span><span class="nf">sum-of-squared-digits</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can do better. I don&#8217;t like the intermediate <code>square-all</code> step,
+which should be hidden in <code>sum-of-squares</code>:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square-all</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">* </span><span class="nv">%</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">digits</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squares</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">reduce + </span><span class="p">(</span><span class="nf">square-all</span> <span class="nv">digits</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squared-components</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">-&gt; </span><span class="nv">n</span>
+</span><span class='line'>      <span class="nv">split-digits</span>
+</span><span class='line'>      <span class="nv">sum-of-squares</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">less-than-sum-of-digits-squared?</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="p">(</span><span class="nf">sum-of-squared-digits</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Extract the function literal in <code>square-all</code>. I&#8217;ve got a great name
+for it:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">%</span><span class="p">)</span> <span class="mi">48</span><span class="p">)</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">n</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="p">(</span><span class="nb">* </span><span class="nv">n</span> <span class="nv">n</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square-all</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="nv">square</span> <span class="nv">digits</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squares</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">reduce + </span><span class="p">(</span><span class="nf">square-all</span> <span class="nv">digits</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squared-components</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">-&gt; </span><span class="nv">n</span>
+</span><span class='line'>      <span class="nv">split-digits</span>
+</span><span class='line'>      <span class="nv">sum-of-squares</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">less-than-sum-of-digits-squared?</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="p">(</span><span class="nf">sum-of-squared-digits</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And there&#8217;s only one function left: splitting a number into a sequence
+of digits. Let&#8217;s extract and name the function literal:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">char-&gt;num</span> <span class="p">[</span><span class="nv">character</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">- </span><span class="p">(</span><span class="nb">int </span><span class="nv">character</span><span class="p">)</span> <span class="mi">48</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="nv">char-&gt;num</span> <span class="p">(</span><span class="nb">seq </span><span class="p">(</span><span class="nb">str </span><span class="nv">number</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="p">(</span><span class="nb">* </span><span class="nv">n</span> <span class="nv">n</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square-all</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="nv">square</span> <span class="nv">digits</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squares</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">reduce + </span><span class="p">(</span><span class="nf">square-all</span> <span class="nv">digits</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squared-components</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">-&gt; </span><span class="nv">n</span>
+</span><span class='line'>      <span class="nv">split-digits</span>
+</span><span class='line'>      <span class="nv">sum-of-squares</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">less-than-sum-of-digits-squared?</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="p">(</span><span class="nf">sum-of-squared-digits</span> <span class="nv">n</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">lt-sqd-components?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And finally, clean it up by using <code>Integer/parseInt</code> instead of hacky
+subtraction:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='clj'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">char-&gt;num</span> <span class="p">[</span><span class="nv">character</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">Integer/parseInt</span> <span class="p">(</span><span class="nb">str </span><span class="nv">character</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">split-digits</span> <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="nv">char-&gt;num</span> <span class="p">(</span><span class="nb">str </span><span class="nv">number</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="p">(</span><span class="nb">* </span><span class="nv">n</span> <span class="nv">n</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">square-all</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">map </span><span class="nv">square</span> <span class="nv">digits</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squares</span> <span class="p">[</span><span class="nv">digits</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">reduce + </span><span class="p">(</span><span class="nf">square-all</span> <span class="nv">digits</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">sum-of-squared-digits</span> <span class="p">[</span><span class="nv">n</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">-&gt; </span><span class="nv">n</span>
+</span><span class='line'>      <span class="nv">split-digits</span>
+</span><span class='line'>      <span class="nv">sum-of-squares</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">less-than-sum-of-digits-squared?</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">number</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">&lt; </span><span class="nv">number</span>
+</span><span class='line'>     <span class="p">(</span><span class="nf">sum-of-squared-digits</span> <span class="nv">number</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">count-less-than-sum-of-squares</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">coll</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">filter </span><span class="nv">less-than-sum-of-digits-squared?</span> <span class="nv">coll</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And there it is&mdash;clean, readable functions at all levels of
+abstraction, minimal nesting, and nothing longer than three lines.
+Starting from the top, low-level functions build into bigger
+abstractions through combination and composition. Each step is easy to
+read and comprehend.</p>
+
+<p>As Uncle Bob puts it in <em>Clean Code</em>:</p>
+
+<blockquote><p>Master programmers think of systems as stories to be told rather than programs to be written. They use the facilities of their chosen programming language to construct a much richer and more expressive language that can be used to tell that story. Part of that domain-specific language is the hierarchy of functions that describe all the actions that take place within that system. In an artful act of recursion, those actions are written to use the very domain-specific language they define to tell their own small part of the story.</p></blockquote>
+
+<p>Extract. Simplify. Recur. Take the time to consider each line, and clean code comes naturally.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Web permissions are broken]]></title>
@@ -3155,19 +3825,6 @@ this bit of language, which comes with some of the best and dearest
 <p>Of course, as soon as I had a few lines of code down, the ideas
   started to flow (I started by parsing headers, by the way), and
   within an hour I had a feature-complete <a href="https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol">HTCPCP server</a> (HTTP is still a work in progress). Another reminder that programming is craft, and writing code really is a creative act.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[The N-Taps problem]]></title>
-    <link href="http://ecmendenhall.github.io/blog/blog/2013/06/10/the-n-taps-problem/"/>
-    <updated>2013-06-10T00:20:00-05:00</updated>
-    <id>http://ecmendenhall.github.io/blog/blog/2013/06/10/the-n-taps-problem</id>
-    <content type="html"><![CDATA[<p>This week, I was introduced to Hopleaf, a craft beer bar in Chicago with 60 rotating taps. One of my favorite bars in Tucson, 1702, was similar. But every time I visited, I would face a dilemma: I usually only visit twice a month, and drink 3±1 beers each time. As a reformed economist, I insist on optimizing every decision I make, and with each beer I order, I face a trade-off between tasting a new beer of uncertain quality or choosing my favorite so far. If I want to maximize expected utility for each month&#8217;s visits, what is my best strategy? How many beers should I spend exploring for better ones, and how many should I spend enjoying my favorite?</p>
-
-<p>Richard Feynman posed <a href="http://www.feynmanlectures.info/exercises/Feynmans_restaurant_problem.html">this problem</a> in the context of finding the best dish at a new restaurant. (But beers are way more interesting). The <a href="http://www.feynmanlectures.info/solutions/restaurant_problem_sol_1.html">solution</a> makes sense (and come on, it&#8217;s Richard Feynman), but I wanted to check his work with a simulation.</p>
-
-<p>You can find the results (and the rest of this post) in <a href="http://nbviewer.ipython.org/5229689">this iPython notebook</a>. There&#8217;s much more there, including an interesting result!</p>
 ]]></content>
   </entry>
   

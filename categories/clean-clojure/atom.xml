@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: clean code | Connor Mendenhall]]></title>
-  <link href="http://ecmendenhall.github.io/blog/categories/clean-code/atom.xml" rel="self"/>
+  <title><![CDATA[Category: clean Clojure | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/clean-clojure/atom.xml" rel="self"/>
   <link href="http://ecmendenhall.github.io/blog/"/>
   <updated>2013-09-05T16:13:05-05:00</updated>
   <id>http://ecmendenhall.github.io/blog/</id>
