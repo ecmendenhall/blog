@@ -7,7 +7,7 @@
 	<meta name="author" content="Connor Mendenhall">
 
 	
-	<meta name="description" content="Jun 24th, 2013 Breadth-first numbering, Functional programming, Lisp, Racket, Scheme Breadth-first Numbering: A Lazy Functional Queue On the way to &hellip;">
+	<meta name="description" content="Jun 24th, 2013 Breadth-first numbering, Functional programming, Lisp, Racket, Scheme Breadth-first Numbering: A Solution Now that we&#8217;ve built &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -86,6 +86,309 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-24T12:00:00-05:00" data-updated="true" itemprop="datePublished">Jun 24<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/breadth-first-numbering/'>Breadth-first numbering</a>, <a class='category' href='/blog/categories/functional-programming/'>Functional programming</a>, <a class='category' href='/blog/categories/lisp/'>Lisp</a>, <a class='category' href='/blog/categories/racket/'>Racket</a>, <a class='category' href='/blog/categories/scheme/'>Scheme</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/24/breadth-first-numbering-a-solution/" itemprop="url">Breadth-first Numbering: A Solution</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Now that we&#8217;ve built an <a href="blog/2013/06/24/breadth-first-numbering-a-lazy-functional-queue/">efficient functional
+queue</a>,
+we can finally put it to work in a breadth-first numbering solution.</p>
+
+<p>First, let&#8217;s define a few trees up front for testing. The first is the
+example given in the introduction of <a href="http://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf">the
+paper</a>.
+The other two are a little trickier, and the twelve-node tree is not binary.</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">example-tree</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                     <span class="s">&quot;leaf&quot;</span><span class="p">))</span>
+</span><span class='line'>                           <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                            <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">five-nodes</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                   <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                              <span class="p">(</span><span class="s">&quot;E&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                   <span class="s">&quot;leaf&quot;</span><span class="p">))</span>
+</span><span class='line'>                         <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                              <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">twelve-nodes</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                           <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="p">(</span><span class="s">&quot;F&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                          <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                     <span class="p">(</span><span class="s">&quot;G&quot;</span> <span class="p">(</span><span class="s">&quot;I&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                               <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                          <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                     <span class="p">(</span><span class="s">&quot;H&quot;</span> <span class="p">(</span><span class="s">&quot;J&quot;</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                               <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                               <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                          <span class="p">(</span><span class="s">&quot;K&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                          <span class="p">(</span><span class="s">&quot;L&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'>                                <span class="p">(</span><span class="s">&quot;E&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To calculate the visit order, we can perform a simple <a href="https://en.wikipedia.org/wiki/Breadth-first_search">breadth-first
+traversal</a> of the
+tree. Now that we have a queue, the solution is pretty close to the pseudocode: Start with the
+root node in the queue, and assign it a number. Then recur with three
+new parameters: A queue with this node&#8217;s children inserted, a list
+with this node&#8217;s number consed on, and an incremented node number.
+When the queue is empty, we&#8217;re done:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">visit-order</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">tree</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">define </span><span class="nv">bfs-iter</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">queue</span> <span class="nv">visited</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">))</span> <span class="nv">visited</span>
+</span><span class='line'>            <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">node</span>  <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">)))</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nf">new-q</span> <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nf">rem</span> <span class="nv">queue</span><span class="p">)))))</span>
+</span><span class='line'>              <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">equal? </span><span class="s">&quot;leaf&quot;</span> <span class="nv">node</span><span class="p">)</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nf">bfs-iter</span> <span class="nv">new-q</span> <span class="nv">visited</span> <span class="nv">n</span><span class="p">)</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nf">bfs-iter</span> <span class="p">(</span><span class="nf">ins-items</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">node</span><span class="p">)</span> <span class="nv">new-q</span><span class="p">)</span>
+</span><span class='line'>                            <span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">cons </span><span class="p">(</span><span class="nb">car </span><span class="nv">node</span><span class="p">)</span> <span class="nv">n</span><span class="p">)</span> <span class="nv">visited</span><span class="p">)</span>
+</span><span class='line'>                            <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">n</span><span class="p">)))))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">bfs-iter</span> <span class="p">(</span><span class="nf">ins</span> <span class="nv">tree</span> <span class="nv">empty-q</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">()</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span>  <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">example-tree</span><span class="p">)</span>
+</span><span class='line'>              <span class="o">&#39;</span><span class="p">((</span><span class="s">&quot;C&quot;</span> <span class="o">.</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;B&quot;</span><span class="o">.</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="o">.</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>              <span class="s">&quot;Visit-order searches a tree breadth-first and returns a</span>
+</span><span class='line'><span class="s">              list of nodes and their numbers.&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span>  <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">five-nodes</span><span class="p">)</span>
+</span><span class='line'>              <span class="o">&#39;</span><span class="p">((</span><span class="s">&quot;E&quot;</span> <span class="o">.</span> <span class="mi">5</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="o">.</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="o">.</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="o">.</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span>   <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">twelve-nodes</span><span class="p">)</span>
+</span><span class='line'>               <span class="o">&#39;</span><span class="p">((</span><span class="s">&quot;L&quot;</span> <span class="o">.</span> <span class="mi">12</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;K&quot;</span> <span class="o">.</span> <span class="mi">11</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;J&quot;</span> <span class="o">.</span> <span class="mi">10</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;I&quot;</span> <span class="o">.</span> <span class="mi">9</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;H&quot;</span> <span class="o">.</span> <span class="mi">8</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;G&quot;</span> <span class="o">.</span> <span class="mi">7</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;F&quot;</span> <span class="o">.</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class='line'>                 <span class="p">(</span><span class="s">&quot;E&quot;</span> <span class="o">.</span> <span class="mi">5</span><span class="p">)</span>  <span class="p">(</span><span class="s">&quot;D&quot;</span> <span class="o">.</span> <span class="mi">4</span><span class="p">)</span>  <span class="p">(</span><span class="s">&quot;C&quot;</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span>  <span class="p">(</span><span class="s">&quot;B&quot;</span> <span class="o">.</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;A&quot;</span> <span class="o">.</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class='line'>               <span class="s">&quot;Visit-order works on non-binary trees.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s possible to map a visit queue back to a binary tree (check out
+ Michael&#8217;s <a href="https://gist.github.com/MichaelBaker/5810053">concise Haskell
+ solution</a>), but I
+ wanted a solution that would work for all trees. In the end, I settled for performing a second <a href="https://en.wikipedia.org/wiki/Depth-first_search">depth-first
+ traversal</a>
+to label nodes. This <code>walk-map</code> function works like a recursive <code>map</code>,
+ traversing a nested structure and applying a function to every
+ element that&#8217;s not a list:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">walk-map</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">func</span> <span class="nv">items</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">define </span><span class="nv">apply-or-map</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">item</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">cond </span><span class="p">((</span><span class="nb">null? </span><span class="nv">item</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">())</span>
+</span><span class='line'>              <span class="p">((</span><span class="nb">pair? </span><span class="nv">item</span><span class="p">)</span> <span class="p">(</span><span class="nb">map </span><span class="nv">apply-or-map</span> <span class="nv">item</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="k">else </span><span class="p">(</span><span class="nf">func</span> <span class="nv">item</span><span class="p">)))))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">map </span><span class="nv">apply-or-map</span> <span class="nv">items</span><span class="p">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span>  <span class="p">(</span><span class="nf">walk-map</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">i</span><span class="p">)</span> <span class="p">(</span><span class="k">cond </span><span class="p">((</span><span class="nb">= </span><span class="nv">i</span> <span class="mi">1</span><span class="p">)</span> <span class="s">&quot;one&quot;</span><span class="p">)</span> <span class="p">((</span><span class="nb">= </span><span class="nv">i</span> <span class="mi">2</span><span class="p">)</span> <span class="s">&quot;two&quot;</span><span class="p">)</span> <span class="p">((</span><span class="nb">= </span><span class="nv">i</span> <span class="mi">3</span><span class="p">)</span> <span class="s">&quot;three&quot;</span><span class="p">)</span> <span class="p">))</span>
+</span><span class='line'>              <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">2</span> <span class="p">(</span><span class="mi">3</span> <span class="p">(</span><span class="mi">1</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">1</span> <span class="mi">3</span><span class="p">))))</span>
+</span><span class='line'>              <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;one&quot;</span> <span class="s">&quot;two&quot;</span> <span class="p">(</span><span class="s">&quot;one&quot;</span> <span class="s">&quot;one&quot;</span> <span class="s">&quot;two&quot;</span> <span class="p">(</span><span class="s">&quot;three&quot;</span> <span class="p">(</span><span class="s">&quot;one&quot;</span> <span class="p">(</span><span class="s">&quot;two&quot;</span><span class="p">)</span><span class="s">&quot;two&quot;</span><span class="p">)</span> <span class="s">&quot;one&quot;</span> <span class="s">&quot;three&quot;</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here&#8217;s a convenience function to store node order in a hash set:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">make-label-map</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">labels</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">label-map</span> <span class="p">(</span><span class="nf">make-hash</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="k">define </span><span class="nv">add-labels</span>
+</span><span class='line'>        <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">labels</span><span class="p">)</span>
+</span><span class='line'>          <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">labels</span><span class="p">)</span>
+</span><span class='line'>              <span class="nv">label-map</span>
+</span><span class='line'>              <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">node</span>   <span class="p">(</span><span class="nb">car </span> <span class="p">(</span><span class="nb">car </span><span class="nv">labels</span><span class="p">)))</span>
+</span><span class='line'>                    <span class="p">(</span><span class="nf">number</span> <span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">car </span><span class="nv">labels</span><span class="p">))))</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">hash-set!</span> <span class="nv">label-map</span> <span class="nv">node</span> <span class="nv">number</span><span class="p">)</span>
+</span><span class='line'>                <span class="p">(</span><span class="nf">add-labels</span> <span class="p">(</span><span class="nb">cdr </span><span class="nv">labels</span><span class="p">))))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">add-labels</span> <span class="nv">labels</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">label-map</span> <span class="p">(</span><span class="nf">make-label-map</span> <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">example-tree</span><span class="p">))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="s">&quot;A&quot;</span><span class="p">)</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="s">&quot;B&quot;</span><span class="p">)</span> <span class="mi">2</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="s">&quot;C&quot;</span><span class="p">)</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="s">&quot;D&quot;</span><span class="p">)</span> <span class="mi">3</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And at long last, a solution for breadth-first numbering: calculate
+node order, then map over the tree to apply the labels:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="k">define </span><span class="nv">number-tree</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">tree</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">label-map</span> <span class="p">(</span><span class="nf">make-label-map</span> <span class="p">(</span><span class="nf">visit-order</span> <span class="nv">tree</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nf">walk-map</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">node</span><span class="p">)</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">equal? </span><span class="s">&quot;leaf&quot;</span> <span class="nv">node</span><span class="p">)</span>
+</span><span class='line'>                                   <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                               <span class="p">(</span><span class="nf">hash-ref</span> <span class="nv">label-map</span> <span class="nv">node</span><span class="p">)))</span>
+</span><span class='line'>                <span class="nv">tree</span><span class="p">))))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">number-tree</span> <span class="nv">example-tree</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">(</span><span class="mi">2</span> <span class="s">&quot;leaf&quot;</span> <span class="p">(</span><span class="mi">4</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">))</span> <span class="p">(</span><span class="mi">3</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">number-tree</span> <span class="nv">five-nodes</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span> <span class="p">(</span><span class="mi">2</span> <span class="p">(</span><span class="mi">4</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)</span> <span class="p">(</span><span class="mi">5</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">))</span> <span class="p">(</span><span class="mi">3</span> <span class="s">&quot;leaf&quot;</span> <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'><span class="p">(</span><span class="nf">check-equal?</span> <span class="p">(</span><span class="nf">number-tree</span> <span class="nv">twelve-nodes</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">1</span>
+</span><span class='line'>                                           <span class="p">(</span><span class="mi">2</span> <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                           <span class="p">(</span><span class="mi">3</span>
+</span><span class='line'>                                              <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                              <span class="p">(</span><span class="mi">4</span>
+</span><span class='line'>                                                <span class="p">(</span><span class="mi">6</span> <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                                   <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                <span class="p">(</span><span class="mi">7</span> <span class="p">(</span><span class="mi">9</span>     <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                                          <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                   <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                <span class="p">(</span><span class="mi">8</span> <span class="p">(</span><span class="mi">10</span>    <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                                          <span class="s">&quot;leaf&quot;</span>
+</span><span class='line'>                                                          <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                   <span class="p">(</span><span class="mi">11</span>    <span class="s">&quot;leaf&quot;</span><span class="p">)</span>
+</span><span class='line'>                                                   <span class="p">(</span><span class="mi">12</span>    <span class="s">&quot;leaf&quot;</span><span class="p">)))</span>
+</span><span class='line'>                                              <span class="p">(</span><span class="mi">5</span>   <span class="s">&quot;leaf&quot;</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On the plus side, this solution generalizes to non-binary trees, and
+is built almost entirely out of Scheme primitives. It&#8217;s not as concise
+or efficient as I&#8217;d like, but I&#8217;m happy with my lazy lists and
+functional queue, even if the implementation is a little long. You can
+find an edited version of my solution
+<a href="https://gist.github.com/ecmendenhall/5847792">here</a>, and all the code
+from these posts as a Gist <a href="https://gist.github.com/ecmendenhall/5847793">here</a>.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1417,132 +1720,6 @@ this bit of language, which comes with some of the best and dearest
 <p>Richard Feynman posed <a href="http://www.feynmanlectures.info/exercises/Feynmans_restaurant_problem.html">this problem</a> in the context of finding the best dish at a new restaurant. (But beers are way more interesting). The <a href="http://www.feynmanlectures.info/solutions/restaurant_problem_sol_1.html">solution</a> makes sense (and come on, it&#8217;s Richard Feynman), but I wanted to check his work with a simulation.</p>
 
 <p>You can find the results (and the rest of this post) in <a href="http://nbviewer.ipython.org/5229689">this iPython notebook</a>. There&#8217;s much more there, including an interesting result!</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-03T01:28:00-05:00" data-updated="true" itemprop="datePublished">Jun 3<span>rd</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/java/'>Java</a>, <a class='category' href='/blog/categories/refactoring/'>refactoring</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/blog/2013/06/03/refactoring-examples-long-methods/" itemprop="url">Refactoring Examples: Long Methods</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Martin Fowler identifies long methods as another common code smell, fixable by breaking one long method into several smaller ones and composing them together. Since <em>Clean Code</em> emphasized writing short, meaningful methods, I had to look a bit to find one. But I&#8217;m not very happy with the board coordinate constructor:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="nf">UniversalBoardCoordinate</span><span class="o">(</span><span class="n">String</span> <span class="n">locationPhrase</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">InvalidCoordinateException</span> <span class="o">{</span>
-</span><span class='line'><span class="err">        </span><span class="n">String</span> <span class="n">noParens</span> <span class="o">=</span> <span class="n">locationPhrase</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="sc">&#39;(&#39;</span><span class="o">,</span> <span class="sc">&#39; &#39;</span><span class="o">).</span><span class="na">replace</span><span class="o">(</span><span class="sc">&#39;)&#39;</span><span class="o">,</span> <span class="sc">&#39; &#39;</span><span class="o">);</span>
-</span><span class='line'><span class="err">        </span><span class="n">String</span><span class="o">[]</span> <span class="n">coordinates</span> <span class="o">=</span> <span class="n">noParens</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="s">&quot;,&quot;</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="err">        </span><span class="k">if</span> <span class="o">(</span><span class="n">coordinates</span><span class="o">.</span><span class="na">length</span> <span class="o">!=</span> <span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'><span class="err">            </span><span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidCoordinateException</span><span class="o">(</span><span class="s">&quot;That&#39;s not a valid board location.&quot;</span><span class="o">);</span>
-</span><span class='line'><span class="err">        </span><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="err">        </span><span class="n">row</span> <span class="o">=</span> <span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">coordinates</span><span class="o">[</span><span class="mi">0</span><span class="o">].</span><span class="na">trim</span><span class="o">());</span>
-</span><span class='line'><span class="err">        </span><span class="n">column</span> <span class="o">=</span> <span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">coordinates</span><span class="o">[</span><span class="mi">1</span><span class="o">].</span><span class="na">trim</span><span class="o">());</span>
-</span><span class='line'><span class="err">    </span><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This is an easy refactor: think about what each line of code does, group the related ones in their own methods, and replace them. In fact, I&#8217;d already separated each group with a line break. The first two trim the input string and split it in two:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="n">Integer</span><span class="o">[]</span> <span class="nf">parseString</span><span class="o">(</span><span class="n">String</span> <span class="n">locationPhrase</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">InvalidCoordinateException</span> <span class="o">{</span>
-</span><span class='line'><span class="err">        </span><span class="n">String</span> <span class="n">noParens</span> <span class="o">=</span> <span class="n">locationPhrase</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="sc">&#39;(&#39;</span><span class="o">,</span> <span class="sc">&#39; &#39;</span><span class="o">).</span><span class="na">replace</span><span class="o">(</span><span class="sc">&#39;)&#39;</span><span class="o">,</span> <span class="sc">&#39; &#39;</span><span class="o">);</span>
-</span><span class='line'><span class="err">        </span><span class="n">String</span><span class="o">[]</span> <span class="n">coordinates</span> <span class="o">=</span> <span class="n">noParens</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="s">&quot;,&quot;</span><span class="o">);</span>
-</span><span class='line'><span class="err">        </span><span class="n">checkValidity</span><span class="o">(</span><span class="n">coordinates</span><span class="o">);</span>
-</span><span class='line'><span class="err">        </span><span class="k">return</span> <span class="n">parseCoordinates</span><span class="o">(</span><span class="n">coordinates</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The next two check whether the result is valid:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kt">void</span> <span class="nf">checkValidity</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">coordinates</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">InvalidCoordinateException</span> <span class="o">{</span>
-</span><span class='line'><span class="err">        </span><span class="k">if</span> <span class="o">(</span><span class="n">coordinates</span><span class="o">.</span><span class="na">length</span> <span class="o">!=</span> <span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'><span class="err">            </span><span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidCoordinateException</span><span class="o">(</span><span class="s">&quot;That&#39;s not a valid board location.&quot;</span><span class="o">);</span>
-</span><span class='line'><span class="err">        </span><span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">And</span> <span class="n">the</span> <span class="n">last</span> <span class="n">two</span> <span class="n">convert</span> <span class="n">the</span> <span class="n">strings</span> <span class="n">to</span> <span class="nl">integers:</span>
-</span><span class='line'><span class="kd">private</span> <span class="n">Integer</span><span class="o">[]</span> <span class="nf">parseCoordinates</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">coordinates</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'><span class="err">        </span><span class="k">return</span> <span class="k">new</span> <span class="n">Integer</span><span class="o">[]</span> <span class="o">{</span> <span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">coordinates</span><span class="o">[</span><span class="mi">0</span><span class="o">].</span><span class="na">trim</span><span class="o">()),</span>
-</span><span class='line'><span class="err">                               </span><span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">coordinates</span><span class="o">[</span><span class="mi">1</span><span class="o">].</span><span class="na">trim</span><span class="o">())</span> <span class="o">};</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now that the details of string manipulation are hidden in helper methods, the complicated constructor looks trivial:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="nf">UniversalBoardCoordinate</span><span class="o">(</span><span class="n">String</span> <span class="n">locationPhrase</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">InvalidCoordinateException</span> <span class="o">{</span>
-</span><span class='line'><span class="err">        </span><span class="n">Integer</span><span class="o">[]</span> <span class="n">orderedPair</span> <span class="o">=</span> <span class="n">parseString</span><span class="o">(</span><span class="n">locationPhrase</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="err">        </span><span class="n">row</span> <span class="o">=</span> <span class="n">orderedPair</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
-</span><span class='line'><span class="err">        </span><span class="n">column</span> <span class="o">=</span> <span class="n">orderedPair</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
 
 		
 		

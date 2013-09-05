@@ -1,0 +1,195 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Web permissions are broken - Connor Mendenhall</title>
+	<meta name="author" content="Connor Mendenhall">
+
+	
+	<meta name="description" content="Web Permissions Are Broken I spent this evening throwing together a simple site that uses the
+HTML5 Geolocation API.
+(Link here. Warning: politics &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/blog/atom.xml" rel="alternate" title="Connor Mendenhall" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://ecmendenhall.github.io/blog/blog/2013/09/05/web-permissions-are-broken/">
+	<link href="/blog/favicon.png" rel="shortcut icon">
+	<link href="/blog/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/blog/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("ecmendenhall@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+</div>
+<hgroup>
+  <h1><a href="/blog/">Connor Mendenhall</a></h1>
+  
+</hgroup>
+
+<p class="subtitle"></p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="/blog/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/ecmendenhall" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/ecmendenhall" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		<a class="pinboard" href="https://pinboard.in/u:ecmendenhall" title="Pinboard">Pinboard</a>
+		
+		
+		<a class="rss" href="/blog/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Web Permissions Are Broken</h1>
+	<div class="entry-content" itemprop="articleBody"><p>I spent this evening throwing together a simple site that uses the
+<a href="http://diveintohtml5.info/geolocation.html">HTML5 Geolocation API</a>.
+(Link <a href="http://oneweirdtiptostopwars.com/">here</a>. Warning: politics!)
+The API enables the sort of services that feel magical. In this case,
+it took just a little Javascript to retrieve and display contact
+information for a user&#8217;s Congressional representatives based on
+location. (The awesome <a href="http://sunlightlabs.github.io/congress/">Congress
+API</a> from <a href="http://sunlightlabs.github.io/">Sunlight Labs</a>
+helped too). In an earlier experiment, I used webcam access with
+<code>getUserMedia()</code> and <a href="http://inspirit.github.io/jsfeat/">feature
+detection</a> to make a scavenger hunt
+clue accessible only by holding up a special image in front of the
+camera.</p>
+
+<p>But before the giddy magic of HTML5 come terrifying requests from the
+browser and a terrible user experience. Chrome &#8220;wants to use your
+location.&#8221; Firefox asks if you&#8217;d &#8220;like to share your camera.&#8221; There&#8217;s
+no explanation of why or what the site wants to do with the data. The
+most likely question for most users is met with only a chance to
+&#8220;Deny&#8221; or &#8220;Accept&#8221; an unknown contract. Perhaps this is a problem to
+be solved on the page, but the ability to provide a simple message
+would be a huge improvement, merely by providing an explanation.</p>
+
+<p>There&#8217;s an existing W3C draft on <a href="http://dev.w3.org/2009/dap/perms/FeaturePermissions.html">feature permissions</a>, which punts
+the idea to <a href="https://dvcs.w3.org/hg/notifications/raw-file/tip/Overview.html">web
+notifications</a>.
+As users get used to fine-grained permissions on <a href="https://developer.android.com/guide/topics/security/permissions.html">other devices</a>,
+browsers will need to catch up.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2013 - Connor Mendenhall -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/blog/javascripts/slash.js"></script>
+<script src="/blog/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'ecmgithub';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ecmendenhall.github.io/blog/blog/2013/09/05/web-permissions-are-broken/';
+        var disqus_url = 'http://ecmendenhall.github.io/blog/blog/2013/09/05/web-permissions-are-broken/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40424493-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

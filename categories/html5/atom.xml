@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: HTML5 | Connor Mendenhall]]></title>
+  <link href="http://ecmendenhall.github.io/blog/categories/html5/atom.xml" rel="self"/>
+  <link href="http://ecmendenhall.github.io/blog/"/>
+  <updated>2013-09-05T02:42:43-05:00</updated>
+  <id>http://ecmendenhall.github.io/blog/</id>
+  <author>
+    <name><![CDATA[Connor Mendenhall]]></name>
+    <email><![CDATA[ecmendenhall@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Web permissions are broken]]></title>
+    <link href="http://ecmendenhall.github.io/blog/blog/2013/09/05/web-permissions-are-broken/"/>
+    <updated>2013-09-05T01:53:00-05:00</updated>
+    <id>http://ecmendenhall.github.io/blog/blog/2013/09/05/web-permissions-are-broken</id>
+    <content type="html"><![CDATA[<p>I spent this evening throwing together a simple site that uses the
+<a href="http://diveintohtml5.info/geolocation.html">HTML5 Geolocation API</a>.
+(Link <a href="http://oneweirdtiptostopwars.com/">here</a>. Warning: politics!)
+The API enables the sort of services that feel magical. In this case,
+it took just a little Javascript to retrieve and display contact
+information for a user's Congressional representatives based on
+location. (The awesome <a href="http://sunlightlabs.github.io/congress/">Congress
+API</a> from <a href="http://sunlightlabs.github.io/">Sunlight Labs</a>
+helped too). In an earlier experiment, I used webcam access with
+<code>getUserMedia()</code> and <a href="http://inspirit.github.io/jsfeat/">feature
+detection</a> to make a scavenger hunt
+clue accessible only by holding up a special image in front of the
+camera.</p>
+
+<p>But before the giddy magic of HTML5 come terrifying requests from the
+browser and a terrible user experience. Chrome "wants to use your
+location." Firefox asks if you'd "like to share your camera." There's
+no explanation of why or what the site wants to do with the data. The
+most likely question for most users is met with only a chance to
+"Deny" or "Accept" an unknown contract. Perhaps this is a problem to
+be solved on the page, but the ability to provide a simple message
+would be a huge improvement, merely by providing an explanation.</p>
+
+<p>There's an existing W3C draft on <a href="http://dev.w3.org/2009/dap/perms/FeaturePermissions.html">feature permissions</a>, which punts
+the idea to <a href="https://dvcs.w3.org/hg/notifications/raw-file/tip/Overview.html">web
+notifications</a>.
+As users get used to fine-grained permissions on <a href="https://developer.android.com/guide/topics/security/permissions.html">other devices</a>,
+browsers will need to catch up.</p>
+]]></content>
+  </entry>
+  
+</feed>
